@@ -98,8 +98,8 @@ DATABASES = {
 }
 # Trusted origins for CSRF protection (required for POST/admin forms)
 CSRF_TRUSTED_ORIGINS = [
-    'http://182.76.176.205',
-    'https://182.76.176.205',  # If you plan to use HTTPS
+    'http://182.76.176.205:5142',
+    'https://182.76.176.205:5142',  # If you plan to use HTTPS
 ]
 
 # Password validation
