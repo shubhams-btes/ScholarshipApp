@@ -12,6 +12,10 @@ from students.models import Student
 import datetime
 from django.utils.timezone import make_aware, get_default_timezone
 from django.contrib.auth import logout as auth_logout
+import json
+from django.views.decorators.http import require_http_methods
+from django.contrib.auth.decorators import user_passes_test
+
 
 # -----------------------------
 # Decorators
@@ -436,7 +440,69 @@ def edit_question(request, pk):
     return render(request, 'admin_panel/add_edit_question.html', {'form': form, 'title': 'Edit Question'})
 
 
+
+
 @superuser_required
+@require_http_methods(["GET", "POST"])
 def upload_questions(request):
-    # Just render upload form for now (extend later with CSV/XLSX import)
+    if request.method == 'POST':
+        file = request.FILES.get('file')
+        if not file:
+            messages.error(request, "Please select a file to upload.")
+            return redirect('upload_questions')
+
+        # Only allow JSON or text files
+        if not (file.name.endswith('.json') or file.name.endswith('.txt')):
+            messages.error(request, "Only .json or .txt files are supported.")
+            return redirect('upload_questions')
+
+        try:
+            # Read file content
+            data = file.read().decode('utf-8')
+
+            # Try to parse JSON directly
+            questions_data = json.loads(data)
+
+            if not isinstance(questions_data, list):
+                messages.error(request, "Invalid JSON format. Expected a list of questions.")
+                return redirect('upload_questions')
+
+            count = 0
+            for q in questions_data:
+                # Safely extract fields
+                category = q.get("category", "").strip()
+                question_text = q.get("question_text", "").strip()
+                option_1 = q.get("option_1", "").strip()
+                option_2 = q.get("option_2", "").strip()
+                option_3 = q.get("option_3", "").strip()
+                option_4 = q.get("option_4", "").strip()
+                correct_option = q.get("correct_option", None)
+
+                if not question_text or correct_option not in [1, 2, 3, 4]:
+                    continue  # skip invalid question
+
+                # Save question
+                Question.objects.create(
+                    category=category,
+                    question_text=question_text,
+                    option_1=option_1,
+                    option_2=option_2,
+                    option_3=option_3,
+                    option_4=option_4,
+                    correct_option=correct_option
+                )
+                count += 1
+
+            messages.success(request, f"{count} questions uploaded successfully!")
+            return redirect('manage_questions')
+
+        except json.JSONDecodeError:
+            messages.error(request, "Invalid JSON format. Please check your file.")
+        except Exception as e:
+            messages.error(request, f"Error while processing file: {str(e)}")
+
+        return redirect('upload_questions')
+
+    # GET method — render upload page
     return render(request, 'admin_panel/upload_questions.html')
+
