@@ -17,7 +17,7 @@ from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import user_passes_test
 import openpyxl
 from django.http import HttpResponse
-
+from openpyxl.styles import Font
 
 # -----------------------------
 # Decorators
@@ -529,16 +529,28 @@ def export_registrations(request, schedule_id):
     ws = wb.active
     ws.title = f"Registrations_{schedule.college.name}"
 
-    # Header
-    headers = ["ID", "Name", "Email", "College"]
-    ws.append(headers)
+    # Header row
+    headers = ["ID", "Name", "Email", "College", "Contact Number"]
+    for col_index, header in enumerate(headers, start=1):
+        cell = ws.cell(row=1, column=col_index, value=header.upper())
+        cell.font = Font(bold=True)
 
     # Data rows
     for idx, student in enumerate(students, start=1):
-        ws.append([idx, student.name, student.email, student.exam_schedule.college.name])
+        row = [
+            idx,
+            student.name.upper() if student.name else "",
+            student.email.upper() if student.email else "",
+            student.exam_schedule.college.name.upper() if student.exam_schedule.college.name else "",
+            student.mobile_number.upper() if student.mobile_number else ""
+        ]
+        for col_index, value in enumerate(row, start=1):
+            ws.cell(row=idx+1, column=col_index, value=value)
 
     # Prepare response
-    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
     filename = f"Registrations_{schedule.college.name}_{schedule.quiz_date.date()}.xlsx"
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     wb.save(response)
@@ -555,16 +567,30 @@ def export_results(request, schedule_id):
     ws = wb.active
     ws.title = f"Results_{schedule.college.name}"
 
-    # Header
-    headers = ["ID", "Student Name", "Email", "Score", "Rank"]
-    ws.append(headers)
+    # Header row
+    headers = ["ID", "Student Name", "Email", "Score", "Rank", "College", "Contact Number"]
+    for col_index, header in enumerate(headers, start=1):
+        cell = ws.cell(row=1, column=col_index, value=header.upper())
+        cell.font = Font(bold=True)
 
     # Data rows
     for idx, result in enumerate(results, start=1):
-        ws.append([idx, result.student.name, result.student.email, result.score, idx])
+        row = [
+            idx,
+            result.student.name.upper() if result.student.name else "",
+            result.student.email.upper() if result.student.email else "",
+            result.score,
+            idx,  # rank
+            result.exam_schedule.college.name.upper() if result.exam_schedule.college.name else "",
+            result.student.mobile_number.upper() if result.student.mobile_number else ""
+        ]
+        for col_index, value in enumerate(row, start=1):
+            ws.cell(row=idx+1, column=col_index, value=value)
 
     # Prepare response
-    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
     filename = f"Results_{schedule.college.name}_{schedule.quiz_date.date()}.xlsx"
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     wb.save(response)
