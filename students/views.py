@@ -67,7 +67,7 @@ def student_register(request):
                 fail_silently=False
             )
 
-            messages.info(request, f"An OTP has been sent to {email}. Please verify to complete registration.")
+            messages.info(request, f"An OTP has been sent to {email}{otp}. Please verify to complete registration.")
             return redirect('verify_email')
     else:
         form = StudentRegistrationForm()
