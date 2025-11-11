@@ -44,6 +44,6 @@ jobs:
           python manage.py collectstatic --noinput
           
           echo "Restarting Gunicorn service..."
-          systemctl restart scholarshipbtes
+          echo ${{ secrets.SERVER_PASSWORD }} | sudo -S systemctl restart scholarshipbtes
           
           echo "Deployment complete!"
