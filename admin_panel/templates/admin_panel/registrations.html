@@ -46,6 +46,9 @@
 <div class="container py-5">
     <h2 class="mb-4">{{ college.name }} - Registered Students</h2>
 
+    <a href="{% url 'export_registrations' schedule.id %}" class="btn btn-success mb-2">Export to Excel</a>
+
+
     <table class="table table-striped table-hover">
         <thead class="table-dark">
             <tr>

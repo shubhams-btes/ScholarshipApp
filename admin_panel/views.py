@@ -15,6 +15,8 @@ from django.contrib.auth import logout as auth_logout
 import json
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import user_passes_test
+import openpyxl
+from django.http import HttpResponse
 
 
 # -----------------------------
@@ -513,3 +515,57 @@ def upload_questions(request):
     # GET method — render upload page
     return render(request, 'admin_panel/upload_questions.html')
 
+
+
+# Export Routes
+
+@superuser_required
+def export_registrations(request, schedule_id):
+    schedule = get_object_or_404(ExamScheduleHistory, pk=schedule_id)
+    students = Student.objects.filter(exam_schedule=schedule).order_by('name')
+
+    # Create Excel workbook
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = f"Registrations_{schedule.college.name}"
+
+    # Header
+    headers = ["ID", "Name", "Email", "College"]
+    ws.append(headers)
+
+    # Data rows
+    for idx, student in enumerate(students, start=1):
+        ws.append([idx, student.name, student.email, student.exam_schedule.college.name])
+
+    # Prepare response
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    filename = f"Registrations_{schedule.college.name}_{schedule.quiz_date.date()}.xlsx"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    wb.save(response)
+    return response
+
+
+@superuser_required
+def export_results(request, schedule_id):
+    schedule = get_object_or_404(ExamScheduleHistory, pk=schedule_id)
+    results = Result.objects.filter(exam_schedule=schedule).order_by('-score')
+
+    # Create Excel workbook
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = f"Results_{schedule.college.name}"
+
+    # Header
+    headers = ["ID", "Student Name", "Email", "Score", "Rank"]
+    ws.append(headers)
+
+    # Data rows
+    for idx, result in enumerate(results, start=1):
+        ws.append([idx, result.student.name, result.student.email, result.score, idx])
+
+    # Prepare response
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    filename = f"Results_{schedule.college.name}_{schedule.quiz_date.date()}.xlsx"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    wb.save(response)
+    return response

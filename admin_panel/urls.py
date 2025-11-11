@@ -35,4 +35,9 @@ urlpatterns = [
     path("results/<int:schedule_id>/", views.college_results, name="college_results"),
     path('registrations/<int:schedule_id>/', views.college_registrations, name='college_registrations'),
 
+    # Export Results
+
+    path('export/registrations/<int:schedule_id>/', views.export_registrations, name='export_registrations'),
+    path('export/results/<int:schedule_id>/', views.export_results, name='export_results'),
+
 ]

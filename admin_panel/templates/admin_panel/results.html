@@ -61,6 +61,7 @@
             <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
         </div>
     </form>
+    <a href="{% url 'export_results' schedule.id %}" class="btn btn-success mb-2">Export to Excel</a>
 
     <!-- Results Table -->
     <table class="table table-striped table-hover">
