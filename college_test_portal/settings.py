@@ -27,11 +27,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['182.76.176.205', 'localhost','127.0.0.1']
 
-# Trusted origins for CSRF protection (required for POST/admin forms)
-CSRF_TRUSTED_ORIGINS = [
-    'http://182.76.176.205',
-    'https://182.76.176.205',  # If you plan to use HTTPS
-]
+
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 EMAIL_FILE_PATH = r"C:\temp\sent_emails"  # Path where email files will be saved
@@ -100,7 +96,11 @@ DATABASES = {
         'PORT': '3306',
     }
 }
-
+# Trusted origins for CSRF protection (required for POST/admin forms)
+CSRF_TRUSTED_ORIGINS = [
+    'http://182.76.176.205',
+    'https://182.76.176.205',  # If you plan to use HTTPS
+]
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
