@@ -317,20 +317,27 @@ def share_quiz_link(request, schedule_id):
     # Send to all registered officials (you can filter further if needed)
     students = Student.objects.filter(exam_schedule=schedule_history)
     emails = students.values_list('email', flat=True)
-    if emails:
-        send_mail(
-            subject="Quiz Link",
-            message=(
-                f"Dear Student,\n\n"
-                f"You have been registered for the quiz scheduled on {schedule.quiz_date}.\n"
-                f"Here is your quiz link: {link}\n\n"
-                f"You will be able to access the quiz 10 minutes before the start time.\n\n"
-                f"Best of luck!"
-            ),
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=list(emails),
+    # if emails:
+    #     send_mail(
+    #         subject="Quiz Link",
+    #         message=(
+    #             f"Dear Student,\n\n"
+    #             f"You have been registered for the quiz scheduled on {schedule.quiz_date}.\n"
+    #             f"Here is your quiz link: {link}\n\n"
+    #             f"You will be able to access the quiz 10 minutes before the start time.\n\n"
+    #             f"Best of luck!"
+    #         ),
+    #         from_email=settings.DEFAULT_FROM_EMAIL,
+    #         recipient_list=list(emails),
+    #         fail_silently=False
+    #     )
+    send_mail(
+            'College Registration Link',
+            f'Your registration link: {link}',
+            settings.DEFAULT_FROM_EMAIL,
+            list(emails),
             fail_silently=False
-        )
+    )
     messages.success(request, f"Quiz link sent for {schedule.college.name}.")
     return redirect('quiz_management')
 
