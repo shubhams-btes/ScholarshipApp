@@ -568,7 +568,7 @@ def export_results(request, schedule_id):
     ws.title = f"Results_{schedule.college.name}"
 
     # Header row
-    headers = ["ID", "Student Name", "Email", "Score", "Rank", "College", "Contact Number"]
+    headers = ["ID", "Student Name", "Email", "Score","College", "Contact Number"]
     for col_index, header in enumerate(headers, start=1):
         cell = ws.cell(row=1, column=col_index, value=header.upper())
         cell.font = Font(bold=True)
@@ -580,7 +580,6 @@ def export_results(request, schedule_id):
             result.student.name.upper() if result.student.name else "",
             result.student.email.upper() if result.student.email else "",
             result.score,
-            idx,  # rank
             result.exam_schedule.college.name.upper() if result.exam_schedule.college.name else "",
             result.student.mobile_number.upper() if result.student.mobile_number else ""
         ]
