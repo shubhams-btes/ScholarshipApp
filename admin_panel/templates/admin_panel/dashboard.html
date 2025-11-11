@@ -8,31 +8,27 @@
     <style>
         .tile { cursor: pointer; transition: transform 0.2s; }
         .tile:hover { transform: scale(1.05); }
+        .navbar { background-color: #ffffff; }
+        #logo { height: 80px;}
     </style>
 </head>
 <body class="bg-light">
-        <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
-    <div class="container-fluid">
-        <!-- Brand / Logo -->
+        <nav class="navbar navbar-expand-lg shadow-sm">
+    <div class="container-fluid d-flex justify-content-between align-items-center">
+        <!-- Left: Brand -->
         <a class="navbar-brand fw-bold" href="{% url 'dashboard' %}">Admin Panel</a>
 
-        <!-- Toggle button for mobile -->
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNavbar"
-                aria-controls="adminNavbar" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-
-        <!-- Navbar links -->
-        <div class="collapse navbar-collapse" id="adminNavbar">
-            
-
-            <!-- Logout button on right -->
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item">
-                    <a class="btn btn-outline-light" href="{% url 'logout' %}">Logout</a>
-                </li>
-            </ul>
+        <!-- Center: Logo -->
+        <div class="mx-auto">
+            <img src="{% static 'students/BTES_Logo.png' %}" alt="Logo" id="logo">
         </div>
+
+        <!-- Right: Logout button -->
+        <ul class="navbar-nav">
+            <li class="nav-item">
+                <a class="btn btn-outline-light" href="{% url 'logout' %}">Logout</a>
+            </li>
+        </ul>
     </div>
 </nav>
 <div class="container py-5">
