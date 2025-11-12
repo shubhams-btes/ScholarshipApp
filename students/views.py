@@ -7,6 +7,7 @@ from django.contrib.sessions.models import Session
 from .forms import StudentRegistrationForm
 from .models import Student
 from admin_panel.models import College, ExamSchedule, ExamScheduleHistory
+from tests.models import Result
 import random, string
 
 def generate_otp(length=6):
@@ -130,11 +131,20 @@ def login_view(request):
                 messages.error(request, "You are already logged in from another device/browser.")
                 return redirect(request.path + (f"?college_id={college_id}" if college_id else ""))
 
+            # 3️⃣ Check if student already attempted the quiz
+            already_attempted = Result.objects.filter(
+                student_id=student.id,
+                exam_schedule_id=student.exam_schedule.id
+            ).exists()
+
+            if already_attempted:
+                messages.warning(request, "You have already attempted this quiz.")
+                return redirect(request.path + (f"?college_id={college_id}" if college_id else ""))
 
             # 4️⃣ Log in
             request.session['student_id'] = student.id
-            # student.current_session = request.session.session_key
-            # student.save()
+            student.current_session = request.session.session_key
+            student.save()
             next_url = request.GET.get('next', '/quiz/start_quiz/')
             return redirect(next_url)
 

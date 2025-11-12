@@ -12,6 +12,10 @@ from django.shortcuts import redirect
 from django.utils.timezone import localtime
 from django.contrib.auth import logout as auth_logout
 from django.views.decorators.cache import cache_control
+import pytz
+
+
+
 
 def student_login_required(view_func):
     @wraps(view_func)
@@ -29,6 +33,8 @@ def student_login_required(view_func):
 def quiz_view(request):
     student = request.student
     now = timezone.now()
+    ist = pytz.timezone('Asia/Kolkata')
+    
     try:
         schedule = ExamSchedule.objects.get(college=student.exam_schedule.college)
     except ExamSchedule.DoesNotExist:
@@ -39,10 +45,14 @@ def quiz_view(request):
 
     # ✅ Ensure schedule.quiz_date is aware
     quiz_datetime = schedule.quiz_date  # Convert quiz date to local time
+    quiz_datetime_ist = quiz_datetime.astimezone(ist)
     # Compare safely
     if now < quiz_datetime:
+        # Calculate remaining time in seconds
+        time_diff = (quiz_datetime - now).total_seconds()
         return render(request, 'tests/message.html', {
-            'message': f'Quiz will start at {quiz_datetime.strftime("%Y-%m-%d %H:%M")}. '
+            'message': f'Quiz will start at {quiz_datetime_ist.strftime("%Y-%m-%d %H:%M")}.',
+            'countdown_seconds': int(time_diff)
         })
 
     if not schedule.quiz_enabled:
@@ -119,6 +129,10 @@ def submit_quiz(request):
 
         )
         
+        # ✅ Clear session info (logout)
+        student.current_session = None
+        student.save()
+
         auth_logout(request)   # from django.contrib.auth import logout as auth_logout
         request.session.flush()  # wipe the session completely
 

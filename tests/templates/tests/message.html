@@ -19,7 +19,7 @@
 
         /* Header with logo */
         .header {
-            background-color: #0d6efd;
+            background-color: #ffffff;
             padding: 10px 0;
             text-align: center;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
@@ -62,6 +62,12 @@
             color: #6c757d;
         }
 
+        #timer {
+            font-size: 2rem;
+            color: #0d6efd;
+            margin-bottom: 15px;
+        }
+
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(-20px); }
             to { opacity: 1; transform: translateY(0); }
@@ -79,9 +85,42 @@
     <div class="container">
         <div class="card">
             <p class="lead">{{ message }}</p>
-            <p class="small">You can now safely close this tab.</p>
+
+            {% if countdown_seconds %}
+                <div id="timer"></div>
+                <p class="small">The quiz will start automatically once the countdown ends.</p>
+            {% else %}
+                <p class="small">You can now safely close this tab.</p>
+            {% endif %}
         </div>
     </div>
+
+    {% if countdown_seconds %}
+    <script>
+        let timeLeft = {{ countdown_seconds }};
+
+        function updateTimer() {
+            if (timeLeft <= 0) {
+                document.getElementById("timer").innerHTML = "You can now start the quiz!";
+                // Auto-redirect to quiz page after 3 seconds
+                setTimeout(() => {
+                    window.location.href = "{% url 'start_quiz' %}";
+                }, 1500);
+                return;
+            }
+
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            document.getElementById("timer").innerHTML =
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+            timeLeft--;
+            setTimeout(updateTimer, 1000);
+        }
+
+        updateTimer();
+    </script>
+    {% endif %}
 
 </body>
 </html>
