@@ -68,6 +68,7 @@
         <thead class="table-dark">
             <tr>
                 <th>#</th>
+                <th>Hall Ticket</th>
                 <th>Student Name</th>
                 <th>Email</th>
                 <th>Contact Number</th>
@@ -79,6 +80,7 @@
             {% for result in filtered_results %}
             <tr>
                 <td>{{ forloop.counter }}</td>
+                <td>{{ result.student.hall_ticket }}</td>
                 <td>{{ result.student.name }}</td>
                 <td>{{ result.student.email }}</td>
                 <td>{{ result.student.mobile_number }}</td>

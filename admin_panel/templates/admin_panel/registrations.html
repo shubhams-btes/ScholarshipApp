@@ -53,9 +53,11 @@
         <thead class="table-dark">
             <tr>
                 <th>#</th>
+                <th>Hall Ticket</th>
                 <th>Student Name</th>
                 <th>Email sdfdgdfh</th>
                 <th>Contact Number</th>
+                
                 
             </tr>
         </thead>
@@ -63,9 +65,11 @@
             {% for student in registered_students %}
             <tr>
                 <td>{{ forloop.counter }}</td>
+                <td>{{ student.hall_ticket }}</td>
                 <td>{{ student.name }}</td>
                 <td>{{ student.email }}</td>
                 <td>{{ student.mobile_number }}</td>
+                
                
             </tr>
             {% empty %}

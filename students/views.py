@@ -40,25 +40,24 @@ def student_register(request):
         if form.is_valid():
             email = form.cleaned_data['email']
 
-            # Prevent duplicate email
+            # Prevent duplicate registration for same exam
             if Student.objects.filter(email=email, exam_schedule=exam_schedule_history).exists():
                 messages.error(request, "You are already registered for this quiz.")
                 return redirect(f"{request.path}?college_id={college_id}")
 
-            # Create student linked to ExamScheduleHistory ✅
-            student = Student.objects.create(
-                name=form.cleaned_data['name'],
-                email=email,
-                password=make_password(form.cleaned_data['password']),
-                exam_schedule=exam_schedule_history,
-                stream=form.cleaned_data['stream'],
-                mobile_number=form.cleaned_data['mobile_number'],
-            )
+            # ✅ Save form data in session (not DB)
+            request.session['pending_registration'] = {
+                'name': form.cleaned_data['name'],
+                'email': email,
+                'password': make_password(form.cleaned_data['password']),
+                'stream': form.cleaned_data['stream'],
+                'mobile_number': form.cleaned_data['mobile_number'],
+                'exam_schedule_id': exam_schedule_history.id
+            }
 
-            # OTP logic
+            # ✅ Generate and send OTP
             otp = generate_otp()
             request.session['email_otp'] = otp
-            request.session['register_email'] = email
 
             send_mail(
                 'Verify your email',
@@ -68,7 +67,7 @@ def student_register(request):
                 fail_silently=False
             )
 
-            messages.info(request, f"An OTP has been sent to {email}{otp}. Please verify to complete registration.")
+            messages.info(request, f"An OTP has been sent to {email}-- {otp}. Please verify to complete registration.")
             return redirect('verify_email')
     else:
         form = StudentRegistrationForm()
@@ -80,27 +79,48 @@ def student_register(request):
     })
 
 
+
 def verify_email(request):
     if request.method == 'POST':
         otp = request.POST.get('otp')
-        if otp == request.session.get('email_otp'):
-            email = request.session.get('register_email')
-            student = Student.objects.get(email=email)
-            student.is_active = True
-            student.save()
+        saved_otp = request.session.get('email_otp')
+        pending_data = request.session.get('pending_registration')
+
+        if not pending_data:
+            messages.error(request, "Session expired or invalid. Please register again.")
+            return redirect('student_register')
+
+        if otp == saved_otp:
+            # ✅ Create the student only after OTP verification
+            exam_schedule = ExamScheduleHistory.objects.get(id=pending_data['exam_schedule_id'])
+
+            student = Student.objects.create(
+                name=pending_data['name'],
+                email=pending_data['email'],
+                password=pending_data['password'],
+                exam_schedule=exam_schedule,
+                stream=pending_data['stream'],
+                mobile_number=pending_data['mobile_number'],
+                is_active=True
+            )
+
+            # Cleanup session data
+            for key in ['email_otp', 'pending_registration']:
+                request.session.pop(key, None)
+
             messages.success(request, "Email verified. Registration complete!")
-            request.session.pop('email_otp')
-            request.session.pop('register_email')
             success_message = (
-            "You have been registered successfully. "
-            "You will receive the quiz link 10 minutes prior to the quiz."
+                f"You have been registered successfully. Your hall ticket is {student.hall_ticket}. "
+                "You will receive the quiz link 10 minutes prior to the quiz."
             )
             return render(request, 'tests/message.html', {'message': success_message})
+
         else:
             messages.error(request, "Invalid OTP. Try again.")
             return redirect('verify_email')
 
     return render(request, 'students/verify_email.html')
+
 
 
 def login_view(request):
