@@ -18,8 +18,13 @@ from django.contrib import admin
 from django.urls import path,include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.shortcuts import redirect
+
+def root_redirect(request):
+    return redirect('/admin_panel')
 
 urlpatterns = [
+    path('', root_redirect),
     path('admin/', admin.site.urls),
     path('quiz/', include('tests.urls')),
     path('admin_panel/', include('admin_panel.urls')),

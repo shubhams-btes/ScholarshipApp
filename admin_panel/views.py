@@ -18,6 +18,7 @@ from django.contrib.auth.decorators import user_passes_test
 import openpyxl
 from django.http import HttpResponse
 from openpyxl.styles import Font
+from django.views.decorators.cache import never_cache
 
 # -----------------------------
 # Decorators
@@ -52,6 +53,7 @@ def logout(request):
 # -----------------------------
 # Dashboard
 # -----------------------------
+@never_cache
 @superuser_required
 def dashboard(request):
     college_query = request.GET.get('college')
