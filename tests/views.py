@@ -63,8 +63,12 @@ def quiz_view(request):
         return render(request, 'tests/message.html', {'message': 'You have already attempted the test.'})
 
     # Select questions
-    technical = list(Question.objects.filter(category="TECH"))
-    reasoning = list(Question.objects.filter(category="REAS"))
+    technical = list(Question.objects.filter(category="TECH", is_active=True))
+    reasoning = list(Question.objects.filter(category="REAS", is_active=True))
+    if len(technical) < 10 or len(reasoning) < 10:
+        return render(request, 'tests/message.html', {
+            'message': 'Not enough active questions available. Contact admin.'
+        })
     selected_questions = random.sample(technical, min(10, len(technical))) + \
                          random.sample(reasoning, min(10, len(reasoning)))
     random.shuffle(selected_questions)

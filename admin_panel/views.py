@@ -468,7 +468,24 @@ def edit_question(request, pk):
     return render(request, 'admin_panel/add_edit_question.html', {'form': form, 'title': 'Edit Question'})
 
 
+@superuser_required
+def toggle_question(request, pk):
+    question = get_object_or_404(Question, pk=pk)
+    question.is_active = not question.is_active
+    question.save(update_fields=['is_active'])
+    status = "enabled" if question.is_active else "disabled"
+    messages.success(request, f"Question #{question.id} has been {status}.")
+    return redirect('manage_questions')
 
+@superuser_required
+def toggle_all_questions(request, action):
+    if action == 'enable':
+        Question.objects.update(is_active=True)
+        messages.success(request, "All questions have been enabled.")
+    elif action == 'disable':
+        Question.objects.update(is_active=False)
+        messages.success(request, "All questions have been disabled.")
+    return redirect('manage_questions')
 
 @superuser_required
 @require_http_methods(["GET", "POST"])

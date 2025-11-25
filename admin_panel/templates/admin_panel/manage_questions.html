@@ -7,106 +7,120 @@
 </head>
 <body class="bg-light">
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
-    <div class="container-fluid">
-        <!-- Brand / Logo -->
-        <a class="navbar-brand fw-bold" href="{% url 'dashboard' %}">Admin Panel</a>
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="{% url 'dashboard' %}">Admin Panel</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNavbar"
+                    aria-controls="adminNavbar" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
 
-        <!-- Toggle button for mobile -->
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNavbar"
-                aria-controls="adminNavbar" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
+            <div class="collapse navbar-collapse" id="adminNavbar">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item"><a class="nav-link" href="{% url 'dashboard' %}">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'manage_questions' %}">Manage Questionnaire</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'college_management' %}">Manage College/Officials</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'quiz_management' %}">Schedule a Quiz</a></li>
+                </ul>
 
-        <!-- Navbar links -->
-        <div class="collapse navbar-collapse" id="adminNavbar">
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'dashboard' %}">Home</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'manage_questions' %}">Manage Questionnaire</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'college_management' %}">Manage College/Officials</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'quiz_management' %}">Schedule a Quiz</a>
-                </li>
-            </ul>
-
-            <!-- Logout button on right -->
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item">
-                    <a class="btn btn-outline-light" href="{% url 'logout' %}">Logout</a>
-                </li>
-            </ul>
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="btn btn-outline-light" href="{% url 'logout' %}">Logout</a></li>
+                </ul>
+            </div>
         </div>
-    </div>
-</nav>
-<div class="container py-5">
-    <h2 class="mb-4">Manage Questions</h2>
-
-    <div class="mb-3">
-        <a href="{% url 'add_question' %}" class="btn btn-primary">Add New Question</a>
-        <a href="{% url 'upload_questions' %}" class="btn btn-info">Upload Questions File</a>
-    </div>
-
-    <table class="table table-striped table-bordered">
-        <thead class="table-dark">
-            <tr>
-                <th>#</th>
-                <th>Category</th>
-                <th>Question</th>
-                <th>Correct Option</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for q in page_obj %}
-            <tr>
-                <td>{{ forloop.counter0|add:page_obj.start_index }}</td>
-                <td>{{ q.get_category_display }}</td>
-                <td>{{ q.question_text|truncatechars:80 }}</td>
-                <td>Option {{ q.correct_option }}</td>
-                <td>
-                    <a href="{% url 'edit_question' q.id %}" class="btn btn-sm btn-warning">Edit</a>
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="5" class="text-center">No questions found.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-    <nav aria-label="Page navigation">
-        <ul class="pagination justify-content-center mt-3">
-            {% if page_obj.has_previous %}
-            <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
-            </li>
-            {% else %}
-            <li class="page-item disabled"><span class="page-link">Previous</span></li>
-            {% endif %}
-
-            {% for num in page_obj.paginator.page_range %}
-                {% if page_obj.number == num %}
-                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-                {% elif num > page_obj.number|add:-3 and num < page_obj.number|add:3 %}
-                    <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
-                {% endif %}
-            {% endfor %}
-
-            {% if page_obj.has_next %}
-            <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
-            </li>
-            {% else %}
-            <li class="page-item disabled"><span class="page-link">Next</span></li>
-            {% endif %}
-        </ul>
     </nav>
-</div>
+
+    <div class="container py-5">
+        <h2 class="mb-4">Manage Questions</h2>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="mb-3">
+            <a href="{% url 'add_question' %}" class="btn btn-primary">Add New Question</a>
+            <a href="{% url 'upload_questions' %}" class="btn btn-info">Upload Questions File</a>
+            <!-- Bulk enable/disable -->
+            <a href="{% url 'toggle_all_questions' 'enable' %}" class="btn btn-success">Enable All</a>
+            <a href="{% url 'toggle_all_questions' 'disable' %}" class="btn btn-danger">Disable All</a>
+        </div>
+
+        <table class="table table-striped table-bordered align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>#</th>
+                    <th>Category</th>
+                    <th>Question</th>
+                    <th>Correct Option</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for q in page_obj %}
+                <tr>
+                    <td>{{ forloop.counter0|add:page_obj.start_index }}</td>
+                    <td>{{ q.get_category_display }}</td>
+                    <td>{{ q.question_text|truncatechars:80 }}</td>
+                    <td>Option {{ q.correct_option }}</td>
+                    <!-- Enable/Disable per question -->
+                    <td>
+                        {% if q.is_active %}
+                            <a href="{% url 'toggle_question' q.id %}" class="btn btn-sm btn-success">Enabled</a>
+                        {% else %}
+                            <a href="{% url 'toggle_question' q.id %}" class="btn btn-sm btn-danger">Disabled</a>
+                        {% endif %}
+                    </td>
+                    <!-- Edit button disabled if inactive -->
+                    <td>
+                        {% if q.is_active %}
+                            <a href="{% url 'edit_question' q.id %}" class="btn btn-sm btn-warning">Edit</a>
+                        {% else %}
+                            <button class="btn btn-sm btn-secondary" disabled>Edit</button>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center">No questions found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center mt-3">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled"><span class="page-link">Previous</span></li>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% elif num > page_obj.number|add:-3 and num < page_obj.number|add:3 %}
+                        <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled"><span class="page-link">Next</span></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

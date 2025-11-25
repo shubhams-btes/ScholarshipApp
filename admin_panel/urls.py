@@ -21,6 +21,9 @@ urlpatterns = [
     path('questions/add/', views.add_question, name='add_question'),
     path('questions/edit/<int:pk>/', views.edit_question, name='edit_question'),
     path('questions/upload/', views.upload_questions, name='upload_questions'),
+    path('questions/toggle/<int:pk>/', views.toggle_question, name='toggle_question'),
+    path('questions/toggle_all/<str:action>/', views.toggle_all_questions, name='toggle_all_questions'),
+
 
     # Quiz management (if needed)
     path('quiz/', views.exam_schedule_management, name='quiz_management'),
