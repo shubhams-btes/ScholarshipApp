@@ -19,6 +19,9 @@ import openpyxl
 from django.http import HttpResponse
 from openpyxl.styles import Font
 from django.views.decorators.cache import never_cache
+from django.utils.dateparse import parse_date
+from django.utils import timezone
+from datetime import datetime
 
 # -----------------------------
 # Decorators
@@ -57,22 +60,33 @@ def logout(request):
 @superuser_required
 def dashboard(request):
     college_query = request.GET.get('college')
-    month_query = request.GET.get('month')
+    from_date_str = request.GET.get('from_date')
+    to_date_str = request.GET.get('to_date')
 
     schedules = ExamScheduleHistory.objects.all()
 
     if college_query:
         schedules = schedules.filter(college__name__icontains=college_query)
 
-    if month_query:
-        schedules = schedules.filter(quiz_date__month=month_query)
+    if from_date_str:
+        from_date = parse_date(from_date_str)
+        if from_date:
+            from_dt = timezone.make_aware(datetime.combine(from_date, datetime.min.time()))
+            schedules = schedules.filter(quiz_date__gte=from_dt)
+
+    if to_date_str:
+        to_date = parse_date(to_date_str)
+        if to_date:
+            to_dt = timezone.make_aware(datetime.combine(to_date, datetime.max.time()))
+            schedules = schedules.filter(quiz_date__lte=to_dt)
 
     schedules = schedules.select_related('college').order_by('-quiz_date')
 
     return render(request, 'admin_panel/dashboard.html', {
         'schedules': schedules,
         'college_query': college_query,
-        'month_query': month_query,
+        'from_date': from_date_str,
+        'to_date': to_date_str,
     })
 
 
