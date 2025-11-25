@@ -86,7 +86,12 @@
                 </td>
                 <td>
                     {% if official.id %}
-                        <a href="{% url 'edit_official' official.id %}" class="btn btn-sm btn-warning">Edit Member</a>
+                        {% if official.is_active %}
+                            <a href="{% url 'edit_official' official.id %}" class="btn btn-sm btn-warning">Edit Member</a>
+                        {% else %}
+                            <button class="btn btn-sm btn-secondary" disabled>Edit Member</button>
+                        {% endif %}    
+                    
                         <a href="{% url 'add_official' official.college.id %}" class="btn btn-sm btn-primary">Add Member</a>
                     {% else %}
                         <a href="{% url 'add_official' official.college.id %}" class="btn btn-sm btn-primary">Add Member</a>

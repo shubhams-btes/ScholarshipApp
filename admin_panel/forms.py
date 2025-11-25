@@ -59,7 +59,7 @@ class CollegeOfficialEditForm(forms.ModelForm):
         model = CollegeOfficial
         fields = ['name', 'email']
         widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
         }
 
