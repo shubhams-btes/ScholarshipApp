@@ -205,7 +205,7 @@ def exam_schedule_management(request):
                 "schedule": None
             })
 
-    return render(request, 'admin_panel/quiz_management.html', {"rows": rows})
+    return render(request, 'admin_panel/quiz_management.html', {"rows": rows,"now":timezone.localtime(timezone.now())})
 
 @superuser_required
 def add_exam_schedule(request):
@@ -225,6 +225,9 @@ def add_exam_schedule(request):
             
             # Make it timezone-aware in your local timezone (Asia/Kolkata)
             aware_dt = make_aware(naive_dt, get_default_timezone())
+            if aware_dt < timezone.now():
+                messages.error(request, "You cannot select a past date for the quiz.")
+                return redirect('quiz_management')
         except Exception as e:
             messages.error(request, f"Invalid date/time format: {e}")
             return redirect('quiz_management')

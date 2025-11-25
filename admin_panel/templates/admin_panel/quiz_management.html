@@ -102,7 +102,7 @@
                     <input type="hidden" name="college" value="{{ row.college.id }}">
                     <td colspan="4">
                         <div class="input-group">
-                            <input type="datetime-local" name="quiz_date" class="form-control" required>
+                            <input type="datetime-local" name="quiz_date" class="form-control" required min="{{ now|date:'Y-m-d\TH:i' }}">
                             <button type="submit" class="btn btn-sm btn-primary">Save</button>
                         </div>
                     </td>
