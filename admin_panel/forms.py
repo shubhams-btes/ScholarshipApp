@@ -2,6 +2,7 @@ from django import forms
 from tests.models import Question
 from .models import College, CollegeOfficial, ExamSchedule
 from django.forms import modelformset_factory
+import re
 
 class QuestionForm(forms.ModelForm):
     class Meta:
@@ -30,8 +31,18 @@ class CollegeForm(forms.ModelForm):
         model = College
         fields = ['name']
         widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'name': forms.TextInput(attrs={'class': 'form-control','pattern': '[A-Za-z ]+',
+        'title': 'Only alphabets allowed.'}),
         }
+
+    def clean_name(self):
+        name = self.cleaned_data.get("name")
+
+        # Allow only alphabets and spaces
+        if not re.match(r'^[A-Za-z ]+$', name):
+            raise forms.ValidationError("College name must contain only alphabets.")
+
+        return name
 
 class CollegeOfficialForm(forms.ModelForm):
     class Meta:
