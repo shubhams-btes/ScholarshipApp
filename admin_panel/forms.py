@@ -89,6 +89,6 @@ class ExamScheduleForm(forms.ModelForm):
         fields = ['college', 'quiz_date', 'is_active']
         widgets = {
             'college': forms.Select(attrs={'class': 'form-select'}),
-            'quiz_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'quiz_date': forms.DateInput(attrs={'class': 'form-control datetimepicker', 'placeholder': 'Select Date & Time'}),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }

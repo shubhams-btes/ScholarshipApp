@@ -221,7 +221,7 @@ def add_exam_schedule(request):
         try:
             # Convert string from datetime-local input to naive datetime
             # Example format from datetime-local: '2025-08-27T17:15'
-            naive_dt = datetime.datetime.strptime(quiz_date_str, "%Y-%m-%dT%H:%M")
+            naive_dt = datetime.strptime(quiz_date_str, "%Y-%m-%dT%H:%M")
             
             # Make it timezone-aware in your local timezone (Asia/Kolkata)
             aware_dt = make_aware(naive_dt, get_default_timezone())
