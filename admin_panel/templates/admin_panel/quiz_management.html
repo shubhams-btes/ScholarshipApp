@@ -9,7 +9,43 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 </head>
 <body class="bg-light">
-<!-- Navbar omitted for brevity -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+    <div class="container-fluid">
+        <!-- Brand / Logo -->
+        <a class="navbar-brand fw-bold" href="{% url 'dashboard' %}">Admin Panel</a>
+
+        <!-- Toggle button for mobile -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNavbar"
+                aria-controls="adminNavbar" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Navbar links -->
+        <div class="collapse navbar-collapse" id="adminNavbar">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'dashboard' %}">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'manage_questions' %}">Manage Questionnaire</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'college_management' %}">Manage College/Officials</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'quiz_management' %}">Schedule a Quiz</a>
+                </li>
+            </ul>
+
+            <!-- Logout button on right -->
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="btn btn-outline-light" href="{% url 'logout' %}">Logout</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
 
 <div class="container py-5">
     <h2 class="mb-4">Quiz Management</h2>
