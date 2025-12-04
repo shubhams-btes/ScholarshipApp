@@ -19,7 +19,7 @@ class Student(models.Model):
         blank=True
     )
 
-    mobile_number = models.CharField(max_length=15)
+    mobile_number = models.CharField(max_length=10)
     stream = models.CharField(max_length=10, choices=STREAM_CHOICES, default='BTECH')
     current_session = models.CharField(max_length=255, null=True, blank=True)
     is_active = models.BooleanField(default=False)

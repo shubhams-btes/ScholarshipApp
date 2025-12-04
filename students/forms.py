@@ -1,3 +1,4 @@
+import re
 from django import forms
 from .models import Student
 from admin_panel.models import ExamSchedule
@@ -18,9 +19,19 @@ class StudentRegistrationForm(forms.ModelForm):
         exclude = ['exam_schedule', 'current_session', 'is_active']
         fields = ['name', 'email', 'password', 'mobile_number', 'stream', 'exam_schedule']
         widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'name': forms.TextInput(attrs={'class': 'form-control','pattern': '[A-Za-z ]+',
+        'title': 'Only alphabets allowed.'}),
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
             'password': forms.PasswordInput(attrs={'class': 'form-control'}),
             'mobile_number': forms.TextInput(attrs={'class': 'form-control'}),
             'exam_schedule': forms.Select(attrs={'class': 'form-select'}),
         }
+        
+    def clean_name(self):
+        name = self.cleaned_data.get("name")
+
+        # Allow only alphabets and spaces
+        if not re.match(r'^[A-Za-z ]+$', name):
+            raise forms.ValidationError("College name must contain only alphabets.")
+
+        return name
