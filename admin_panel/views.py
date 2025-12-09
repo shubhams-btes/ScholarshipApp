@@ -153,14 +153,33 @@ def college_management(request):
 @superuser_required
 def add_college(request):
     if request.method == "POST":
-        form = CollegeForm(request.POST)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "College added successfully.")
+        college_form = CollegeForm(request.POST)
+        official_form = CollegeOfficialForm(request.POST)
+
+        if college_form.is_valid() and official_form.is_valid():
+            college = college_form.save()
+
+            # Create associated primary official
+            official = official_form.save(commit=False)
+            official.college = college
+            official.save()
+
+            messages.success(request, "College and primary official added successfully.")
             return redirect('college_management')
     else:
-        form = CollegeForm()
-    return render(request, "admin_panel/add_edit_college.html", {"form": form, "title": "Add College"})
+        college_form = CollegeForm()
+        official_form = CollegeOfficialForm()
+
+    return render(
+        request,
+        "admin_panel/add_edit_college.html",
+        {
+            "college_form": college_form,
+            "official_form": official_form,
+            "title": "Add College",
+        },
+    )
+
 
 @superuser_required
 def add_official(request, college_id=None):

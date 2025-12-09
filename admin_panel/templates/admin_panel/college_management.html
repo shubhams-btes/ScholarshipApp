@@ -83,9 +83,9 @@
                 {% if official.is_active == None %}
                     —
                 {% elif official.is_active %}
-                    <a href="{% url 'toggle_official_status' official.id %}" class="btn btn-sm btn-danger">Deactivate</a>
+                    <span class="text-success">Active</span>
                 {% else %}
-                    <a href="{% url 'toggle_official_status' official.id %}" class="btn btn-sm btn-success">Activate</a>
+                    <span  class="text-danger">Inactive</span>
                 {% endif %}
             </td>
             <td class="actions-btns">
@@ -95,6 +95,13 @@
                     <button class="btn btn-sm btn-secondary" disabled>Edit Member</button>
                 {% endif %}
                 <a href="{% url 'add_official' college.id %}" class="btn btn-sm btn-primary">Add Member</a>
+                {% if official.is_active == None %}
+                    —
+                {% elif official.is_active %}
+                    <a href="{% url 'toggle_official_status' official.id %}" class="btn btn-sm btn-danger">Deactivate</a>
+                {% else %}
+                    <a href="{% url 'toggle_official_status' official.id %}" class="btn btn-sm btn-success">Activate</a>
+                {% endif %}
             </td>
         </tr>
         {% endfor %}
