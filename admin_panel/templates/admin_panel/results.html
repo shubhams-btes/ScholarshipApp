@@ -6,43 +6,26 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
     <div class="container-fluid">
-        <!-- Brand / Logo -->
         <a class="navbar-brand fw-bold" href="{% url 'dashboard' %}">Admin Panel</a>
-
-        <!-- Toggle button for mobile -->
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNavbar"
-                aria-controls="adminNavbar" aria-expanded="false" aria-label="Toggle navigation">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNavbar">
             <span class="navbar-toggler-icon"></span>
         </button>
-
-        <!-- Navbar links -->
         <div class="collapse navbar-collapse" id="adminNavbar">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'dashboard' %}">Home</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'manage_questions' %}">Add/Remove Questions</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'college_management' %}">Manage College/Officials</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'quiz_management' %}">Schedule a Quiz</a>
-                </li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'dashboard' %}">Home</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'manage_questions' %}">Add/Remove Questions</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'college_management' %}">Manage College/Officials</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'quiz_management' %}">Schedule a Quiz</a></li>
             </ul>
-
-            <!-- Logout button on right -->
             <ul class="navbar-nav ms-auto">
-                <li class="nav-item">
-                    <a class="btn btn-outline-light" href="{% url 'logout' %}">Logout</a>
-                </li>
+                <li class="nav-item"><a class="btn btn-outline-light" href="{% url 'logout' %}">Logout</a></li>
             </ul>
         </div>
     </div>
 </nav>
+
 <div class="container py-5">
     <h2 class="mb-2">{{ college.name }} - Quiz Results</h2>
     <p class="text-muted">Exam Date: {{ schedule.quiz_date|date:"Y-m-d H:i" }}</p>
@@ -51,19 +34,19 @@
     <form method="get" class="row g-3 mb-4">
         <div class="col-md-4">
             <label class="form-label">Minimum Score</label>
-            <input type="number" name="cutoff" min="0" value="{{ request.GET.cutoff }}" class="form-control">
+            <input type="number" name="cutoff" min="0" value="{{ cutoff }}" class="form-control">
         </div>
         <div class="col-md-4">
             <label class="form-label">Number of Students to Display</label>
-            <input type="number" name="top_n" min="1" value="{{ request.GET.top_n }}" class="form-control">
+            <input type="number" name="top_n" min="1" value="{{ top_n }}" class="form-control">
         </div>
         <div class="col-md-4 d-flex align-items-end">
             <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
         </div>
     </form>
+
     <a href="{% url 'export_results' schedule.id %}" class="btn btn-success mb-2">Export to Excel</a>
 
-    <!-- Results Table -->
     <table class="table table-striped table-hover">
         <thead class="table-dark">
             <tr>
@@ -77,9 +60,9 @@
             </tr>
         </thead>
         <tbody>
-            {% for result in filtered_results %}
+            {% for result in page_obj %}
             <tr>
-                <td>{{ forloop.counter }}</td>
+                <td>{{ forloop.counter0|add:page_obj.start_index }}</td>
                 <td>{{ result.student.hall_ticket }}</td>
                 <td>{{ result.student.name }}</td>
                 <td>{{ result.student.email }}</td>
@@ -88,10 +71,37 @@
                 <td>{{ result.total_questions }}</td>
             </tr>
             {% empty %}
-            <tr><td colspan="5" class="text-center">No students match the criteria.</td></tr>
+            <tr><td colspan="7" class="text-center text-muted">No students match the criteria.</td></tr>
             {% endfor %}
         </tbody>
     </table>
+
+    <!-- Pagination Controls -->
+    {% if page_obj.has_other_pages %}
+    <nav>
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if cutoff %}&cutoff={{ cutoff }}{% endif %}{% if top_n %}&top_n={{ top_n }}{% endif %}">Previous</a></li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">Previous</span></li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% else %}
+                    <li class="page-item"><a class="page-link" href="?page={{ num }}{% if cutoff %}&cutoff={{ cutoff }}{% endif %}{% if top_n %}&top_n={{ top_n }}{% endif %}">{{ num }}</a></li>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if cutoff %}&cutoff={{ cutoff }}{% endif %}{% if top_n %}&top_n={{ top_n }}{% endif %}">Next</a></li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">Next</span></li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

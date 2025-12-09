@@ -23,7 +23,8 @@ from django.utils.dateparse import parse_date
 from django.utils import timezone
 from datetime import datetime
 import os
-from django.db.models import Q
+from django.core.paginator import Paginator
+from django.db.models import Q, Prefetch
 # -----------------------------
 # Decorators
 # -----------------------------
@@ -82,9 +83,14 @@ def dashboard(request):
             schedules = schedules.filter(quiz_date__lte=to_dt)
 
     schedules = schedules.select_related('college').order_by('-quiz_date')
+    
+     # Pagination
+    paginator = Paginator(schedules, 5)  # 10 rows per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
 
     return render(request, 'admin_panel/dashboard.html', {
-        'schedules': schedules,
+        'page_obj': page_obj,
         'college_query': college_query,
         'from_date': from_date_str,
         'to_date': to_date_str,
@@ -96,48 +102,41 @@ def dashboard(request):
 # -----------------------------
 @superuser_required
 def college_management(request):
-    q = request.GET.get("q", "").strip().lower()
+    query = request.GET.get("q", "").strip()
 
+    # Base queryset for colleges
     colleges = College.objects.all().order_by("name")
 
-    # If empty search, skip filtering entirely
-    if q:
-        matched_colleges = set()
+    # Filter using proper Q lookups
+    if query:
+        colleges = colleges.filter(
+            Q(name__icontains=query) |
+            Q(officials__name__icontains=query) |
+            Q(officials__email__icontains=query)
+        ).distinct()
 
-        # 1. Match by college name
-        for college in colleges:
-            if q in college.name.lower():
-                matched_colleges.add(college)
+    # Prefetch officials for efficiency
+    colleges = colleges.prefetch_related(
+        Prefetch("officials", queryset=CollegeOfficial.objects.order_by("name"))
+    )
 
-        # 2. Match by official name or email
-        for college in colleges:
-            for off in college.officials.all():
-                if (
-                    off.name and q in off.name.lower()
-                ) or (
-                    off.email and q in off.email.lower()
-                ):
-                    matched_colleges.add(college)
-
-        # Convert the set back to a list
-        colleges = list(matched_colleges)
-        colleges.sort(key=lambda c: c.name.lower())
-
-    # Now flatten for display
+    # Build flattened list with dummy officials when needed
     officials_list = []
+    query_lower = query.lower()
+
     for college in colleges:
-        officials = college.officials.all().order_by("name")
+        officials = list(college.officials.all())
 
-        if q:
-            officials = [o for o in officials if (
-                (o.name and q in o.name.lower()) or
-                (o.email and q in o.email.lower())
-            )]
+        # Apply official-level filtering if search applied
+        if query:
+            officials = [
+                o for o in officials
+                if (o.name and query_lower in o.name.lower()) or
+                   (o.email and query_lower in o.email.lower())
+            ]
 
-        if officials:
-            officials_list.extend(officials)
-        else:
-            # Dummy entry
+        # If no officials match → add dummy row
+        if not officials:
             class DummyOfficial:
                 def __init__(self, college):
                     self.college = college
@@ -147,9 +146,18 @@ def college_management(request):
                     self.id = None
 
             officials_list.append(DummyOfficial(college))
+        else:
+            officials_list.extend(officials)
 
-    return render(request, 'admin_panel/college_management.html', {
-        'officials': officials_list
+    # PAGINATION (10 results per page)
+    paginator = Paginator(officials_list, 10)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, "admin_panel/college_management.html", {
+        "officials": page_obj,
+        "page_obj": page_obj,
+        "query": query,
     })
 
 
@@ -224,6 +232,12 @@ def toggle_college_official(request, pk):
 def exam_schedule_management(request):
     colleges = College.objects.prefetch_related('exam_schedules').order_by('name')
     # Prepare rows: one per college per schedule, or dummy if no schedule
+    q = request.GET.get("q", "").strip().lower()
+
+    colleges = College.objects.prefetch_related('exam_schedules').order_by('name')
+
+    if q:
+        colleges = [c for c in colleges if q in c.name.lower()]
     rows = []
     for college in colleges:
         schedules = college.exam_schedules.all().order_by('quiz_date')
@@ -238,8 +252,17 @@ def exam_schedule_management(request):
                 "college": college,
                 "schedule": None
             })
+            
+    paginator = Paginator(rows, 10)   # 10 rows per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
 
-    return render(request, 'admin_panel/quiz_management.html', {"rows": rows,"now":timezone.localtime(timezone.now())})
+    return render(request, 'admin_panel/quiz_management.html', {
+        "rows": page_obj,      # use page_obj for template loop
+        "page_obj": page_obj,  # use for pagination links
+        "q": q,                # keep search value in template
+        "now": timezone.localtime(timezone.now())
+    })
 
 @superuser_required
 def add_exam_schedule(request):
@@ -440,11 +463,17 @@ def college_results(request, schedule_id):
     if top_n:
         filtered_results = filtered_results[:int(top_n)]
 
+    # Pagination: 10 results per page
+    paginator = Paginator(filtered_results, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     return render(request, "admin_panel/results.html", {
         "college": college,
         "schedule": schedule,
-        "college_results": results,
-        "filtered_results": filtered_results,
+        "page_obj": page_obj,
+        "cutoff": cutoff,
+        "top_n": top_n,
     })
 
 
@@ -457,10 +486,15 @@ def college_registrations(request, schedule_id):
     # Fetch all students registered for this quiz schedule
     registered_students = Student.objects.filter(exam_schedule=schedule).order_by('name')
 
+    # Pagination: 10 students per page
+    paginator = Paginator(registered_students, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     return render(request, "admin_panel/registrations.html", {
         "college": college,
         "schedule": schedule,
-        "registered_students": registered_students
+        "page_obj": page_obj
     })
 
 # -----------------------------
