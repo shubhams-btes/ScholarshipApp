@@ -100,43 +100,32 @@ def dashboard(request):
 # -----------------------------
 # College Management
 # -----------------------------
+
 @superuser_required
 def college_management(request):
-    query = request.GET.get("q", "").strip()
+    q = request.GET.get("q", "").strip().lower()
 
-    # Base queryset for colleges
-    colleges = College.objects.all().order_by("name")
+    colleges = College.objects.prefetch_related("officials").order_by("name")
 
-    # Filter using proper Q lookups
-    if query:
-        colleges = colleges.filter(
-            Q(name__icontains=query) |
-            Q(officials__name__icontains=query) |
-            Q(officials__email__icontains=query)
-        ).distinct()
-
-    # Prefetch officials for efficiency
-    colleges = colleges.prefetch_related(
-        Prefetch("officials", queryset=CollegeOfficial.objects.order_by("name"))
-    )
-
-    # Build flattened list with dummy officials when needed
     officials_list = []
-    query_lower = query.lower()
 
     for college in colleges:
-        officials = list(college.officials.all())
+        college_matches = q in college.name.lower() if q else True
+        matching_officials = []
 
-        # Apply official-level filtering if search applied
-        if query:
-            officials = [
-                o for o in officials
-                if (o.name and query_lower in o.name.lower()) or
-                   (o.email and query_lower in o.email.lower())
-            ]
+        # Check each official
+        for off in college.officials.all():
+            if (
+                (q in off.name.lower() if off.name else False) or
+                (q in off.email.lower() if off.email else False) or
+                college_matches
+            ):
+                matching_officials.append(off)
 
-        # If no officials match → add dummy row
-        if not officials:
+        if matching_officials:
+            officials_list.extend(matching_officials)
+        elif college_matches:
+            # Include dummy if college matches but no officials
             class DummyOfficial:
                 def __init__(self, college):
                     self.college = college
@@ -146,19 +135,18 @@ def college_management(request):
                     self.id = None
 
             officials_list.append(DummyOfficial(college))
-        else:
-            officials_list.extend(officials)
 
-    # PAGINATION (10 results per page)
-    paginator = Paginator(officials_list, 10)
+    # Pagination
+    paginator = Paginator(officials_list, 10)  # change 10 to whatever per-page
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
 
     return render(request, "admin_panel/college_management.html", {
         "officials": page_obj,
-        "page_obj": page_obj,
-        "query": query,
+        "q": q
     })
+
+
 
 
 
