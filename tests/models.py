@@ -13,8 +13,8 @@ class Question(models.Model):
     question_text = models.TextField()
     option_1 = models.CharField(max_length=255)
     option_2 = models.CharField(max_length=255)
-    option_3 = models.CharField(max_length=255)
-    option_4 = models.CharField(max_length=255)
+    option_3 = models.CharField(max_length=255, blank=True, null=True)
+    option_4 = models.CharField(max_length=255, blank=True, null=True)
     correct_option = models.IntegerField(choices=[(1, 'Option 1'), (2, 'Option 2'), (3, 'Option 3'), (4, 'Option 4')])
     is_active = models.BooleanField(default=True)  # new field
 

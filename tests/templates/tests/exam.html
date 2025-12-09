@@ -1,4 +1,4 @@
-{% load static %}
+{% load static question_extras %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,50 +6,16 @@
   <title>Scholarship Exam</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
-  html, body {
-    height: 100%;
-    margin: 0;
-    overflow: hidden; /* remove scroll bar */
-  }
-
-  .header {
-    background-color: #ffffff;
-    padding: 10px 0; /* reduced height */
-    text-align: center;
-  }
-
-  .header img {
-    height: 120px; /* increased logo size */
-    width: auto;
-  }
-
-  .timer {
-    position: fixed;
-    top: 15px;
-    right: 30px;
-    font-size: 1.1rem;
-    font-weight: 700;
-  }
-
-  .container {
-    height: calc(100% - 120px); /* take header height into account */
-    overflow-y: auto; /* allow scrolling inside container if content exceeds */
-    padding-top: 20px;
-    padding-bottom: 20px;
-  }
-
-  .question-nav .btn {
-    width: 45px;
-    height: 45px;
-    margin: 4px;
-    border-radius: 50%;
-  }
-</style>
-
+    html, body { height: 100%; margin: 0; overflow: hidden; }
+    .header { background-color: #ffffff; padding: 10px 0; text-align: center; }
+    .header img { height: 120px; width: auto; }
+    .timer { position: fixed; top: 15px; right: 30px; font-size: 1.1rem; font-weight: 700; }
+    .container { height: calc(100% - 120px); overflow-y: auto; padding-top: 20px; padding-bottom: 20px; }
+    .question-nav .btn { width: 45px; height: 45px; margin: 4px; border-radius: 50%; }
+  </style>
 </head>
 <body class="bg-light">
 
-<!-- Header -->
 <div class="header">
   <img src="{% static 'students/BTES_Logo.png' %}" alt="Logo">
 </div>
@@ -63,65 +29,50 @@
 
 <div class="container min-vh-100 d-flex justify-content-center align-items-start py-4">
   <div class="row g-4 w-100" style="max-width: 1200px;">
-    <!-- Main -->
     <div class="col-lg-8">
       <div class="card shadow-sm p-4">
         <form id="exam-form" method="post" action="{% url 'submit_quiz' %}">
           {% csrf_token %}
-          {% for q in questions %}
-            <div class="question-block" id="question-{{ forloop.counter }}" data-qnum="{{ forloop.counter }}" style="display:none;">
-              <div class="d-flex justify-content-between align-items-start mb-2">
-                <h5 class="mb-0">Q{{ forloop.counter }}. {{ q.question_text }}</h5>
-                <button type="button" class="btn btn-sm btn-outline-warning ms-3"
-                        id="bookmark-btn-{{ forloop.counter }}"
-                        onclick="toggleBookmark({{ forloop.counter }})">⭐ Bookmark</button>
-              </div>
 
-              <div class="mt-3">
-                <div class="form-check">
-                  <input class="form-check-input" type="radio" name="q{{ q.id }}" value="1" id="q{{ q.id }}a"
-                         onclick="markAttempted({{ forloop.counter }})">
-                  <label class="form-check-label" for="q{{ q.id }}a">{{ q.option_1 }}</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="radio" name="q{{ q.id }}" value="2" id="q{{ q.id }}b"
-                         onclick="markAttempted({{ forloop.counter }})">
-                  <label class="form-check-label" for="q{{ q.id }}b">{{ q.option_2 }}</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="radio" name="q{{ q.id }}" value="3" id="q{{ q.id }}c"
-                         onclick="markAttempted({{ forloop.counter }})">
-                  <label class="form-check-label" for="q{{ q.id }}c">{{ q.option_3 }}</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="radio" name="q{{ q.id }}" value="4" id="q{{ q.id }}d"
-                         onclick="markAttempted({{ forloop.counter }})">
-                  <label class="form-check-label" for="q{{ q.id }}d">{{ q.option_4 }}</label>
-                </div>
-              </div>
+          {% for q in questions %}
+          <div class="question-block" id="question-{{ forloop.counter }}" data-qnum="{{ forloop.counter }}" style="display:none;">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <h5 class="mb-0">Q{{ forloop.counter }}. {{ q.question_text }}</h5>
+              <button type="button" class="btn btn-sm btn-outline-warning ms-3"
+                      id="bookmark-btn-{{ forloop.counter }}"
+                      onclick="toggleBookmark({{ forloop.counter }})">⭐ Bookmark</button>
             </div>
+
+            <div class="mt-3">
+              {% for i in "1234" %}
+                {% with option_value=q|get_option:i %}
+                  {% if option_value %}
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="q{{ q.id }}" value="{{ i }}" id="q{{ q.id }}{{ i }}">
+                      <label class="form-check-label" for="q{{ q.id }}{{ i }}">{{ option_value }}</label>
+                    </div>
+                  {% endif %}
+                {% endwith %}
+              {% endfor %}
+            </div>
+          </div>
           {% endfor %}
 
           <div class="d-flex justify-content-between mt-4">
             <button type="button" id="prev-btn" class="btn btn-outline-secondary" onclick="prevQuestion()">« Previous</button>
             <button type="button" id="next-btn" class="btn btn-primary" onclick="nextQuestion()">Next »</button>
           </div>
-      
       </div>
     </div>
 
-    <!-- Sidebar -->
     <div class="col-lg-4">
       <div class="card shadow-sm p-3 text-center">
         <h5 class="mb-3">Question Navigator</h5>
         <div class="question-nav d-flex flex-wrap justify-content-center">
           {% for q in questions %}
-            <button type="button"
-                    class="btn btn-outline-secondary"
-                    id="nav-{{ forloop.counter }}"
-                    onclick="showQuestion({{ forloop.counter }})">
-              {{ forloop.counter }}
-            </button>
+          <button type="button" class="btn btn-outline-secondary" id="nav-{{ forloop.counter }}" onclick="showQuestion({{ forloop.counter }})">
+            {{ forloop.counter }}
+          </button>
           {% endfor %}
         </div>
         <input type="submit" class="mt-3 d-inline-block fw-semibold link-danger" value="Submit Quiz">
@@ -132,92 +83,88 @@
 </div>
 
 <script>
-  // --- Timer ---
-  let duration = {{ duration }} * 60; // seconds
+  let duration = {{ duration }} * 60;
   const timerDisplay = document.getElementById("timer");
-  function startTimer(){
+  function startTimer() {
     const interval = setInterval(() => {
       const m = Math.floor(duration/60), s = duration%60;
       timerDisplay.textContent = m + ":" + (s<10 ? "0"+s : s);
-      if(--duration < 0){ clearInterval(interval); document.getElementById("exam-form").submit(); }
+      if (--duration < 0) { clearInterval(interval); document.getElementById("exam-form").submit(); }
     }, 1000);
   }
 
-  // --- State ---
   const total = {{ questions|length }};
   let current = 1;
-  const attempted = Array(total+1).fill(false);   // 1-indexed
+  const attempted = Array(total+1).fill(false);
   const bookmarked = Array(total+1).fill(false);
 
- function updateNavButtonState(n){
-  const btn = document.getElementById("nav-"+n);
-
-  // default neutral
-  btn.className = "btn btn-outline-secondary";
-
-  if(bookmarked[n]){
-    btn.classList.add("btn-warning","text-dark"); // yellow
-  } else if(attempted[n]){
-    btn.classList.add("btn-success","text-white"); // green
-  } else if(btn.dataset.markedRed === "true") {
-    btn.className = "btn btn-danger text-white"; // red only if previously marked
+  function updateNavButtonState(n){
+    const btn = document.getElementById("nav-"+n);
+    btn.className = "btn btn-outline-secondary";
+    if (bookmarked[n]) {
+      btn.classList.add("btn-warning","text-dark");
+    } else if (attempted[n]) {
+      btn.classList.add("btn-success","text-white");
+    } else if (btn.dataset.markedRed === "true") {
+      btn.className = "btn btn-danger text-white";
+    }
   }
-}
 
   function updateBookmarkButton(n){
     const b = document.getElementById("bookmark-btn-"+n);
     if(bookmarked[n]){
       b.className = "btn btn-sm btn-warning";
       b.textContent = "⭐ Bookmarked";
-    }else{
+    } else {
       b.className = "btn btn-sm btn-outline-warning";
       b.textContent = "⭐ Bookmark";
     }
   }
 
-  // --- Navigation / actions ---
+  function markCurrentAsAttempted(n) {
+    const radios = document.querySelectorAll('#question-'+n+' input[type=radio]');
+    for (let r of radios) {
+      if (r.checked) {
+        attempted[n] = true;
+        const btn = document.getElementById("nav-"+n);
+        if(btn.dataset.markedRed) delete btn.dataset.markedRed;
+        return;
+      }
+    }
+  }
+
   function showQuestion(n){
-  if(n < 1 || n > total) return;
+    if(n < 1 || n > total) return;
 
-  // Before leaving current question, check if skipped
-  const currentBtn = document.getElementById("nav-"+current);
-  if(!attempted[current] && !bookmarked[current]){
-    currentBtn.dataset.markedRed = "true"; // mark as skipped
+    // Mark current question as attempted if any option selected
+    markCurrentAsAttempted(current);
+
+    // Mark skipped if not attempted and not bookmarked
+    if(!attempted[current] && !bookmarked[current]){
+      document.getElementById("nav-"+current).dataset.markedRed = "true";
+    }
+
+    const curEl = document.getElementById("question-"+current);
+    const nextEl = document.getElementById("question-"+n);
+    if(curEl) curEl.style.display = "none";
+    if(nextEl) nextEl.style.display = "block";
+
+    current = n;
+
+    for(let i=1;i<=total;i++) updateNavButtonState(i);
+
+    document.getElementById("prev-btn").disabled = (current===1);
+    document.getElementById("next-btn").disabled = (current===total);
   }
-
-  // Hide current, show next
-  const curEl = document.getElementById("question-"+current);
-  const nextEl = document.getElementById("question-"+n);
-  if(curEl) curEl.style.display = "none";
-  if(nextEl) nextEl.style.display = "block";
-
-  current = n;
-
-  // Update nav buttons
-  for(let i=1; i<=total; i++){
-    updateNavButtonState(i);
-  }
-
-  // enable/disable prev/next
-  document.getElementById("prev-btn").disabled = (current===1);
-  document.getElementById("next-btn").disabled = (current===total);
-}
 
   function nextQuestion(){ showQuestion(current+1); }
   function prevQuestion(){ showQuestion(current-1); }
-
-  function markAttempted(n){
-    attempted[n] = true;
-    updateNavButtonState(n);
-  }
-
   function toggleBookmark(n){
     bookmarked[n] = !bookmarked[n];
     updateBookmarkButton(n);
     updateNavButtonState(n);
   }
 
-  // --- Init ---
   window.onload = function(){
     for(let i=1;i<=total;i++) updateNavButtonState(i);
     updateBookmarkButton(1);
@@ -225,8 +172,6 @@
     startTimer();
   };
 </script>
-</body>
-</html>
 
 <script>
   document.addEventListener("visibilitychange", function() {
@@ -235,21 +180,6 @@
     }
   });
 </script>
-<!-- <script>
-  window.onload = function() {
-    // Ask for fullscreen permission
-    const allowFullscreen = confirm("Do you want to start the exam in full screen?");
-    
-    if (allowFullscreen) {
-        // Request fullscreen (must be triggered by user gesture)
-        const elem = document.documentElement;
-        if (elem.requestFullscreen) elem.requestFullscreen();
 
-        // Optionally, start the exam timer and show questions
-        startExam();
-    } else {
-        alert("You chose not to start in full screen. Exam will still start in normal view.");
-        startExam();
-    }
-};
-</script> -->
+</body>
+</html>

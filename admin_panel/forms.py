@@ -1,7 +1,7 @@
 from django import forms
 from tests.models import Question
 from .models import College, CollegeOfficial, ExamSchedule
-from django.forms import modelformset_factory
+from django.core.exceptions import ValidationError
 import re
 
 class QuestionForm(forms.ModelForm):
@@ -17,14 +17,36 @@ class QuestionForm(forms.ModelForm):
             'correct_option'
         ]
         widgets = {
-            'category': forms.Select(attrs={'class': 'form-select'}),
-            'question_text': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'option_1': forms.TextInput(attrs={'class': 'form-control'}),
-            'option_2': forms.TextInput(attrs={'class': 'form-control'}),
-            'option_3': forms.TextInput(attrs={'class': 'form-control'}),
-            'option_4': forms.TextInput(attrs={'class': 'form-control'}),
+            'category': forms.Select(attrs={'class': 'form-select', 'required': True}),
+            'question_text': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'required': True}),
+            'option_1': forms.TextInput(attrs={'class': 'form-control', 'required': True}),
+            'option_2': forms.TextInput(attrs={'class': 'form-control', 'required': True}),
+            'option_3': forms.TextInput(attrs={'class': 'form-control', 'required': False}),
+            'option_4': forms.TextInput(attrs={'class': 'form-control', 'required': False}),
             'correct_option': forms.Select(attrs={'class': 'form-select'}),
         }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        opt1 = cleaned_data.get("option_1")
+        opt2 = cleaned_data.get("option_2")
+        opt3 = cleaned_data.get("option_3")
+        opt4 = cleaned_data.get("option_4")
+        correct = cleaned_data.get("correct_option")
+
+        # Ensure first 2 options exist
+        if not opt1 or not opt2:
+            raise ValidationError("Option 1 and Option 2 are required.")
+
+        # Ensure correct option matches a filled option
+        options_map = {
+            1: opt1,
+            2: opt2,
+            3: opt3,
+            4: opt4
+        }
+        if correct not in options_map or not options_map[correct]:
+            raise ValidationError("Correct option must correspond to a filled option.")
 
 class CollegeForm(forms.ModelForm):
     class Meta:

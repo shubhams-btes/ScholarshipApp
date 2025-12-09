@@ -83,13 +83,13 @@
             {% if row.schedule and row.schedule.quiz_date %}
                 <td>{{ row.schedule.quiz_date|date:"d-m-Y H:i" }}</td>
                 <td>
-                    <a href="{% url 'toggle_registration' row.schedule.id %}" class="btn btn-sm {% if row.schedule.registration_enabled %}btn-success{% else %}btn-danger{% endif %}">
-                        {% if row.schedule.registration_enabled %}Open{% else %}Closed{% endif %}
+                    <a href="{% url 'toggle_registration' row.schedule.id %}" class="btn btn-sm {% if row.schedule.registration_enabled %}btn-danger{% else %}btn-success{% endif %}">
+                        {% if row.schedule.registration_enabled %}Close Registrations{% else %}Registrations open{% endif %}
                     </a>
                 </td>
                 <td>
-                    <a href="{% url 'toggle_quiz_status' row.schedule.id %}" class="btn btn-sm {% if row.schedule.quiz_enabled %}btn-success{% else %}btn-danger{% endif %}">
-                        {% if row.schedule.quiz_enabled %}Enabled{% else %}Disabled{% endif %}
+                    <a href="{% url 'toggle_quiz_status' row.schedule.id %}" class="btn btn-sm {% if row.schedule.quiz_enabled %}btn-danger{% else %}btn-success{% endif %}">
+                        {% if row.schedule.quiz_enabled %}Disable Quiz{% else %}Enable Quiz{% endif %}
                     </a>
                 </td>
                 <td>
