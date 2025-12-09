@@ -25,6 +25,7 @@ from datetime import datetime
 import os
 from django.core.paginator import Paginator
 from django.db.models import Q, Prefetch
+from collections import defaultdict
 # -----------------------------
 # Decorators
 # -----------------------------
@@ -104,16 +105,16 @@ def dashboard(request):
 @superuser_required
 def college_management(request):
     q = request.GET.get("q", "").strip().lower()
-
     colleges = College.objects.prefetch_related("officials").order_by("name")
 
-    officials_list = []
-
+    # Filter colleges based on search
+    filtered_colleges = []
     for college in colleges:
+        # College matches?
         college_matches = q in college.name.lower() if q else True
-        matching_officials = []
 
-        # Check each official
+        # Filter officials
+        matching_officials = []
         for off in college.officials.all():
             if (
                 (q in off.name.lower() if off.name else False) or
@@ -122,33 +123,31 @@ def college_management(request):
             ):
                 matching_officials.append(off)
 
-        if matching_officials:
-            officials_list.extend(matching_officials)
-        elif college_matches:
-            # Include dummy if college matches but no officials
-            class DummyOfficial:
-                def __init__(self, college):
-                    self.college = college
-                    self.name = None
-                    self.email = None
-                    self.is_active = None
-                    self.id = None
+        if matching_officials or college_matches:
+            # Add a dummy official if no real officials
+            if not matching_officials:
+                class DummyOfficial:
+                    def __init__(self, college):
+                        self.college = college
+                        self.name = None
+                        self.email = None
+                        self.is_active = None
+                        self.id = None
+                matching_officials.append(DummyOfficial(college))
 
-            officials_list.append(DummyOfficial(college))
+            # Attach matching officials to college for template
+            college.matching_officials = matching_officials
+            filtered_colleges.append(college)
 
-    # Pagination
-    paginator = Paginator(officials_list, 10)  # change 10 to whatever per-page
+    # Pagination on colleges
+    paginator = Paginator(filtered_colleges, 10)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
 
     return render(request, "admin_panel/college_management.html", {
-        "officials": page_obj,
+        "colleges": page_obj,  # template loops over colleges
         "q": q
     })
-
-
-
-
 
 
 @superuser_required
