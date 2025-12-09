@@ -22,6 +22,7 @@ from django.views.decorators.cache import never_cache
 from django.utils.dateparse import parse_date
 from django.utils import timezone
 from datetime import datetime
+import os
 
 # -----------------------------
 # Decorators
@@ -496,37 +497,52 @@ def upload_questions(request):
             messages.error(request, "Please select a file to upload.")
             return redirect('upload_questions')
 
-        # Only allow JSON or text files
-        if not (file.name.endswith('.json') or file.name.endswith('.txt')):
-            messages.error(request, "Only .json or .txt files are supported.")
+        # --- FIX 1: Validate allowed extensions ---
+        allowed_extensions = ['.json', '.txt']
+        file_ext = os.path.splitext(file.name)[1].lower()
+
+        if file_ext not in allowed_extensions:
+            messages.error(request, "Invalid file type. Only .json or .txt files are allowed.")
             return redirect('upload_questions')
 
         try:
-            # Read file content
+            # Read file
             data = file.read().decode('utf-8')
 
-            # Try to parse JSON directly
-            questions_data = json.loads(data)
+            # --- FIX 2: Validate JSON format ---
+            try:
+                questions_data = json.loads(data)
+            except json.JSONDecodeError:
+                messages.error(request, "Invalid JSON format. Ensure the file contains valid JSON.")
+                return redirect('upload_questions')
 
             if not isinstance(questions_data, list):
-                messages.error(request, "Invalid JSON format. Expected a list of questions.")
+                messages.error(request, "Invalid JSON format: root must be a list of questions.")
                 return redirect('upload_questions')
 
             count = 0
             for q in questions_data:
-                # Safely extract fields
+                if not isinstance(q, dict):
+                    continue
+
+                # Extract fields safely
                 category = q.get("category", "").strip()
                 question_text = q.get("question_text", "").strip()
                 option_1 = q.get("option_1", "").strip()
                 option_2 = q.get("option_2", "").strip()
                 option_3 = q.get("option_3", "").strip()
                 option_4 = q.get("option_4", "").strip()
-                correct_option = q.get("correct_option", None)
+                correct_option = q.get("correct_option")
 
-                if not question_text or correct_option not in [1, 2, 3, 4]:
-                    continue  # skip invalid question
+                # Validate question
+                if (
+                    not question_text or 
+                    correct_option not in [1, 2, 3, 4] or
+                    not all([option_1, option_2, option_3, option_4])
+                ):
+                    continue
 
-                # Save question
+                # Create question
                 Question.objects.create(
                     category=category,
                     question_text=question_text,
@@ -541,14 +557,11 @@ def upload_questions(request):
             messages.success(request, f"{count} questions uploaded successfully!")
             return redirect('manage_questions')
 
-        except json.JSONDecodeError:
-            messages.error(request, "Invalid JSON format. Please check your file.")
         except Exception as e:
-            messages.error(request, f"Error while processing file: {str(e)}")
+            messages.error(request, f"Error processing file: {str(e)}")
+            return redirect('upload_questions')
 
-        return redirect('upload_questions')
-
-    # GET method — render upload page
+    # GET request
     return render(request, 'admin_panel/upload_questions.html')
 
 
