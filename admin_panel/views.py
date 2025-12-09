@@ -23,7 +23,7 @@ from django.utils.dateparse import parse_date
 from django.utils import timezone
 from datetime import datetime
 import os
-
+from django.db.models import Q
 # -----------------------------
 # Decorators
 # -----------------------------
@@ -96,29 +96,62 @@ def dashboard(request):
 # -----------------------------
 @superuser_required
 def college_management(request):
-    # Fetch all colleges
-    colleges = College.objects.all().order_by('name')
-    
-    # Prepare a flattened list: each official gets a row, or a placeholder if none
+    q = request.GET.get("q", "").strip().lower()
+
+    colleges = College.objects.all().order_by("name")
+
+    # If empty search, skip filtering entirely
+    if q:
+        matched_colleges = set()
+
+        # 1. Match by college name
+        for college in colleges:
+            if q in college.name.lower():
+                matched_colleges.add(college)
+
+        # 2. Match by official name or email
+        for college in colleges:
+            for off in college.officials.all():
+                if (
+                    off.name and q in off.name.lower()
+                ) or (
+                    off.email and q in off.email.lower()
+                ):
+                    matched_colleges.add(college)
+
+        # Convert the set back to a list
+        colleges = list(matched_colleges)
+        colleges.sort(key=lambda c: c.name.lower())
+
+    # Now flatten for display
     officials_list = []
     for college in colleges:
-        college_officials = college.officials.all().order_by('name')
-        if college_officials.exists():
-            for official in college_officials:
-                officials_list.append(official)
+        officials = college.officials.all().order_by("name")
+
+        if q:
+            officials = [o for o in officials if (
+                (o.name and q in o.name.lower()) or
+                (o.email and q in o.email.lower())
+            )]
+
+        if officials:
+            officials_list.extend(officials)
         else:
-            # Create a dummy object with empty fields for display
+            # Dummy entry
             class DummyOfficial:
                 def __init__(self, college):
                     self.college = college
                     self.name = None
                     self.email = None
                     self.is_active = None
-                    self.id = None  # so template won't break
+                    self.id = None
 
             officials_list.append(DummyOfficial(college))
-    
-    return render(request, 'admin_panel/college_management.html', {'officials': officials_list})
+
+    return render(request, 'admin_panel/college_management.html', {
+        'officials': officials_list
+    })
+
 
 
 
