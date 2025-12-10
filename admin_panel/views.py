@@ -593,13 +593,15 @@ def upload_questions(request):
                 messages.error(request, "Invalid JSON format: root must be a list of questions.")
                 return redirect('upload_questions')
 
+            allowed_categories = ["TECHNICAL", "REASONING"]
+
             count = 0
             for q in questions_data:
                 if not isinstance(q, dict):
                     continue
 
                 # Extract fields safely
-                category = q.get("category", "").strip()
+                category = q.get("category", "").strip().upper()
                 question_text = q.get("question_text", "").strip()
                 option_1 = q.get("option_1", "").strip()
                 option_2 = q.get("option_2", "").strip()
@@ -607,7 +609,15 @@ def upload_questions(request):
                 option_4 = q.get("option_4", "").strip()
                 correct_option = q.get("correct_option")
 
-                # Validate question
+                # --- NEW: Validate category ---
+                if category not in allowed_categories:
+                    messages.error(
+                        request,
+                        f"Invalid category '{category}'. Allowed categories: TECHNICAL or REASONING only."
+                    )
+                    return redirect('upload_questions')
+
+                # Validate basic question fields
                 if (
                     not question_text or 
                     correct_option not in [1, 2, 3, 4] or
@@ -625,6 +635,7 @@ def upload_questions(request):
                     option_4=option_4,
                     correct_option=correct_option
                 )
+
                 count += 1
 
             messages.success(request, f"{count} questions uploaded successfully!")
@@ -636,6 +647,7 @@ def upload_questions(request):
 
     # GET request
     return render(request, 'admin_panel/upload_questions.html')
+
 
 
 
