@@ -59,15 +59,33 @@ def student_register(request):
             otp = generate_otp()
             request.session['email_otp'] = otp
 
-            send_mail(
-                'Verify your email',
-                f'Your OTP for registration: {otp}',
-                settings.DEFAULT_FROM_EMAIL,
-                [email],
-                fail_silently=False
-            )
+            
+            try:
+                send_mail(
+                    subject="Verify Your Email – Scholarship Test Registration",
+                    message=(
+                        "Dear Student,\n\n"
+                        "Thank you for registering for the Scholarship Test.\n\n"
+                        f"Your One-Time Password (OTP) for email verification is:\n\n"
+                        f"OTP: {otp}\n\n"
+                        "Please enter this OTP on the registration page to complete your verification.\n\n"
+                        "If you did not initiate this request, please ignore this email.\n\n"
+                        "Warm regards,\n"
+                        "BTES Examination Support\n"
+                        "Email: support@btes.org\n"
+                        "Phone: +91-XXXXXXXXXX\n"
+                        "Address: BTES, Bangalore, India"
+                    ),
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[email],
+                    fail_silently=False,
+                )
 
-            messages.info(request, f"An OTP has been sent to {email}-- {otp}. Please verify to complete registration.")
+                messages.info(request, f"An OTP has been sent to {email}. Please verify to complete registration.")
+            except Exception as e:
+                messages.error(request, f"❌ Failed to send OTP to {email}. Please try again later.")
+
+            
             return redirect('verify_email')
     else:
         form = StudentRegistrationForm()

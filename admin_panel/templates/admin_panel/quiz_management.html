@@ -84,7 +84,7 @@
                 <td>{{ row.schedule.quiz_date|date:"d-m-Y H:i" }}</td>
                 <td>
                     <a href="{% url 'toggle_registration' row.schedule.id %}" class="btn btn-sm {% if row.schedule.registration_enabled %}btn-danger{% else %}btn-success{% endif %}">
-                        {% if row.schedule.registration_enabled %}Close Registrations{% else %}Registrations open{% endif %}
+                        {% if row.schedule.registration_enabled %}Close Registrations{% else %}Open Registrations{% endif %}
                     </a>
                 </td>
                 <td>

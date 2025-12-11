@@ -153,22 +153,19 @@ def college_management(request):
 @superuser_required
 def add_college(request):
     if request.method == "POST":
-        college_form = CollegeForm(request.POST)
-        official_form = CollegeOfficialForm(request.POST)
+        college_form = CollegeForm(request.POST, prefix="college")
+        official_form = CollegeOfficialForm(request.POST, prefix="official")
 
         if college_form.is_valid() and official_form.is_valid():
             college = college_form.save()
-
-            # Create associated primary official
             official = official_form.save(commit=False)
             official.college = college
             official.save()
-
             messages.success(request, "College and primary official added successfully.")
             return redirect('college_management')
     else:
-        college_form = CollegeForm()
-        official_form = CollegeOfficialForm()
+        college_form = CollegeForm(prefix="college")
+        official_form = CollegeOfficialForm(prefix="official")
 
     return render(
         request,
@@ -370,59 +367,105 @@ def toggle_quiz_status(request, pk):
 @superuser_required
 def share_registration_link(request, schedule_id):
     schedule = get_object_or_404(ExamSchedule, pk=schedule_id)
-    # link = f"{settings.SITE_URL}/student/register/?college_id={schedule.college.id}"
-    link = f"127.0.0.1:8000/register/?college_id={schedule.college.id}"
+    link = f"{settings.SITE_URL}/register/?college_id={schedule.college.id}"
+    # link = f"127.0.0.1:8000/register/?college_id={schedule.college.id}"
     schedule.registration_link = link
     schedule.save(update_fields=['registration_link'])
     # Send to all active college officials
     emails = schedule.college.officials.filter(is_active=True).values_list('email', flat=True)
-    send_mail(
-        'College Registration Link',
-        f'Your registration link: {link}',
-        settings.DEFAULT_FROM_EMAIL,
-        list(emails),
-        fail_silently=False
-    )
-    messages.success(request, f"Registration link sent to {schedule.college.name} officials.")
+    
+    
+    try:
+        send_mail(
+            subject="Scholarship Test Registration Link",
+            message=(
+                "Dear Sir/Madam,\n\n"
+                "Greetings from BTES!\n\n"
+                "We are pleased to share the registration link for the upcoming Scholarship Test.\n"
+                "Kindly provide the following link to your students so they can complete their registration:\n\n"
+                f"Registration Link:\n{link}\n\n"
+                "Test Details:\n"
+                "• Mode: Online\n"
+                "• Registration: Mandatory for all participants\n"
+                "• Instructions: Ensure students enter correct email and college details\n\n"
+                "Should you need any assistance, please feel free to contact us.\n\n"
+                "Warm regards,\n"
+                "BTES Examination Support\n"
+                "Email: support@btes.org\n"
+                "Phone: +91-XXXXXXXXXX\n"
+                "Address: BTES, Bangalore, India"
+            ),
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=list(emails),
+            fail_silently=False,
+        )
+
+        messages.success(request, f"Registration link sent to {schedule.college.name} officials.")
+
+    except Exception as e:
+        messages.success(request, f"❌ Failed to send email: {e}")
+
+    
     return redirect('quiz_management')
 
 
 @superuser_required
 def share_quiz_link(request, schedule_id):
     schedule = get_object_or_404(ExamSchedule, pk=schedule_id)
+
     schedule_history, _ = ExamScheduleHistory.objects.get_or_create(
         college=schedule.college,
         quiz_date=schedule.quiz_date,
     )
-    # link = f"{settings.SITE_URL}/student/quiz/?college_id={schedule.college.id}"
-    link = f"127.0.0.1:8000/login/?college_id={schedule.college.id}"
+
+    link = f"{settings.SITE_URL}/login/?college_id={schedule.college.id}"
+
     schedule.quiz_link = link
     schedule.save(update_fields=['quiz_link'])
-    # Send to all registered officials (you can filter further if needed)
+
+    # Local timezone conversion
+    local_quiz_time = timezone.localtime(schedule.quiz_date)
+
     students = Student.objects.filter(exam_schedule=schedule_history)
-    emails = students.values_list('email', flat=True)
-    # if emails:
-    #     send_mail(
-    #         subject="Quiz Link",
-    #         message=(
-    #             f"Dear Student,\n\n"
-    #             f"You have been registered for the quiz scheduled on {schedule.quiz_date}.\n"
-    #             f"Here is your quiz link: {link}\n\n"
-    #             f"You will be able to access the quiz 10 minutes before the start time.\n\n"
-    #             f"Best of luck!"
-    #         ),
-    #         from_email=settings.DEFAULT_FROM_EMAIL,
-    #         recipient_list=list(emails),
-    #         fail_silently=False
-    #     )
-    send_mail(
-            'College Registration Link',
-            f'Your registration link: {link}',
-            settings.DEFAULT_FROM_EMAIL,
-            list(emails),
-            fail_silently=False
-    )
-    messages.success(request, f"Quiz link sent for {schedule.college.name}.")
+
+    if students.exists():
+        try:
+            for student in students:
+                # Send one personalized email per student
+                send_mail(
+                    subject="Your Quiz Link & Hall Ticket – Scholarship Test",
+                    message=(
+                        "Dear Student,\n\n"
+                        "Your registration for the Scholarship Test has been successfully completed.\n\n"
+                        "Please find your test schedule below:\n\n"
+                        "-----------------------------------------------------\n"
+                        f" Test Date & Time : {local_quiz_time}\n"
+                        f" Hall Ticket No   : {student.hall_ticket}\n"
+                        " Access Time      : 10 minutes before the test\n"
+                        "-----------------------------------------------------\n\n"
+                        "Your Quiz Login Link:\n"
+                        f"{link}\n\n"
+                        "Important Instructions:\n"
+                        "• Ensure a stable internet connection during the exam\n"
+                        "• Keep your Hall Ticket ready\n"
+                        "• Log in at least 10 minutes before the scheduled time\n"
+                        "• Do not refresh the page once the test begins\n\n"
+                        "We wish you the very best for your exam!\n\n"
+                        "Warm regards,\n"
+                        "BTES Examination Support\n"
+                        "Email: support@btes.org\n"
+                        "Phone: +91-XXXXXXXXXX\n"
+                        "Address: BTES, Bangalore, India"
+                    ),
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[student.email],
+                    fail_silently=False,
+                )
+
+            messages.success(request, f"Quiz link sent for {schedule.college.name}.")
+        except Exception as e:
+            messages.error(request, f"❌ Failed to send quiz emails: {e}")
+
     return redirect('quiz_management')
 
 
