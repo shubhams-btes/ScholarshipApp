@@ -9,6 +9,10 @@ from .models import Student
 from admin_panel.models import College, ExamSchedule, ExamScheduleHistory
 from tests.models import Result
 import random, string
+from django.template.loader import render_to_string
+from django.core.mail import EmailMultiAlternatives
+from django.conf import settings
+
 
 def generate_otp(length=6):
     return ''.join(random.choices(string.digits, k=length))
@@ -61,27 +65,29 @@ def student_register(request):
 
             
             try:
-                send_mail(
-                    subject="Verify Your Email – Scholarship Test Registration",
-                    message=(
-                        "Dear Student,\n\n"
-                        "Thank you for registering for the Scholarship Test.\n\n"
-                        f"Your One-Time Password (OTP) for email verification is:\n\n"
-                        f"OTP: {otp}\n\n"
-                        "Please enter this OTP on the registration page to complete your verification.\n\n"
-                        "If you did not initiate this request, please ignore this email.\n\n"
-                        "Warm regards,\n"
-                        "BTES Examination Support\n"
-                        "Email: support@btes.org\n"
-                        "Phone: +91-XXXXXXXXXX\n"
-                        "Address: BTES, Bangalore, India"
-                    ),
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[email],
-                    fail_silently=False,
+                html_message = render_to_string(
+                    "students/emails/otp_email.html",
+                    {
+                        "name": form.cleaned_data["name"],
+                        "otp": otp,
+                    }
                 )
 
-                messages.info(request, f"An OTP has been sent to {email}. Please verify to complete registration.")
+                email_message = EmailMultiAlternatives(
+                    subject="Verify Your Email – BTES Scholarship Test Registration",
+                    body=f"Your OTP is {otp}",  # Plain text fallback
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    to=[email],
+                )
+
+                email_message.attach_alternative(
+                    html_message,
+                    "text/html"
+                )
+
+                email_message.send()
+
+                messages.info(request, f"An OTP has been sent to {email}.{otp} Please verify to complete registration.")
             except Exception as e:
                 messages.error(request, f"❌ Failed to send OTP to {email}. Please try again later.")
 

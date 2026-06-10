@@ -4,78 +4,132 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Student Registration</title>
+    <title>Scholarship Application-BTES</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{% static 'tests/css/custom.css' %}" rel="stylesheet" />
 </head>
-<body class="bg-light">
+<body>
 
-<div class="container d-flex justify-content-center align-items-center vh-100">
-    <div class="card shadow w-50">
+    <div class="exam-layout">
 
-      <!-- Header -->
-       <div class="card-header  text-white text-center">
-    <!-- Logo centered -->
-    <img src="{% static 'students/BTES_Logo.png' %}" alt="Logo" class="img-fluid" style="height:100px; width:auto;">
-    </div>
+		<!-- LEFT PANEL -->
+		<aside class="left-panel">
+			<section class="sidebar-content">
+				<div class="logo">
+					<a href="#"><img src="{% static 'tests/images/logo-white.png' %}" alt="BTES" /></a>
+				</div>
 
-                <div class="card-body p-4">
-                    
+				<figure>
+					<img src="{% static 'tests/images/registration.png' %}" alt="" />
+				</figure>
+
+				<div class="copyright">
+					Copyright © BTES. All rights reserved.
+				</div>
+			</section>
+
+		</aside>
+
+		<!-- RIGHT PANEL -->
+		<main class="right-panel">
+
+			<div class="content-area">
+                <section class="question-section">
                     <form method="post">
                         {% csrf_token %}
 
-                        <!-- Name -->
-                        <div class="mb-3">
-                            <label class="form-label" for="{{ form.name.id_for_label }}">Name</label>
+                        <h2 class="section-title">
+                            Student Registration
+                        </h2>
+
+                        <div class="divider"></div>
+
+                        <div class="form-group">
+                            <label for="{{ form.name.id_for_label }}">
+                                Name
+                            </label>
+
                             {{ form.name }}
+
                             {% for error in form.name.errors %}
-                                <div class="text-danger small">{{ error }}</div>
+                                <small class="text-danger">{{ error }}</small>
                             {% endfor %}
                         </div>
 
-                        <!-- Email -->
-                        <div class="mb-3">
-                            <label class="form-label" for="{{ form.email.id_for_label }}">Email</label>
+                        <div class="form-group">
+                            <label for="{{ form.email.id_for_label }}">
+                                Email
+                            </label>
+
                             {{ form.email }}
+
                             {% for error in form.email.errors %}
-                                <div class="text-danger small">{{ error }}</div>
+                                <small class="text-danger">{{ error }}</small>
                             {% endfor %}
                         </div>
 
-                        <!-- Password -->
-                        <div class="mb-3">
-                            <label class="form-label" for="{{ form.password.id_for_label }}">Password</label>
+                        <div class="form-group">
+                            <label for="{{ form.password.id_for_label }}">
+                                Password
+                            </label>
+
                             {{ form.password }}
+
                             {% for error in form.password.errors %}
-                                <div class="text-danger small">{{ error }}</div>
+                                <small class="text-danger">{{ error }}</small>
                             {% endfor %}
                         </div>
-                        <input type="hidden" name="college" value="{{ college.id }}">
-                        <!-- Mobile Number -->
-                        <div class="mb-3">
-                            <label class="form-label" for="{{ form.mobile_number.id_for_label }}">Mobile Number</label>
+
+                        <input
+                            type="hidden"
+                            name="college"
+                            value="{{ college.id }}">
+
+                        <div class="form-group">
+                            <label for="{{ form.mobile_number.id_for_label }}">
+                                Mobile Number
+                            </label>
+
                             {{ form.mobile_number }}
+
                             {% for error in form.mobile_number.errors %}
-                                <div class="text-danger small">{{ error }}</div>
+                                <small class="text-danger">{{ error }}</small>
                             {% endfor %}
                         </div>
 
-                        <!-- Stream -->
-                        <div class="mb-3">
-                            <label class="form-label" for="{{ form.stream.id_for_label }}">Stream</label>
+                        <div class="form-group">
+                            <label for="{{ form.stream.id_for_label }}">
+                                Stream
+                            </label>
+
                             {{ form.stream }}
+
                             {% for error in form.stream.errors %}
-                                <div class="text-danger small">{{ error }}</div>
+                                <small class="text-danger">{{ error }}</small>
                             {% endfor %}
                         </div>
 
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary btn-lg">Register</button>
-                        </div>
-                    </form>
+                        <div class="divider"></div>
 
-    </div>
-</div>
+                        <div class="actions">
+
+                            <button
+                                type="submit"
+                                class="btn next">
+                                Register
+                            </button>
+
+                        </div>
+
+                    </form>
+                </section>
+			</div>
+
+		</main>
+
+	</div>
+
+    <script src="{% static 'tests/js/script.js' %}"></script>
 
 </body>
 </html>

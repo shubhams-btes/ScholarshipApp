@@ -19,12 +19,19 @@ class StudentRegistrationForm(forms.ModelForm):
         exclude = ['exam_schedule', 'current_session', 'is_active']
         fields = ['name', 'email', 'password', 'mobile_number', 'stream', 'exam_schedule']
         widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-control','pattern': '[A-Za-z ]+',
-        'title': 'Only alphabets allowed.'}),
-            'email': forms.EmailInput(attrs={'class': 'form-control'}),
-            'password': forms.PasswordInput(attrs={'class': 'form-control'}),
-            'mobile_number': forms.TextInput(attrs={'class': 'form-control'}),
-            'exam_schedule': forms.Select(attrs={'class': 'form-select'}),
+            'name': forms.TextInput(attrs={
+                'placeholder': 'Enter your name'
+            }),
+            'email': forms.EmailInput(attrs={
+                'placeholder': 'Enter your email'
+            }),
+            'password': forms.PasswordInput(attrs={
+                'placeholder': 'Enter password'
+            }),
+            'mobile_number': forms.TextInput(attrs={
+                'placeholder': 'Enter mobile number'
+            }),
+            'stream': forms.Select()
         }
         
     def clean_name(self):

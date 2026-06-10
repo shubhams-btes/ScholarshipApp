@@ -1,185 +1,245 @@
 {% load static question_extras %}
+{% load static%}
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Scholarship Exam</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    html, body { height: 100%; margin: 0; overflow: hidden; }
-    .header { background-color: #ffffff; padding: 10px 0; text-align: center; }
-    .header img { height: 120px; width: auto; }
-    .timer { position: fixed; top: 15px; right: 30px; font-size: 1.1rem; font-weight: 700; }
-    .container { height: calc(100% - 120px); overflow-y: auto; padding-top: 20px; padding-bottom: 20px; }
-    .question-nav .btn { width: 45px; height: 45px; margin: 4px; border-radius: 50%; }
-  </style>
+  <title>Scholarship Application-BTES</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="{% static 'tests/css/custom.css' %}" rel="stylesheet" />
+  
 </head>
 <body class="bg-light">
 
-<div class="header">
-  <img src="{% static 'students/BTES_Logo.png' %}" alt="Logo">
-</div>
 
-<div class="timer badge bg-primary p-2" id="timer-container">
-  Time Remaining: <span id="timer"></span>
-</div>
-<div class="timer badge bg-primary p-2" style="left: 30px; right: auto;">
-  Hall Ticket: {{ request.student.hall_ticket }}
-</div>
+<div class="exam-layout">
 
-<div class="container min-vh-100 d-flex justify-content-center align-items-start py-4">
-  <div class="row g-4 w-100" style="max-width: 1200px;">
-    <div class="col-lg-8">
-      <div class="card shadow-sm p-4">
-        <form id="exam-form" method="post" action="{% url 'submit_quiz' %}">
-          {% csrf_token %}
+        <!-- LEFT PANEL -->
+        <aside class="left-panel">
+            <section class="sidebar-content">
+                <div class="logo">
+                    <a href="#"><img src="{% static 'tests/images/logo-white.png' %}" alt="BTES" /></a>
+                </div>
 
-          {% for q in questions %}
-          <div class="question-block" id="question-{{ forloop.counter }}" data-qnum="{{ forloop.counter }}" style="display:none;">
-            <div class="d-flex justify-content-between align-items-start mb-2">
-              <h5 class="mb-0">Q{{ forloop.counter }}. {{ q.question_text }}</h5>
-              <button type="button" class="btn btn-sm btn-outline-warning ms-3"
-                      id="bookmark-btn-{{ forloop.counter }}"
-                      onclick="toggleBookmark({{ forloop.counter }})">⭐ Bookmark</button>
-            </div>
+                <div class="nav-card">
 
-            <div class="mt-3">
-              {% for i in "1234" %}
-                {% with option_value=q|get_option:i %}
-                  {% if option_value %}
-                    <div class="form-check">
-                      <input class="form-check-input" type="radio" name="q{{ q.id }}" value="{{ i }}" id="q{{ q.id }}{{ i }}">
-                      <label class="form-check-label" for="q{{ q.id }}{{ i }}">{{ option_value }}</label>
+                    <div class="hall-ticket">
+                        Hall Ticket: {{ request.student.hall_ticket }}
                     </div>
-                  {% endif %}
-                {% endwith %}
-              {% endfor %}
+
+                    <h4 class="nav-title">
+                        <span>•</span> Navigation Panel <span>•</span>
+                    </h4>
+
+                    <!-- <div class="question-grid">
+
+                        <button class="q-btn answered">1</button>
+                        <button class="q-btn answered">2</button>
+                        <button class="q-btn answered">3</button>
+                        <button class="q-btn skipped">4</button>
+                        <button class="q-btn answered">5</button>
+
+                        <button class="q-btn active">6</button>
+                        <button class="q-btn">7</button>
+                        <button class="q-btn">8</button>
+                        <button class="q-btn">9</button>
+                        <button class="q-btn">10</button>
+
+                        <button class="q-btn">11</button>
+                        <button class="q-btn">12</button>
+                        <button class="q-btn">13</button>
+                        <button class="q-btn">14</button>
+                        <button class="q-btn">15</button>
+
+                        <button class="q-btn">16</button>
+                        <button class="q-btn">17</button>
+                        <button class="q-btn">18</button>
+                        <button class="q-btn">19</button>
+                        <button class="q-btn">20</button>
+
+                    </div> -->
+
+                    <div class="question-grid">
+                      {% for q in questions %}
+                      <button
+                          type="button"
+                          class="q-btn"
+                          id="nav-{{ forloop.counter }}"
+                          onclick="showQuestion({{ forloop.counter }})">
+                          {{ forloop.counter }}
+                      </button>
+                      {% endfor %}
+                    </div>
+                    <div class="indicators">
+
+                        <h4>Indicators</h4>
+
+                        <div class="indicator-grid">
+
+                            <div class="indicator-item">
+                                <span class="dot orange"></span>
+                                Responded
+                            </div>
+
+                            <div class="indicator-item">
+                                <span class="dot blue"></span>
+                                Active
+                            </div>
+
+                            <div class="indicator-item">
+                                <span class="dot yellow"></span>
+                                Bookmarked
+                            </div>
+
+                            <div class="indicator-item">
+                                <span class="dot white"></span>
+                                Unattempted
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="copyright">
+                    Copyright © BTES. All rights reserved.
+                </div>
+            </section>
+
+        </aside>
+
+        <!-- RIGHT PANEL -->
+        <main class="right-panel">
+
+            <div class="content-area">
+                <div class="timer-card">
+
+                    <div class="timer-title">
+                        Time Remaining
+                    </div>
+
+                    <div class="timer-row">
+                      <div class="timer-icon">⏱</div>
+
+                      <div class="timer-countdown">
+                          <div class="timer" id="timer"></div>
+
+                          <div class="timer-labels">
+                              <span>Min</span>
+                              <span>Sec</span>
+                          </div>
+                      </div>
+                  </div>
+
+
+                </div>
+
+                <section class="question-section">
+
+                  <div class="progress-text" id="progress-text">
+                      0 of {{ questions|length }} completed
+                  </div>
+
+                  <div class="progress-bar">
+                      <div class="progress-fill" id="progress-fill"></div>
+                  </div>
+
+                  <form id="exam-form" method="post" action="{% url 'submit_quiz' %}">
+                      {% csrf_token %}
+
+                      {% for q in questions %}
+                      <div class="question-block"
+                          id="question-{{ forloop.counter }}"
+                          data-qnum="{{ forloop.counter }}"
+                          style="display:none;">
+
+                          <h2 class="section-title">
+                              Question {{ forloop.counter }}
+                          </h2>
+
+                          <h3 class="question-text">
+                              {{ q.question_text }}
+                          </h3>
+
+                           <button
+                              type="button"
+                              class="bookmark-btn"
+                              id="bookmark-btn-{{ forloop.counter }}"
+                              onclick="toggleBookmark({{ forloop.counter }})">
+                              ☆ Bookmark
+                          </button>
+
+                          {% for i in "1234" %}
+                              {% with option_value=q|get_option:i %}
+                                  {% if option_value %}
+                                      <label class="option">
+                                          <input
+                                              type="radio"
+                                              name="q{{ q.id }}"
+                                              value="{{ i }}"
+                                              id="q{{ q.id }}{{ i }}">
+
+                                          <span class="radio"></span>
+
+                                          <span class="option-text">
+                                              {{ option_value }}
+                                          </span>
+                                      </label>
+                                  {% endif %}
+                              {% endwith %}
+                          {% endfor %}
+
+                      </div>
+                      {% endfor %}
+
+                      <div class="divider"></div>
+
+                      <div class="actions">
+
+                          <button
+                              type="button"
+                              id="prev-btn"
+                              class="btn prev"
+                              onclick="prevQuestion()">
+                              Prev
+                          </button>
+
+                          <button
+                              type="button"
+                              id="next-btn"
+                              class="btn next"
+                              onclick="nextQuestion()">
+                              Next →
+                          </button>
+
+                          <button
+                              type="submit"
+                              id="submit-btn"
+                              class="btn next"
+                              style="display:none;">
+                              Submit Test
+                          </button>
+
+                      </div>
+
+                  </form>
+
+                </section>
             </div>
-          </div>
-          {% endfor %}
 
-          <div class="d-flex justify-content-between mt-4">
-            <button type="button" id="prev-btn" class="btn btn-outline-secondary" onclick="prevQuestion()">« Previous</button>
-            <button type="button" id="next-btn" class="btn btn-primary" onclick="nextQuestion()">Next »</button>
-          </div>
-      </div>
+        </main>
+
     </div>
 
-    <div class="col-lg-4">
-      <div class="card shadow-sm p-3 text-center">
-        <h5 class="mb-3">Question Navigator</h5>
-        <div class="question-nav d-flex flex-wrap justify-content-center">
-          {% for q in questions %}
-          <button type="button" class="btn btn-outline-secondary" id="nav-{{ forloop.counter }}" onclick="showQuestion({{ forloop.counter }})">
-            {{ forloop.counter }}
-          </button>
-          {% endfor %}
-        </div>
-        <input type="submit" class="mt-3 d-inline-block fw-semibold link-danger" value="Submit Quiz">
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
+    <script>
+      window.examConfig = {
+          totalQuestions: {{ questions|length }},
+          examEndTime: "{{ exam_end_time|escapejs }}"
+      };
+    </script>
 
-<script>
-  let duration = {{ duration }} * 60;
-  const timerDisplay = document.getElementById("timer");
-  function startTimer() {
-    const interval = setInterval(() => {
-      const m = Math.floor(duration/60), s = duration%60;
-      timerDisplay.textContent = m + ":" + (s<10 ? "0"+s : s);
-      if (--duration < 0) { clearInterval(interval); document.getElementById("exam-form").submit(); }
-    }, 1000);
-  }
-
-  const total = {{ questions|length }};
-  let current = 1;
-  const attempted = Array(total+1).fill(false);
-  const bookmarked = Array(total+1).fill(false);
-
-  function updateNavButtonState(n){
-    const btn = document.getElementById("nav-"+n);
-    btn.className = "btn btn-outline-secondary";
-    if (bookmarked[n]) {
-      btn.classList.add("btn-warning","text-dark");
-    } else if (attempted[n]) {
-      btn.classList.add("btn-success","text-white");
-    } else if (btn.dataset.markedRed === "true") {
-      btn.className = "btn btn-danger text-white";
-    }
-  }
-
-  function updateBookmarkButton(n){
-    const b = document.getElementById("bookmark-btn-"+n);
-    if(bookmarked[n]){
-      b.className = "btn btn-sm btn-warning";
-      b.textContent = "⭐ Bookmarked";
-    } else {
-      b.className = "btn btn-sm btn-outline-warning";
-      b.textContent = "⭐ Bookmark";
-    }
-  }
-
-  function markCurrentAsAttempted(n) {
-    const radios = document.querySelectorAll('#question-'+n+' input[type=radio]');
-    for (let r of radios) {
-      if (r.checked) {
-        attempted[n] = true;
-        const btn = document.getElementById("nav-"+n);
-        if(btn.dataset.markedRed) delete btn.dataset.markedRed;
-        return;
-      }
-    }
-  }
-
-  function showQuestion(n){
-    if(n < 1 || n > total) return;
-
-    // Mark current question as attempted if any option selected
-    markCurrentAsAttempted(current);
-
-    // Mark skipped if not attempted and not bookmarked
-    if(!attempted[current] && !bookmarked[current]){
-      document.getElementById("nav-"+current).dataset.markedRed = "true";
-    }
-
-    const curEl = document.getElementById("question-"+current);
-    const nextEl = document.getElementById("question-"+n);
-    if(curEl) curEl.style.display = "none";
-    if(nextEl) nextEl.style.display = "block";
-
-    current = n;
-
-    for(let i=1;i<=total;i++) updateNavButtonState(i);
-
-    document.getElementById("prev-btn").disabled = (current===1);
-    document.getElementById("next-btn").disabled = (current===total);
-  }
-
-  function nextQuestion(){ showQuestion(current+1); }
-  function prevQuestion(){ showQuestion(current-1); }
-  function toggleBookmark(n){
-    bookmarked[n] = !bookmarked[n];
-    updateBookmarkButton(n);
-    updateNavButtonState(n);
-  }
-
-  window.onload = function(){
-    for(let i=1;i<=total;i++) updateNavButtonState(i);
-    updateBookmarkButton(1);
-    showQuestion(1);
-    startTimer();
-  };
-</script>
-
-<script>
-  document.addEventListener("visibilitychange", function() {
-    if (document.hidden) {
-      document.getElementById("exam-form").submit();
-    }
-  });
-</script>
+    <script src="{% static 'tests/js/script.js' %}"></script>
 
 </body>
 </html>

@@ -26,6 +26,8 @@ import os
 from django.core.paginator import Paginator
 from django.db.models import Q, Prefetch
 from collections import defaultdict
+from django.template.loader import render_to_string
+from django.core.mail import EmailMultiAlternatives
 # -----------------------------
 # Decorators
 # -----------------------------
@@ -366,107 +368,177 @@ def toggle_quiz_status(request, pk):
 # -----------------------------
 @superuser_required
 def share_registration_link(request, schedule_id):
-    schedule = get_object_or_404(ExamSchedule, pk=schedule_id)
-    link = f"{settings.SITE_URL}/register/?college_id={schedule.college.id}"
-    # link = f"127.0.0.1:8000/register/?college_id={schedule.college.id}"
+
+    schedule = get_object_or_404(
+        ExamSchedule,
+        pk=schedule_id
+    )
+
+    link = (
+        f"{settings.SITE_URL}/register/"
+        f"?college_id={schedule.college.id}"
+    )
+
     schedule.registration_link = link
-    schedule.save(update_fields=['registration_link'])
-    # Send to all active college officials
-    emails = schedule.college.officials.filter(is_active=True).values_list('email', flat=True)
-    
-    
+    schedule.save(update_fields=["registration_link"])
+
+    emails = list(
+        schedule.college.officials
+        .filter(is_active=True)
+        .values_list("email", flat=True)
+    )
+
+    if not emails:
+        messages.error(
+            request,
+            "No active college officials found."
+        )
+        return redirect("quiz_management")
+
+    context = {
+        "college_name": schedule.college.name,
+        "registration_link": link,
+        "quiz_date": schedule.quiz_date.strftime(
+            "%d-%m-%Y %I:%M %p"
+        ),
+    }
+
+    html_content = render_to_string(
+        "emails/register_email.html",
+        context
+    )
+
+    email = EmailMultiAlternatives(
+        subject=(
+            f"BTES Scholarship Test Registration - "
+            f"{schedule.college.name}"
+        ),
+        body="Please view this email in HTML format.",
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=emails,
+    )
+
+    email.attach_alternative(
+        html_content,
+        "text/html"
+    )
+
     try:
-        send_mail(
-            subject="Scholarship Test Registration Link",
-            message=(
-                "Dear Sir/Madam,\n\n"
-                "Greetings from BTES!\n\n"
-                "We are pleased to share the registration link for the upcoming Scholarship Test.\n"
-                "Kindly provide the following link to your students so they can complete their registration:\n\n"
-                f"Registration Link:\n{link}\n\n"
-                "Test Details:\n"
-                "• Mode: Online\n"
-                "• Registration: Mandatory for all participants\n"
-                "• Instructions: Ensure students enter correct email and college details\n\n"
-                "Should you need any assistance, please feel free to contact us.\n\n"
-                "Warm regards,\n"
-                "BTES Examination Support\n"
-                "Email: support@btes.org\n"
-                "Phone: +91-XXXXXXXXXX\n"
-                "Address: BTES, Bangalore, India"
-            ),
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=list(emails),
-            fail_silently=False,
+        email.send()
+
+        messages.success(
+            request,
+            f"Registration link sent to {schedule.college.name} officials."
         )
 
-        messages.success(request, f"Registration link sent to {schedule.college.name} officials.")
-
     except Exception as e:
-        messages.success(request, f"❌ Failed to send email: {e}")
+        messages.error(
+            request,
+            f"Failed to send email: {e}"
+        )
 
-    
-    return redirect('quiz_management')
+    return redirect("quiz_management")
+
 
 
 @superuser_required
 def share_quiz_link(request, schedule_id):
-    schedule = get_object_or_404(ExamSchedule, pk=schedule_id)
 
-    schedule_history, _ = ExamScheduleHistory.objects.get_or_create(
-        college=schedule.college,
-        quiz_date=schedule.quiz_date,
+    schedule = get_object_or_404(
+        ExamSchedule,
+        pk=schedule_id
     )
 
-    link = f"{settings.SITE_URL}/login/?college_id={schedule.college.id}"
+    schedule_history, _ = (
+        ExamScheduleHistory.objects.get_or_create(
+            college=schedule.college,
+            quiz_date=schedule.quiz_date,
+        )
+    )
+
+    link = (
+        f"{settings.SITE_URL}/login/"
+        f"?college_id={schedule.college.id}"
+    )
 
     schedule.quiz_link = link
-    schedule.save(update_fields=['quiz_link'])
+    schedule.save(update_fields=["quiz_link"])
 
-    # Local timezone conversion
-    local_quiz_time = timezone.localtime(schedule.quiz_date)
+    local_quiz_time = timezone.localtime(
+        schedule.quiz_date
+    )
 
-    students = Student.objects.filter(exam_schedule=schedule_history)
+    students = Student.objects.filter(
+        exam_schedule=schedule_history
+    )
 
-    if students.exists():
-        try:
-            for student in students:
-                # Send one personalized email per student
-                send_mail(
-                    subject="Your Quiz Link & Hall Ticket – Scholarship Test",
-                    message=(
-                        "Dear Student,\n\n"
-                        "Your registration for the Scholarship Test has been successfully completed.\n\n"
-                        "Please find your test schedule below:\n\n"
-                        "-----------------------------------------------------\n"
-                        f" Test Date & Time : {local_quiz_time}\n"
-                        f" Hall Ticket No   : {student.hall_ticket}\n"
-                        " Access Time      : 10 minutes before the test\n"
-                        "-----------------------------------------------------\n\n"
-                        "Your Quiz Login Link:\n"
-                        f"{link}\n\n"
-                        "Important Instructions:\n"
-                        "• Ensure a stable internet connection during the exam\n"
-                        "• Keep your Hall Ticket ready\n"
-                        "• Log in at least 10 minutes before the scheduled time\n"
-                        "• Do not refresh the page once the test begins\n\n"
-                        "We wish you the very best for your exam!\n\n"
-                        "Warm regards,\n"
-                        "BTES Examination Support\n"
-                        "Email: support@btes.org\n"
-                        "Phone: +91-XXXXXXXXXX\n"
-                        "Address: BTES, Bangalore, India"
-                    ),
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[student.email],
-                    fail_silently=False,
-                )
+    if not students.exists():
 
-            messages.success(request, f"Quiz link sent for {schedule.college.name}.")
-        except Exception as e:
-            messages.error(request, f"❌ Failed to send quiz emails: {e}")
+        messages.error(
+            request,
+            "No registered students found."
+        )
 
-    return redirect('quiz_management')
+        return redirect("quiz_management")
+
+    success_count = 0
+
+    try:
+
+        for student in students:
+
+            context = {
+                "student_name": student.name,
+                "college_name": schedule.college.name,
+                "hall_ticket": student.hall_ticket,
+                "quiz_link": link,
+                "quiz_date": local_quiz_time.strftime(
+                    "%d-%m-%Y %I:%M %p"
+                ),
+                "access_time": "10 minutes before the test",
+            }
+
+            html_content = render_to_string(
+                "emails/quiz_link.html",
+                context
+            )
+
+            email = EmailMultiAlternatives(
+                subject=(
+                    "Your Quiz Link & Hall Ticket "
+                    "- Scholarship Test"
+                ),
+                body=(
+                    "Please view this email "
+                    "in HTML format."
+                ),
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[student.email],
+            )
+
+            email.attach_alternative(
+                html_content,
+                "text/html"
+            )
+
+            email.send()
+
+            success_count += 1
+
+        messages.success(
+            request,
+            f"Quiz links sent successfully "
+            f"to {success_count} students."
+        )
+
+    except Exception as e:
+
+        messages.error(
+            request,
+            f"Failed to send quiz emails: {e}"
+        )
+
+    return redirect("quiz_management")
 
 
 @superuser_required

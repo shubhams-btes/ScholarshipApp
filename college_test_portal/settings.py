@@ -32,12 +32,7 @@ ALLOWED_HOSTS = ['182.76.176.205', 'localhost','127.0.0.1']
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 EMAIL_FILE_PATH = r"C:\temp\sent_emails"  # Path where email files will be saved
-# EMAIL_HOST = 'smtp.gmail.com'
-# EMAIL_PORT = 587
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = 'shubhamse90@gmail.com'        # Replace with your Gmail
-# EMAIL_HOST_PASSWORD = 'your-app-password'      # See note below
-# DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
 
 # Application definition
 
