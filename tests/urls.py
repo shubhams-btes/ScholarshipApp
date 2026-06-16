@@ -5,4 +5,5 @@ urlpatterns = [
     path('start_quiz/', views.quiz_view, name='start_quiz'),
     path("submit/", views.submit_quiz, name="submit_quiz"),
     path("submitted/", views.quiz_submitted, name="quiz_submitted"),
+    path("start-exam/", views.start_exam, name="start_exam")
 ]

@@ -1,9 +1,13 @@
 // =============================
 // CONFIG
 // =============================
+if (!window.examConfig) {
+    console.warn("examConfig not found");
+} else {
 
 const total = window.examConfig.totalQuestions;
-
+let autoSubmitting = false;
+let finalSubmission = false;
 const examEndTime =
     new Date(window.examConfig.examEndTime).getTime();
 
@@ -15,9 +19,8 @@ const attempted =
 const bookmarked =
     Array(total + 1).fill(false);
 
-// =============================
-// TIMER
-// =============================
+
+
 
 function updateTimer() {
 
@@ -30,7 +33,7 @@ function updateTimer() {
 
         document.getElementById("timer").textContent =
             "00:00";
-
+        autoSubmitting = true;
         document.getElementById("exam-form").submit();
 
         return false;
@@ -309,6 +312,155 @@ window.addEventListener(
 
         showQuestion(1);
 
-        startTimer();
+        if(window.examConfig.examEndTime){
+            startTimer();
+        }
+
     }
 );
+function openSubmitConfirmation() {
+
+    const attemptedCount =
+        attempted.filter(Boolean).length;
+
+    const remainingCount =
+        total - attemptedCount;
+
+    const confirmText =
+        document.querySelector(".confirm-text");
+
+    if (confirmText) {
+
+        if (remainingCount > 0) {
+
+            confirmText.innerHTML = `
+                You still have
+                <strong>${remainingCount}</strong>
+                unanswered question(s).
+
+                <br><br>
+
+                Are you sure you want to submit?
+            `;
+
+        } else {
+
+            confirmText.innerHTML = `
+                You have answered all questions.
+
+                <br><br>
+
+                Are you sure you want to submit?
+            `;
+        }
+    }
+
+    const attemptedEl =
+        document.getElementById("attemptedCount");
+
+    if (attemptedEl) {
+        attemptedEl.textContent =
+            attemptedCount;
+    }
+
+    const remainingEl =
+        document.getElementById("remainingCount");
+
+    if (remainingEl) {
+        remainingEl.textContent =
+            remainingCount;
+    }
+
+    const modal =
+        document.getElementById(
+            "submitConfirmModal"
+        );
+
+    if (modal) {
+        modal.style.display = "flex";
+    }
+}
+
+// =============================
+// EVENT BINDINGS
+// =============================
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        const form =
+            document.getElementById(
+                "exam-form"
+            );
+
+        // Intercept form submit
+        if (form) {
+
+            form.addEventListener(
+                "submit",
+                function (e) {
+                    console.log("FORM INTERCEPTED");
+                    if (
+                        finalSubmission ||
+                        autoSubmitting
+                    ) {
+                        return;
+                    }
+
+                    e.preventDefault();
+
+                    openSubmitConfirmation();
+                }
+            );
+        }
+
+        // Review Answers Button
+        const reviewBtn =
+            document.getElementById(
+                "reviewAnswersBtn"
+            );
+
+        if (reviewBtn) {
+
+            reviewBtn.addEventListener(
+                "click",
+                function () {
+
+                    const modal =
+                        document.getElementById(
+                            "submitConfirmModal"
+                        );
+
+                    if (modal) {
+                        modal.style.display =
+                            "none";
+                    }
+                }
+            );
+        }
+
+        // Final Submit Button
+        const finalSubmitBtn =
+            document.getElementById(
+                "finalSubmitBtn"
+            );
+
+        if (finalSubmitBtn) {
+
+            finalSubmitBtn.addEventListener(
+                "click",
+                function () {
+
+                    finalSubmission = true;
+
+                    document.getElementById(
+                        "exam-form"
+                    ).submit();
+                }
+            );
+        }
+
+    }
+);
+}

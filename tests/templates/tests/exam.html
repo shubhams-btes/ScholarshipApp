@@ -7,7 +7,8 @@
   <title>Scholarship Application-BTES</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link href="{% static 'tests/css/custom.css' %}" rel="stylesheet" />
-  
+<link rel="stylesheet" href="{% static 'students/css/exam-guidelines.css' %}" />
+
 </head>
 <body class="bg-light">
 
@@ -231,14 +232,73 @@
         </main>
 
     </div>
+    <div id="submitConfirmModal" class="guidelines-modal" style="display:none;">
 
+    <div class="guidelines-card">
+
+       
+
+        <h2>Confirm Submission</h2>
+
+        <p class="confirm-text">
+    Please review your submission carefully.
+
+    <br><br>
+
+    Once the Scholarship Test is submitted, you will not be able to modify or review your answers.
+</p>
+
+        <div class="submission-summary">
+
+            <div>
+                Attempted:
+                <strong id="attemptedCount">0</strong>
+            </div>
+
+            <div>
+                Remaining:
+                <strong id="remainingCount">0</strong>
+            </div>
+
+        </div>
+
+        <div class="confirm-actions">
+
+            <button
+                type="button"
+                id="reviewAnswersBtn"
+                class="secondary-btn">
+
+                Review Answers
+
+            </button>
+
+            <button
+                type="button"
+                id="finalSubmitBtn"
+                class="primary-btn">
+
+                Submit Test
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+    {% if not guidelines_accepted %}
+    {% include 'students/includes/exam_guidelines_modal.html' %}
+    {% endif %}
     <script>
       window.examConfig = {
           totalQuestions: {{ questions|length }},
-          examEndTime: "{{ exam_end_time|escapejs }}"
+          examEndTime: "{{ exam_end_time|escapejs }}",
+          startExamUrl: "{% url 'start_exam' %}"
       };
     </script>
-
+    <script src="{% static 'students/js/exam-guidelines.js' %}"></script>
     <script src="{% static 'tests/js/script.js' %}"></script>
 
 </body>

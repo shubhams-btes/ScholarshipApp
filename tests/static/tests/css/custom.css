@@ -12,7 +12,7 @@ body {
 }
 
 a {
-	color: #f28021;
+	color: #f58220;
 	text-decoration: none;
 }
 
@@ -102,7 +102,7 @@ NAV CARD
 	top: -26px;
 	left: 50%;
 	transform: translateX(-50%);
-	background: #ff6f00;
+	background: #f58220;
 	color: #fff;
 	padding: 16px;
 	border-radius: 8px;
@@ -121,7 +121,7 @@ NAV CARD
 }
 
 .nav-title span {
-	color: #ff6f00;
+	color: #f58220;
 }
 
 /* =========================
@@ -177,12 +177,12 @@ QUESTION GRID
 }
 
 .q-btn.answered {
-	border-color: #ff7a00;
-	color: #ff7a00;
+	border-color: #f58220;
+	color: #f58220;
 }
 
 .q-btn.answered::before {
-	border-color: #ff7a00;
+	border-color: #f58220;
 }
 
 .q-btn.active {
@@ -237,7 +237,7 @@ INDICATORS
 }
 
 .dot.orange {
-	background: #ff7a00;
+	background: #f58220;
 }
 
 .dot.blue {
@@ -286,7 +286,7 @@ RIGHT PANEL
 }
 
 .timer-title {
-	color: #ff6f00;
+	color: #f58220;
 	font-size: 16px;
 	margin-bottom: 10px;
 }
@@ -299,7 +299,7 @@ RIGHT PANEL
 }
 
 .timer-icon {
-	color: #ff6f00;
+	color: #f58220;
 	font-size: 32px;
 	font-weight: 700;
 	line-height: 1.2;
@@ -566,7 +566,7 @@ Thank You card
 }
 
 .card-thank-you h2 {
-	color: #f28021;
+	color: #f58220;
 	font-weight: 600;
 }
 
@@ -617,7 +617,7 @@ Thank You card
 .bookmark-btn{
     border:none;
     background:#fff8e1;
-    color:#ff9800;
+    color:#647412;
     padding:8px 14px;
     border-radius:6px;
     font-size:14px;
@@ -628,22 +628,22 @@ Thank You card
 }
 
 .bookmark-btn:hover{
-    background:#ffe0b2;
+    background:#647412;
 }
 
 .bookmark-btn.active{
-    background:#ffc107;
+    background:#647412;
     color:#000;
 }
 
 .q-btn.bookmarked{
-    border-color:#ffc107;
-    background:#ffc107;
+    border-color:#647412;
+    background:#647412;
     color:#000;
 }
 
 .q-btn.bookmarked::before{
-    background:#ffc107;
+    background:#647412;
     border:none;
 }
 

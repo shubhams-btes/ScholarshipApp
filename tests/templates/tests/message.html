@@ -14,36 +14,21 @@
 
     <!-- LEFT PANEL -->
     <aside class="left-panel">
-        <section class="sidebar-content">
+			<section class="sidebar-content">
+				<div class="logo">
+					<a href="#"><img src="{% static 'tests/images/logo-white.png' %}" alt="BTES" /></a>
+				</div>
 
-            <div class="logo">
-                <a href="#">
-                    <img src="{% static 'tests/images/logo-white.png' %}" alt="BTES">
-                </a>
-            </div>
+				<figure>
+					<img src="{% static 'tests/images/successfully-submitted-the-quiz.png' %}" alt="" />
+				</figure>
 
-            <div class="text-center text-white mt-5 px-4">
+				<div class="copyright">
+					Copyright © BTES. All rights reserved.
+				</div>
+			</section>
 
-                {% if countdown_seconds %}
-                    <h3>Quiz Schedule</h3>
-                    <p>
-                        Please wait until the examination window opens.
-                    </p>
-                {% else %}
-                    <h3>Scholarship Examination</h3>
-                    <p>
-                        Status information regarding your examination.
-                    </p>
-                {% endif %}
-
-            </div>
-
-            <div class="copyright">
-                Copyright © BTES. All rights reserved.
-            </div>
-
-        </section>
-    </aside>
+		</aside>
 
     <!-- RIGHT PANEL -->
     <main class="right-panel">

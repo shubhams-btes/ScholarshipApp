@@ -15,6 +15,7 @@ from django.contrib.auth import logout as auth_logout
 from django.views.decorators.cache import cache_control
 import pytz
 from datetime import timedelta
+from django.http import JsonResponse
 
 
 
@@ -36,7 +37,10 @@ def quiz_view(request):
     student = request.student
     now = timezone.now()
     ist = pytz.timezone('Asia/Kolkata')
-
+    guidelines_accepted = request.session.get(
+        "guidelines_accepted",
+        False
+    )
     try:
         schedule = ExamSchedule.objects.get(
             college=student.exam_schedule.college
@@ -93,13 +97,17 @@ def quiz_view(request):
     # -----------------------------
     # Create timer only once
     # -----------------------------
-    if 'exam_end_time' not in request.session:
-        request.session['exam_end_time'] = (
-            timezone.now() +
-            timedelta(minutes=EXAM_DURATION_MINUTES)
-        ).isoformat()
+    # if 'exam_end_time' not in request.session:
+    #     request.session['exam_end_time'] = (
+    #         timezone.now() +
+    #         timedelta(minutes=EXAM_DURATION_MINUTES)
+    #     ).isoformat()
 
-    exam_end_time = request.session['exam_end_time']
+    # exam_end_time = request.session['exam_end_time']
+    exam_end_time = request.session.get(
+        'exam_end_time',
+        ''
+    )
 
     # -----------------------------
     # Create question set only once
@@ -176,9 +184,26 @@ def quiz_view(request):
             "questions": selected_questions,
             "duration": EXAM_DURATION_MINUTES,
             "exam_end_time": exam_end_time,
-            "schedule": schedule
+            "schedule": schedule,
+            "guidelines_accepted": guidelines_accepted
         }
     )
+
+@student_login_required
+def start_exam(request):
+
+    EXAM_DURATION_MINUTES = 20
+
+    request.session['exam_end_time'] = (
+        timezone.now() +
+        timedelta(minutes=EXAM_DURATION_MINUTES)
+    ).isoformat()
+
+    request.session['guidelines_accepted'] = True
+
+    return JsonResponse({
+        "success": True
+    })
 
 @student_login_required
 @cache_control(no_cache=True, must_revalidate=True, no_store=True)
@@ -235,6 +260,7 @@ def submit_quiz(request):
 
         auth_logout(request)   # from django.contrib.auth import logout as auth_logout
         request.session.pop('exam_question_ids', None)
+        request.session.pop('guidelines_accepted', None)
         request.session.pop('exam_end_time', None)
         request.session.flush()  # wipe the session completely
 
