@@ -62,14 +62,21 @@
     border-radius:4px;
 }
 
+.guidelines-list{
+    list-style:none;
+    margin:0;
+    padding:0;
+}
+
 .guidelines-list li{
     position:relative;
     padding-left:28px;
     margin-bottom:14px;
-
+   
     font-size:15px;
     font-weight:500;
     line-height:1.7;
+    list-style: none;
 }
 
 .guidelines-list li{
@@ -77,6 +84,7 @@
     padding-left:28px;
     margin-bottom:12px;
     line-height:1.7;
+     
 }
 
 .guidelines-list li:before{

@@ -617,7 +617,7 @@ Thank You card
 .bookmark-btn{
     border:none;
     background:#fff8e1;
-    color:#f58220;
+    color:#647412;
     padding:8px 14px;
     border-radius:6px;
     font-size:14px;
@@ -628,7 +628,7 @@ Thank You card
 }
 
 .bookmark-btn:hover{
-    background:#082B65;
+    background:#f58220;
 }
 
 .bookmark-btn.active{
