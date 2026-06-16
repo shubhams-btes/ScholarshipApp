@@ -245,7 +245,7 @@ INDICATORS
 }
 
 .dot.yellow {
-	background: #ffc107;
+	background: #647412;
 }
 
 .dot.white {
@@ -616,7 +616,7 @@ Thank You card
 
 .bookmark-btn{
     border:none;
-    background:#fff8e1;
+    background:#f58220;
     color:#647412;
     padding:8px 14px;
     border-radius:6px;
@@ -628,7 +628,8 @@ Thank You card
 }
 
 .bookmark-btn:hover{
-    background:#f58220;
+    background:#647412;
+	color:#f58220
 }
 
 .bookmark-btn.active{
@@ -637,13 +638,13 @@ Thank You card
 }
 
 .q-btn.bookmarked{
-    border-color:#f58220;
-    background:#f58220;
+    border-color:#647412;
+    background:#647412;
     color:#000;
 }
 
 .q-btn.bookmarked::before{
-    background:#f58220;
+    background:#647412;
     border:none;
 }
 
