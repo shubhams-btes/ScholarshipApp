@@ -12,7 +12,7 @@ body {
 }
 
 a {
-	color: #f58220;
+	color: #f28021;
 	text-decoration: none;
 }
 
@@ -102,7 +102,7 @@ NAV CARD
 	top: -26px;
 	left: 50%;
 	transform: translateX(-50%);
-	background: #f58220;
+	background: #ff6f00;
 	color: #fff;
 	padding: 16px;
 	border-radius: 8px;
@@ -121,7 +121,7 @@ NAV CARD
 }
 
 .nav-title span {
-	color: #f58220;
+	color: #ff6f00;
 }
 
 /* =========================
@@ -177,12 +177,12 @@ QUESTION GRID
 }
 
 .q-btn.answered {
-	border-color: #f58220;
-	color: #f58220;
+	border-color: #ff7a00;
+	color: #ff7a00;
 }
 
 .q-btn.answered::before {
-	border-color: #f58220;
+	border-color: #ff7a00;
 }
 
 .q-btn.active {
@@ -237,7 +237,7 @@ INDICATORS
 }
 
 .dot.orange {
-	background: #f58220;
+	background: #ff7a00;
 }
 
 .dot.blue {
@@ -286,7 +286,7 @@ RIGHT PANEL
 }
 
 .timer-title {
-	color: #f58220;
+	color: #ff6f00;
 	font-size: 16px;
 	margin-bottom: 10px;
 }
@@ -299,7 +299,7 @@ RIGHT PANEL
 }
 
 .timer-icon {
-	color: #f58220;
+	color: #ff6f00;
 	font-size: 32px;
 	font-weight: 700;
 	line-height: 1.2;
@@ -566,7 +566,7 @@ Thank You card
 }
 
 .card-thank-you h2 {
-	color: #f58220;
+	color: #f28021;
 	font-weight: 600;
 }
 
