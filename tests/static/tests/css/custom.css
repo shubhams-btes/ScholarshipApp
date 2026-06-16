@@ -459,7 +459,8 @@ RIGHT PANEL
 .btn {
 	border: none;
 	border-radius: 8px;
-	font-size: 18px;
+	font-size: 16px;
+	font-family: 'Montserrat', sans-serif;
 	cursor: pointer;
 	transition: .25s;
 	padding: 10px 20px;
@@ -616,11 +617,11 @@ Thank You card
 
 .bookmark-btn{
     border:none;
-    background:#f58220;
-    color:#647412;
+    background:#fff8e1;
+    color:#f58220;
     padding:8px 14px;
     border-radius:6px;
-    font-size:14px;
+    font-size:16px;
     font-weight:600;
     cursor:pointer;
     margin-bottom:20px;
@@ -629,7 +630,7 @@ Thank You card
 
 .bookmark-btn:hover{
     background:#647412;
-	color:#f58220
+	color:#fff8e1
 }
 
 .bookmark-btn.active{
@@ -640,7 +641,7 @@ Thank You card
 .q-btn.bookmarked{
     border-color:#647412;
     background:#647412;
-    color:#000;
+    color:#fff;
 }
 
 .q-btn.bookmarked::before{
