@@ -57,7 +57,7 @@
     display:block;
     width:70px;
     height:4px;
-    background:#FE9912;
+    background:#f58220;
     margin:12px 0 0;
     border-radius:4px;
 }
@@ -83,7 +83,7 @@
     content:"✓";
     position:absolute;
     left:0;
-    color:#FE9912;
+    color:#f58220;
     font-weight:700;
 }
 
@@ -102,14 +102,14 @@
 .agreement input{
     width:18px;
     height:18px;
-    accent-color:#FE9912;
+    accent-color:#f58220;
     margin-top:2px;
 }
 
 #startExamBtn{
     width:100%;
 
-    background:#FE9912;
+    background:#f58220;
     color:#fff;
 
     border:none;
@@ -148,7 +148,7 @@
     margin-bottom:30px;
 }
 .confirm-text strong{
-    color:#FE9912;
+    color:#f58220;
     font-weight:700;
 }
 
@@ -182,7 +182,7 @@
 
     margin-top:8px;
 
-    color:#FE9912;
+    color:#f58220;
 
     font-size:28px;
     font-weight:700;
@@ -215,7 +215,7 @@
 }
 
 .primary-btn{
-    background:#FE9912;
+    background:#f58220;
     color:#ffffff;
 }
 
