@@ -41,6 +41,9 @@ def quiz_view(request):
         "guidelines_accepted",
         False
     )
+    
+    if not guidelines_accepted:
+        request.session.pop("exam_end_time", None)
     try:
         schedule = ExamSchedule.objects.get(
             college=student.exam_schedule.college
@@ -183,7 +186,10 @@ def quiz_view(request):
             "student": student,
             "questions": selected_questions,
             "duration": EXAM_DURATION_MINUTES,
-            "exam_end_time": exam_end_time,
+            "exam_end_time": request.session.get(
+                "exam_end_time",
+                ""
+            ),
             "schedule": schedule,
             "guidelines_accepted": guidelines_accepted
         }
