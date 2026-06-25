@@ -28,6 +28,7 @@ from django.db.models import Q, Prefetch
 from collections import defaultdict
 from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives
+from django.db.models import Count
 # -----------------------------
 # Decorators
 # -----------------------------
@@ -235,17 +236,29 @@ def toggle_college_official(request, pk):
 # -----------------------------
 @superuser_required
 def exam_schedule_management(request):
-    colleges = College.objects.prefetch_related('exam_schedules').order_by('name')
+    now = timezone.now()
+    colleges = (
+        College.objects
+        .prefetch_related('exam_schedules')
+        .annotate(
+            active_schedule_count=Count(
+                'exam_schedules',
+                filter=Q(exam_schedules__quiz_date__gte=now)
+            )
+        )
+        .order_by('-active_schedule_count', 'name')
+    )
+    
+    
     # Prepare rows: one per college per schedule, or dummy if no schedule
     q = request.GET.get("q", "").strip().lower()
 
-    colleges = College.objects.prefetch_related('exam_schedules').order_by('name')
-
+    
     if q:
         colleges = [c for c in colleges if q in c.name.lower()]
     rows = []
     for college in colleges:
-        schedules = college.exam_schedules.all().order_by('quiz_date')
+        schedules = college.exam_schedules.all()
         if schedules.exists():
             for schedule in schedules:
                 rows.append({
@@ -257,6 +270,14 @@ def exam_schedule_management(request):
                 "college": college,
                 "schedule": None
             })
+    max_date = timezone.make_aware(datetime.max) 
+    rows.sort(
+        key=lambda r: (
+            r["schedule"] is None,
+            r["schedule"].quiz_date if r["schedule"] and r["schedule"].quiz_date else max_date,
+            r["college"].name.lower(),
+        )
+    )
             
     paginator = Paginator(rows, 10)   # 10 rows per page
     page_number = request.GET.get('page')
