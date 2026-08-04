@@ -9,6 +9,7 @@ from .forms import QuestionForm, CollegeForm, ExamScheduleForm, CollegeOfficialF
 from tests.models import Result, Question
 from admin_panel.models import College, CollegeOfficial, ExamSchedule, ExamScheduleHistory
 from students.models import Student
+from utils.qr_utils import generate_qr_attachment
 import datetime
 from django.utils.timezone import make_aware, get_default_timezone
 from django.contrib.auth import logout as auth_logout
@@ -402,7 +403,7 @@ def share_registration_link(request, schedule_id):
 
     schedule.registration_link = link
     schedule.save(update_fields=["registration_link"])
-
+    registration_qr_cid, registration_qr = generate_qr_attachment(link,filename="registration_qr.png")
     emails = list(
         schedule.college.officials
         .filter(is_active=True)
@@ -419,6 +420,7 @@ def share_registration_link(request, schedule_id):
     context = {
         "college_name": schedule.college.name,
         "registration_link": link,
+        "registration_qr_cid": registration_qr_cid,
         "quiz_date": schedule.quiz_date.strftime(
             "%d-%m-%Y %I:%M %p"
         ),
@@ -443,7 +445,7 @@ def share_registration_link(request, schedule_id):
         html_content,
         "text/html"
     )
-
+    email.attach(registration_qr)
     try:
         email.send()
 
