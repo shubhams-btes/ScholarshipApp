@@ -656,7 +656,11 @@ def add_question(request):
     if request.method == 'POST':
         form = QuestionForm(request.POST)
         if form.is_valid():
-            form.save()
+            question = form.save(commit=False)
+
+            question.uploaded_by = request.user
+
+            question.save()
             messages.success(request, "Question added successfully.")
             return redirect('manage_questions')
     else:
@@ -670,8 +674,15 @@ def edit_question(request, pk):
     if request.method == 'POST':
         form = QuestionForm(request.POST, instance=question)
         if form.is_valid():
-            form.save()
+
+            question = form.save(commit=False)
+
+            question.updated_by = request.user
+
+            question.save()
+
             messages.success(request, "Question updated successfully.")
+
             return redirect('manage_questions')
     else:
         form = QuestionForm(instance=question)
@@ -763,13 +774,23 @@ def upload_questions(request):
 
                 # Create question
                 Question.objects.create(
+
                     category=category,
+
                     question_text=question_text,
+
                     option_1=option_1,
+
                     option_2=option_2,
+
                     option_3=option_3,
+
                     option_4=option_4,
-                    correct_option=correct_option
+
+                    correct_option=correct_option,
+
+                    uploaded_by=request.user
+
                 )
 
                 count += 1
