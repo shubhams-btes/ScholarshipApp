@@ -8,7 +8,7 @@ if (!window.examConfig) {
 const total = window.examConfig.totalQuestions;
 let autoSubmitting = false;
 let finalSubmission = false;
-const examEndTime =
+let examEndTime =
     new Date(window.examConfig.examEndTime).getTime();
 
 let current = 1;
@@ -66,6 +66,221 @@ function startTimer() {
 
     }, 1000);
 }
+
+// =============================
+// PROCTORING (tab/window switch + fullscreen exit)
+// =============================
+
+let proctoringActive = false;
+let violationCount    = 0;
+let lastViolationAt   = 0;
+
+const MAX_VIOLATIONS    = 3;    // 2 warnings, auto-submit on the 3rd
+const VIOLATION_COOLDOWN = 1500; // ms — debounce so one action counts once
+
+function autoSubmitExam() {
+    autoSubmitting = true;
+    const form = document.getElementById("exam-form");
+    if (form) form.submit();
+}
+
+function triggerAutoSubmit() {
+
+    // Block any further violation handling during the countdown.
+    autoSubmitting = true;
+
+    // Hide the resume overlay if it happens to be open.
+    const resume = document.getElementById("resumeFullscreenModal");
+    if (resume) resume.style.display = "none";
+
+    const overlay = document.getElementById("autoSubmitModal");
+    if (overlay) overlay.style.display = "flex";
+
+    // Show the message for 5 seconds, then submit.
+    setTimeout(function () {
+        const form = document.getElementById("exam-form");
+        if (form) form.submit();
+    }, 5000);
+}
+
+
+
+function handleViolation(opts) {
+
+    opts = opts || {};
+
+    if (!proctoringActive || autoSubmitting || finalSubmission) return;
+
+    const now = Date.now();
+    if (now - lastViolationAt < VIOLATION_COOLDOWN) return; // debounce duplicate events
+    lastViolationAt = now;
+
+    violationCount++;
+
+    if (violationCount >= MAX_VIOLATIONS) {
+        triggerAutoSubmit();
+        return;
+    }
+
+    if (opts.showResume) {
+        // Left fullscreen (Esc/F11) → show the overlay so they can click back in.
+        showResumeOverlay(violationCount);
+    } else {
+        // Tab switch / window blur → can't force them back, so just warn.
+        showWarningDialog(violationCount);
+        
+    }
+}
+
+function onFullscreenChange() {
+    const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
+    if (!fsEl) handleViolation({ showResume: true });
+}
+
+function startProctoring() {
+
+    if (proctoringActive) return;
+    proctoringActive = true;
+
+    // Tab switch / minimize
+    document.addEventListener("visibilitychange", function () {
+        if (document.hidden) handleViolation();
+    });
+
+    // Switching to another app / window
+    window.addEventListener("blur", handleViolation);
+
+    // Pressing Esc / leaving fullscreen
+    document.addEventListener("fullscreenchange", onFullscreenChange);
+    document.addEventListener("webkitfullscreenchange", onFullscreenChange);
+}
+
+// Shows the resume overlay. warningNumber is optional (present on a live
+// fullscreen-exit violation; absent on a plain reload resume).
+function showResumeOverlay(warningNumber) {
+
+    const overlay   = document.getElementById("resumeFullscreenModal");
+    const resumeBtn = document.getElementById("resumeFullscreenBtn");
+
+    if (!overlay || !resumeBtn) {
+        if (warningNumber) {
+            alert("Warning " + warningNumber + " of 2 — please return to full screen.");
+        }
+        return;
+    }
+
+    const textEl = document.getElementById("resumeText");
+    if (textEl) {
+        if (warningNumber) {
+            textEl.innerHTML =
+                "Warning <strong>" + warningNumber + "</strong> of 2 — you left full screen.<br><br>" +
+                "The timer is still running. Return to full screen to continue. " +
+                "One more violation will submit your test automatically.";
+        } else {
+            textEl.innerHTML =
+                "Your test is still in progress and must be taken in full screen.<br><br>" +
+                "The timer has kept running while you were away. Click below to return and continue.";
+        }
+    }
+
+    overlay.style.display = "flex";
+}
+
+// Wire the resume button ONCE. It re-enters fullscreen, and then either starts
+// the runtime (reload case) or just closes (live re-entry, runtime already going).
+function wireResumeButton() {
+
+    const resumeBtn = document.getElementById("resumeFullscreenBtn");
+    if (!resumeBtn) return;
+
+    resumeBtn.addEventListener("click", async function () {
+
+        resumeBtn.disabled = true;
+
+        try {
+            await document.documentElement.requestFullscreen();
+        } catch (err) {
+            console.error(err);
+            alert("Full screen is required to continue. Please allow full screen and try again.");
+            resumeBtn.disabled = false;
+            return;
+        }
+
+        const overlay = document.getElementById("resumeFullscreenModal");
+        if (overlay) overlay.style.display = "none";
+        resumeBtn.disabled = false;
+
+        // Reload case → runtime not started yet, so start it now.
+        // Live Esc case → proctoring/timer already running, nothing more to do.
+        if (!proctoringActive) {
+            beginExamRuntime(window.examConfig.examEndTime);
+        }
+    });
+}
+
+function showWarningDialog(warningNumber) {
+
+    const modal = document.getElementById("warningModal");
+    const textEl = document.getElementById("warningText");
+
+    if (textEl) {
+        textEl.innerHTML =
+            "Warning <strong>" + warningNumber + "</strong> of 2<br><br>" +
+            "Switching tabs or windows is not allowed during the test.<br><br>" +
+            "One more violation will submit your test automatically.";
+    }
+
+    if (modal) {
+        modal.style.display = "flex";
+    }
+}
+
+// Called by exam_guidelines.js after start_exam succeeds,
+// and on refresh if the exam is already in progress.
+function beginExamRuntime(endTimeStr) {
+
+    if (endTimeStr) {
+        examEndTime = new Date(endTimeStr).getTime();
+        window.examConfig.examEndTime = endTimeStr;
+    }
+
+    if (!isNaN(examEndTime) && examEndTime > 0) {
+        startTimer();
+    }
+
+    startProctoring();
+}
+
+// =============================
+// RESUME AFTER RELOAD
+// =============================
+// On a mid-exam reload, guidelines_accepted is already true (so the guidelines
+// modal never renders) and examEndTime is populated. The browser will NOT let
+// us re-enter fullscreen without a fresh user gesture, so we show a "return to
+// fullscreen" overlay and only call beginExamRuntime after its button is clicked.
+
+function resumeExamAfterReload() {
+
+    // Deadline already passed → don't prompt, submit immediately.
+    if (isNaN(examEndTime) || examEndTime - Date.now() <= 0) {
+        autoSubmitting = true;
+        const form = document.getElementById("exam-form");
+        if (form) form.submit();
+        return;
+    }
+
+    const overlay = document.getElementById("resumeFullscreenModal");
+    if (!overlay) {
+        // Overlay markup missing → resume without fullscreen rather than trapping them.
+        beginExamRuntime(window.examConfig.examEndTime);
+        return;
+    }
+
+    showResumeOverlay(); // no warning number → default reload text
+}
+
+// Expose so exam_guidelines.js can reach it
+window.beginExamRuntime = beginExamRuntime;
 
 // =============================
 // PROGRESS BAR
@@ -312,8 +527,23 @@ window.addEventListener(
 
         showQuestion(1);
 
-        if(window.examConfig.examEndTime){
-            startTimer();
+        //  if (window.examConfig.examEndTime) {
+        //     // Exam already in progress (e.g. page refreshed) → resume timer + proctoring
+        //     beginExamRuntime(window.examConfig.examEndTime);
+        // }
+
+        wireResumeButton();
+        const warningAckBtn = document.getElementById("warningAckBtn");
+        if (warningAckBtn) {
+            warningAckBtn.addEventListener("click", function () {
+                const modal = document.getElementById("warningModal");
+                if (modal) modal.style.display = "none";
+            });
+        }
+        if (window.examConfig.examEndTime) {
+            // Exam already in progress (page was reloaded) → require a fresh
+            // click to re-enter fullscreen before resuming.
+            resumeExamAfterReload();
         }
 
     }
@@ -463,4 +693,15 @@ document.addEventListener(
 
     }
 );
-}
+// =============================
+// DISABLE COPY / PASTE / RIGHT-CLICK / SELECTION
+// =============================
+["contextmenu", "copy", "cut", "paste", "dragstart", "selectstart"]
+    .forEach(function (evt) {
+        document.addEventListener(evt, function (e) {
+            e.preventDefault();
+        });
+    });
+
+} 
+

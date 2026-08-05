@@ -1,6 +1,5 @@
 # quiz/views.py
 import random
-from urllib import request
 from django.contrib import messages
 from django.shortcuts import render,redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
@@ -14,7 +13,7 @@ from django.utils.timezone import localtime
 from django.contrib.auth import logout as auth_logout
 from django.views.decorators.cache import cache_control
 import pytz
-from datetime import timedelta
+from datetime import timedelta,datetime
 from django.http import JsonResponse
 
 
@@ -88,7 +87,23 @@ def quiz_view(request):
         )
 
     # Prevent multiple attempts
-    if Result.objects.filter(student=student).exists():
+    # Prevent multiple attempts — scoped to THIS exam schedule,
+    # matching the check in submit_quiz.
+    try:
+        history = ExamScheduleHistory.objects.get(
+            college=student.exam_schedule.college,
+            quiz_date=schedule.quiz_date,
+        )
+        already_attempted = Result.objects.filter(
+            student=student,
+            exam_schedule=history,
+        ).exists()
+    except ExamScheduleHistory.DoesNotExist:
+        # No history row yet → nobody from this college has submitted,
+        # so this student can't have attempted.
+        already_attempted = False
+
+    if already_attempted:
         return render(
             request,
             'tests/message.html',
@@ -200,81 +215,146 @@ def start_exam(request):
 
     EXAM_DURATION_MINUTES = 20
 
-    request.session['exam_end_time'] = (
-        timezone.now() +
-        timedelta(minutes=EXAM_DURATION_MINUTES)
-    ).isoformat()
+    # Reuse the existing end time if the exam is already in progress,
+    # so a repeat call (double-click, refresh, etc.) can't reset the clock.
+    end_iso = request.session.get('exam_end_time')
 
-    request.session['guidelines_accepted'] = True
+    if not end_iso:
+        end_iso = (
+            timezone.now() +
+            timedelta(minutes=EXAM_DURATION_MINUTES)
+        ).isoformat()
+
+        request.session['exam_end_time'] = end_iso
+        request.session['guidelines_accepted'] = True
 
     return JsonResponse({
-        "success": True
+        "success": True,
+        "exam_end_time": end_iso,
     })
 
 @student_login_required
 @cache_control(no_cache=True, must_revalidate=True, no_store=True)
 def submit_quiz(request):
-    if request.method == "POST":
-        student = request.student  # assuming OneToOne with User
-        score = 0
-        answered_qids = []
+    if request.method != "POST":
+        return redirect("exam")  # fallback
 
-        
+    student = request.student  # assuming OneToOne with User
 
-        for key, value in request.POST.items():
-            if key.startswith("q"):  # only process question fields
-                qid = key[1:]  # remove the 'q' prefix
-                try:
-                    q = Question.objects.get(id=int(qid))
-                    answered_qids.append(qid)
-                    if str(value) == str(q.correct_option):
-                        score += 1
-                except Question.DoesNotExist:
-                    continue
+    # -------------------------------------------------
+    # 1. SERVER-SIDE DEADLINE CHECK
+    # -------------------------------------------------
+    GRACE_SECONDS = 15  # allow latency / auto-submit lag
 
-        # ✅ Get active exam schedule for student’s college
+    end_iso = request.session.get("exam_end_time")
+    is_late = False
+
+    if end_iso:
         try:
-            schedule = ExamSchedule.objects.get(college=student.exam_schedule.college)
-        except ExamSchedule.DoesNotExist:
-            return render(request, "tests/message.html", {
-                "message": "No active exam schedule found for your college."
-            })
+            exam_end_time = datetime.fromisoformat(end_iso)
+        except (ValueError, TypeError):
+            exam_end_time = None
 
-        
+        if exam_end_time is not None:
+            # Guard against naive/aware mismatch
+            if timezone.is_naive(exam_end_time):
+                exam_end_time = timezone.make_aware(
+                    exam_end_time, timezone.get_current_timezone()
+                )
 
-        # ✅ Store result with exam schedule history
-        history, _ = ExamScheduleHistory.objects.get_or_create(
-            college=student.exam_schedule.college,
-            quiz_date=schedule.quiz_date
+            deadline = exam_end_time + timedelta(seconds=GRACE_SECONDS)
+            if timezone.now() > deadline:
+                is_late = True
+    else:
+        # No end time in session → exam was never properly started,
+        # or session already cleared (double submit). Treat as invalid.
+        is_late = True
+
+    # -------------------------------------------------
+    # 2. GRADE ANSWERS
+    # -------------------------------------------------
+    score = 0
+    answered_qids = []
+
+    for key, value in request.POST.items():
+        if key.startswith("q") and key != "csrfmiddlewaretoken":
+            qid = key[1:]  # remove the 'q' prefix
+            if not qid.isdigit():
+                continue
+            try:
+                q = Question.objects.get(id=int(qid))
+                # OPTIONAL: enforce that qid belongs to this student's exam
+                # if int(qid) not in request.session.get("exam_question_ids", []):
+                #     continue
+                answered_qids.append(qid)
+                if str(value) == str(q.correct_option):
+                    score += 1
+            except Question.DoesNotExist:
+                continue
+
+    # -------------------------------------------------
+    # 3. RESOLVE EXAM SCHEDULE
+    # -------------------------------------------------
+    try:
+        schedule = ExamSchedule.objects.get(
+            college=student.exam_schedule.college
         )
-
-        if Result.objects.filter(student=student, exam_schedule=history).exists():
-            return render(request, "tests/message.html", {"message": "You have already attempted the test."})
-
-        result = Result.objects.create(
-            student=student,
-            exam_schedule=history,
-            quiz_date=schedule.quiz_date,
-            score=score,
-            total_questions='20'
-
-        )
-        
-        # ✅ Clear session info (logout)
-        student.current_session = None
-        student.save()
-
-        auth_logout(request)   # from django.contrib.auth import logout as auth_logout
-        request.session.pop('exam_question_ids', None)
-        request.session.pop('guidelines_accepted', None)
-        request.session.pop('exam_end_time', None)
-        request.session.flush()  # wipe the session completely
-
-        return render(request, "tests/submitted.html", {
-            "result": result
+    except ExamSchedule.DoesNotExist:
+        return render(request, "tests/message.html", {
+            "message": "No active exam schedule found for your college."
         })
 
-    return redirect("exam")  # fallback
+    history, _ = ExamScheduleHistory.objects.get_or_create(
+        college=student.exam_schedule.college,
+        quiz_date=schedule.quiz_date,
+    )
+
+    # -------------------------------------------------
+    # 4. PREVENT DOUBLE ATTEMPT
+    # -------------------------------------------------
+    if Result.objects.filter(student=student, exam_schedule=history).exists():
+        return render(request, "tests/message.html", {
+            "message": "You have already attempted the test."
+        })
+
+    # -------------------------------------------------
+    # 5. RECORD RESULT (flag if late)
+    # -------------------------------------------------
+    if is_late:
+        # POLICY CHOICE — pick one:
+        #   (a) record the real score but mark it for review,
+        #   (b) zero it out,
+        #   (c) reject entirely (return before creating Result).
+        # Below records the attempt so it can't be retried, scored 0.
+        # Change to `final_score = score` if you'd rather keep it.
+        final_score = 0
+    else:
+        final_score = score
+
+    result = Result.objects.create(
+        student=student,
+        exam_schedule=history,
+        quiz_date=schedule.quiz_date,
+        score=final_score,
+        total_questions="20",
+        # is_flagged=is_late,   # add this field to your model if you want an audit trail
+    )
+
+    # -------------------------------------------------
+    # 6. CLEAR SESSION / LOGOUT
+    # -------------------------------------------------
+    student.current_session = None
+    student.save()
+
+    auth_logout(request)
+    request.session.pop("exam_question_ids", None)
+    request.session.pop("guidelines_accepted", None)
+    request.session.pop("exam_end_time", None)
+    request.session.flush()
+
+    return render(request, "tests/submitted.html", {
+        "result": result
+    })
 
 
 @student_login_required

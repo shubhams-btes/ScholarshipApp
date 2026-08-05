@@ -288,6 +288,62 @@
 
 </div>
 
+    <div id="resumeFullscreenModal" class="guidelines-modal" style="display:none;">
+    <div class="guidelines-card">
+
+        <h2>Return to Full Screen</h2>
+
+        <p class="confirm-text" id="resumeText">
+            Your test is still in progress and must be taken in full screen.
+
+            <br><br>
+
+            The timer has kept running while you were away. Click below to
+            return to full screen and continue.
+        </p>
+
+          <div class="confirm-actions">
+            <button type="button" id="resumeFullscreenBtn" class="primary-btn">
+                Return to Full Screen &amp; Continue
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<div id="autoSubmitModal" class="guidelines-modal" style="display:none;">
+    <div class="guidelines-card">
+
+        <h2>Test Submitting</h2>
+
+        <p class="confirm-text">
+            You have left the exam screen too many times.
+
+            <br><br>
+
+            Your test is being submitted automatically. Please wait…
+        </p>
+
+    </div>
+</div>
+
+<div id="warningModal" class="guidelines-modal" style="display:none;">
+    <div class="guidelines-card">
+
+        <h2>Warning</h2>
+
+        <p class="confirm-text" id="warningText">
+            Switching tabs or windows is not allowed during the test.
+        </p>
+
+        <div class="confirm-actions">
+            <button type="button" id="warningAckBtn" class="primary-btn">
+                I Understand
+            </button>
+        </div>
+
+    </div>
+</div>
     {% if not guidelines_accepted %}
     {% include 'students/includes/exam_guidelines_modal.html' %}
     {% endif %}
@@ -300,6 +356,8 @@
     </script>
     <script src="{% static 'students/js/exam-guidelines.js' %}"></script>
     <script src="{% static 'tests/js/script.js' %}"></script>
+
+
 
 </body>
 </html>
