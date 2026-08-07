@@ -5,8 +5,16 @@ from django.db import models
 
 class Student(models.Model):
     name = models.CharField(max_length=255)
-    email = models.EmailField(unique=True)
+    email = models.EmailField()
     password = models.CharField(max_length=128)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['email', 'exam_schedule'],
+                name='unique_email_per_exam'
+            )
+        ]   
 
     STREAM_CHOICES = [
         ('BTECH', 'B.Tech'),

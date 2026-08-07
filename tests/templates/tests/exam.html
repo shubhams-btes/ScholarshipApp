@@ -4,7 +4,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Scholarship Application-BTES</title>
+  <title>{{ site_name }}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link href="{% static 'tests/css/custom.css' %}" rel="stylesheet" />
 <link rel="stylesheet" href="{% static 'students/css/exam-guidelines.css' %}" />
@@ -245,7 +245,7 @@
 
     <br><br>
 
-    Once the Scholarship Test is submitted, you will not be able to modify or review your answers.
+    Once the BTES TalentQuest is submitted, you will not be able to modify or review your answers.
 </p>
 
         <div class="submission-summary">
@@ -349,9 +349,11 @@
     {% endif %}
     <script>
       window.examConfig = {
-          totalQuestions: {{ questions|length }},
-          examEndTime: "{{ exam_end_time|escapejs }}",
-          startExamUrl: "{% url 'start_exam' %}"
+        totalQuestions: {{ questions|length }},
+        examEndTime: "{{ exam_end_time|escapejs }}",
+        startExamUrl: "{% url 'start_exam' %}",
+        saveAnswerUrl: "{% url 'save_answer' %}",
+        savedAnswers: JSON.parse('{{ saved_answers_json|escapejs }}')
       };
     </script>
     <script src="{% static 'students/js/exam-guidelines.js' %}"></script>

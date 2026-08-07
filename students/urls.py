@@ -5,5 +5,6 @@ from . import views
 urlpatterns = [
     path("register/", views.student_register, name="register"),
     path("verify-email/", views.verify_email, name="verify_email"),
-    path("login/", views.login_view, name="login")
+    path("login/", views.login_view, name="login"),
+    path('resend-otp/', views.resend_otp, name='resend_otp')
 ]

@@ -1,191 +1,362 @@
 {% load static %}
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-    <title>Quiz Management</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <head>
+        <title>{{ site_name }}</title>
+        <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+        />
 
-    <!-- Flatpickr CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-</head>
-<body class="bg-light">
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
-    <div class="container-fluid">
-        <!-- Brand / Logo -->
-        <a class="navbar-brand fw-bold" href="{% url 'dashboard' %}">Admin Panel</a>
+        <!-- Flatpickr CSS -->
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
+        />
+    </head>
+    <body class="bg-light">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+            <div class="container-fluid">
+                <!-- Brand / Logo -->
+                <a class="navbar-brand fw-bold" href="{% url 'dashboard' %}">{{ site_name }}</a>
 
-        <!-- Toggle button for mobile -->
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNavbar"
-                aria-controls="adminNavbar" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
+                <!-- Toggle button for mobile -->
+                <button
+                    class="navbar-toggler"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#adminNavbar"
+                    aria-controls="adminNavbar"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation"
+                >
+                    <span class="navbar-toggler-icon"></span>
+                </button>
 
-        <!-- Navbar links -->
-        <div class="collapse navbar-collapse" id="adminNavbar">
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'dashboard' %}">Home</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'manage_questions' %}">Add/Remove Questions</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'college_management' %}">Manage College/Officials</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'quiz_management' %}">Schedule a Quiz</a>
-                </li>
-            </ul>
+                <!-- Navbar links -->
+                <div class="collapse navbar-collapse" id="adminNavbar">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'dashboard' %}">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'manage_questions' %}">
+                                Add/Remove Questions
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'college_management' %}">
+                                Manage College/Officials
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'quiz_management' %}">
+                                Schedule a Quiz
+                            </a>
+                        </li>
+                    </ul>
 
-            <!-- Logout button on right -->
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item">
-                    <a class="btn btn-outline-light" href="{% url 'logout' %}">Logout</a>
-                </li>
-            </ul>
-        </div>
-    </div>
-</nav>
+                    <!-- Logout button on right -->
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item">
+                            <a class="btn btn-outline-light" href="{% url 'logout' %}">Logout</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
 
-<div class="container py-5">
-    <h2 class="mb-4">Quiz Management</h2>
+        <div class="container py-5">
+            <h2 class="mb-4">Quiz Management</h2>
 
-    {% if messages %}
-        {% for message in messages %}
+            {% if messages %} {% for message in messages %}
             <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
                 {{ message }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
-        {% endfor %}
-    {% endif %}
-<form method="get" class="mb-3 d-flex" style="max-width: 400px;">
-    <input type="text" name="q" class="form-control me-2" placeholder="Search by college"
-           value="{{ q }}">
-    <button type="submit" class="btn btn-primary">Search</button>
-</form>
-    <table class="table table-striped table-hover">
-    <thead class="table-dark">
-        <tr>
-            <th>#</th>
-            <th>College</th>
-            <th>Quiz Date</th>
-            <th>Registration Status</th>
-            <th>Quiz Status</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for row in rows %}
-        <tr>
-            <td>{{ forloop.counter }}</td>
-            <td>{{ row.college.name }}</td>
+            {% endfor %} {% endif %}
+            <form method="get" class="mb-3 d-flex" style="max-width: 400px">
+                <input
+                    type="text"
+                    name="q"
+                    class="form-control me-2"
+                    placeholder="Search by college"
+                    value="{{ q }}"
+                />
+                <button type="submit" class="btn btn-primary">Search</button>
+            </form>
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>#</th>
+                        <th>College</th>
+                        <th>Quiz Date</th>
+                        <th>Registration Status</th>
+                        <th>Quiz Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in rows %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ row.college.name }}</td>
 
-            {% if row.schedule and row.schedule.quiz_date %}
-                <td>{{ row.schedule.quiz_date|date:"d-m-Y H:i" }}</td>
-                <td>
-                    <a href="{% url 'toggle_registration' row.schedule.id %}" class="btn btn-sm {% if row.schedule.registration_enabled %}btn-danger{% else %}btn-success{% endif %}">
-                        {% if row.schedule.registration_enabled %}Close Registrations{% else %}Open Registrations{% endif %}
-                    </a>
-                </td>
-                <td>
-                    <a href="{% url 'toggle_quiz_status' row.schedule.id %}" class="btn btn-sm {% if row.schedule.quiz_enabled %}btn-danger{% else %}btn-success{% endif %}">
-                        {% if row.schedule.quiz_enabled %}Disable Quiz{% else %}Enable Quiz{% endif %}
-                    </a>
-                </td>
-                <td>
-                    {% if row.schedule.registration_enabled %}
-                        <a href="{% url 'share_registration_link' row.schedule.id %}" class="btn btn-sm btn-info">Share Reg Link</a>
+                        {% if row.schedule and row.schedule.quiz_date %}
+                        <td>{{ row.schedule.quiz_date|date:"d-m-Y H:i" }}</td>
+                        <td>
+                            <form
+                                method="post"
+                                action="{% url 'toggle_registration' row.schedule.id %}"
+                                style="margin: 0"
+                            >
+                                {% csrf_token %}
+                                <button
+                                    type="submit"
+                                    class="btn btn-sm {% if row.schedule.registration_enabled %}btn-danger{% else %}btn-success{% endif %}"
+                                >
+                                    {% if row.schedule.registration_enabled %}Close Registrations{% else %}Open Registrations{% endif %}
+                                </button>
+                            </form>
+                        </td>
+                        <td>
+                            {% if row.schedule.quiz_enabled %}
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-danger disable-quiz-btn"
+                                    data-action="{% url 'toggle_quiz_status' row.schedule.id %}"
+                                    data-college="{{ row.schedule.college.name }}"
+                                >
+                                    Disable Quiz
+                                </button>
+                            {% else %}
+                                <form
+                                    method="post"
+                                    action="{% url 'toggle_quiz_status' row.schedule.id %}"
+                                    style="margin: 0"
+                                    onsubmit="return confirm('Enable the quiz for {{ row.college.name|escapejs }}?');"
+                                >
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-success">
+                                        Enable Quiz
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if row.schedule.registration_enabled %}
+                            <button
+                                type="button"
+                                class="btn btn-sm btn-info share-btn"
+                                data-action="{% url 'share_registration_link' row.schedule.id %}"
+                                data-college="{{ row.schedule.college.name }}"
+                                data-kind="registration link"
+                            >
+                                Share Reg Link
+                            </button>
+                            {% endif %} {% if row.schedule.quiz_enabled %}
+                            <button
+                                type="button"
+                                class="btn btn-sm btn-primary share-btn"
+                                data-action="{% url 'share_quiz_link' row.schedule.id %}"
+                                data-college="{{ row.schedule.college.name }}"
+                                data-kind="quiz link (emails will be sent to every registered student)"
+                            >
+                                Share Quiz Link
+                            </button>
+                            {% endif %}
+                        </td>
+                        {% else %}
+                        <td colspan="4">
+                            <form method="post" action="{% url 'add_exam_schedule' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="college" value="{{ row.college.id }}" />
+                                <div class="input-group">
+                                    <input
+                                        type="text"
+                                        name="quiz_date"
+                                        class="form-control quiz-datetimepicker"
+                                        placeholder="Select Date & Time"
+                                        required
+                                    />
+                                    <button type="submit" class="btn btn-sm btn-primary">
+                                        Save
+                                    </button>
+                                </div>
+                            </form>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center">No colleges found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% if rows.has_other_pages %}
+            <nav class="mt-3">
+                <ul class="pagination justify-content-center">
+                    {% if rows.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ rows.previous_page_number }}">
+                            Previous
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled"><span class="page-link">Previous</span></li>
+                    {% endif %} {% for num in rows.paginator.page_range %} {% if rows.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                    {% else %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                    {% endif %} {% endfor %} {% if rows.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ rows.next_page_number }}">Next</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled"><span class="page-link">Next</span></li>
                     {% endif %}
-                    {% if row.schedule.quiz_enabled %}
-                        <a href="{% url 'share_quiz_link' row.schedule.id %}" class="btn btn-sm btn-primary">Share Quiz Link</a>
-                    {% endif %}
-                </td>
-            {% else %}
-                <!-- Inline form when no schedule exists -->
-                <form method="post" action="{% url 'add_exam_schedule' %}">
-                    {% csrf_token %}
-                    <input type="hidden" name="college" value="{{ row.college.id }}">
-                    <td colspan="4">
-                        <div class="input-group">
-                            <input type="text" name="quiz_date" class="form-control quiz-datetimepicker" 
-                                   placeholder="Select Date & Time" required>
-                            <button type="submit" class="btn btn-sm btn-primary">Save</button>
-                        </div>
-                    </td>
-                </form>
+                </ul>
+            </nav>
             {% endif %}
-        </tr>
-        {% empty %}
-        <tr>
-            <td colspan="6" class="text-center">No colleges found.</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-{% if rows.has_other_pages %}
-<nav class="mt-3">
-    <ul class="pagination justify-content-center">
+        </div>
 
-        {% if rows.has_previous %}
-            <li class="page-item">
-                <a class="page-link" href="?page={{ rows.previous_page_number }}">Previous</a>
-            </li>
-        {% else %}
-            <li class="page-item disabled"><span class="page-link">Previous</span></li>
-        {% endif %}
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-        {% for num in rows.paginator.page_range %}
-            {% if rows.number == num %}
-                <li class="page-item active">
-                    <span class="page-link">{{ num }}</span>
-                </li>
-            {% else %}
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
-                </li>
-            {% endif %}
-        {% endfor %}
+        <!-- Flatpickr JS -->
+        <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
-        {% if rows.has_next %}
-            <li class="page-item">
-                <a class="page-link" href="?page={{ rows.next_page_number }}">Next</a>
-            </li>
-        {% else %}
-            <li class="page-item disabled"><span class="page-link">Next</span></li>
-        {% endif %}
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                // Initialize Flatpickr for all input fields with class quiz-datetimepicker
+                flatpickr('.quiz-datetimepicker', {
+                    enableTime: true,
+                    dateFormat: 'Y-m-d\\TH:i', // Matches your backend format
+                    minDate: "{{ now|date:'Y-m-d H:i' }}",
+                    time_24hr: true,
+                });
 
-    </ul>
-</nav>
-{% endif %}
+                // Alert auto-dismiss
+                const alerts = document.querySelectorAll('.alert');
+                alerts.forEach((alert) => {
+                    setTimeout(() => {
+                        alert.classList.remove('show');
+                        alert.classList.add('hide');
+                        setTimeout(() => alert.remove(), 500);
+                    }, 2000);
+                });
+            });
+        </script>
+        <!-- Disable Quiz confirm -->
+        <div class="modal fade" id="disableQuizModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Disable Quiz</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        Disable the BTES TalentQuest for
+                        <strong id="disableQuizCollege"></strong>
+                        ?
+                        <br />
+                        <br />
+                        This closes the BTES TalentQuest and clears its date. Any
+                        <strong>expired, unsubmitted</strong>
+                        attempts will be graded from their saved answers. Students still
+                        legitimately in progress are not affected.
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            Cancel
+                        </button>
+                        <form method="post" id="disableQuizForm" style="margin: 0">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger">Disable Quiz</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-</div>
+        <!-- Share (email blast) confirm -->
+        <div class="modal fade" id="shareModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Send Emails</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        Send the
+                        <strong id="shareKind"></strong>
+                        to
+                        <strong id="shareCollege"></strong>
+                        college?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            Cancel
+                        </button>
+                        <form method="post" id="shareForm" style="margin: 0">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-primary">Send</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+        <div id="loadingOverlay" style="display:none; position:fixed; inset:0;
+        background:rgba(255,255,255,0.75); z-index:2000;
+        align-items:center; justify-content:center; flex-direction:column;">
+        <div class="spinner-border text-primary" role="status" style="width:3rem; height:3rem;">
+            <span class="visually-hidden">Loading…</span>
+        </div>
+        <p id="loadingText" style="margin-top:16px; font-weight:600; color:#333;">Sending…</p>
+    </div>
 
-<!-- Flatpickr JS -->
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+        <script>
+            document.querySelectorAll('.disable-quiz-btn').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    document.getElementById('disableQuizCollege').textContent = btn.dataset.college;
+                    document.getElementById('disableQuizForm').action = btn.dataset.action;
+                    new bootstrap.Modal(document.getElementById('disableQuizModal')).show();
+                });
+            });
 
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    // Initialize Flatpickr for all input fields with class quiz-datetimepicker
-    flatpickr(".quiz-datetimepicker", {
-        enableTime: true,
-        dateFormat: "Y-m-d\\TH:i",      // Matches your backend format
-        minDate: "{{ now|date:'Y-m-d H:i' }}",
-        time_24hr: true
-    });
+            document.querySelectorAll('.share-btn').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    document.getElementById('shareCollege').textContent = btn.dataset.college;
+                    document.getElementById('shareKind').textContent = btn.dataset.kind;
+                    document.getElementById('shareForm').action = btn.dataset.action;
+                    new bootstrap.Modal(document.getElementById('shareModal')).show();
+                });
+            });
 
-    // Alert auto-dismiss
-    const alerts = document.querySelectorAll('.alert');
-    alerts.forEach(alert => {
-        setTimeout(() => {
-            alert.classList.remove('show');
-            alert.classList.add('hide');
-            setTimeout(() => alert.remove(), 500);
-        }, 2000);
-    });
-});
-</script>
+            // When the share modal's Send button submits, swap modal → spinner.
+            var shareForm = document.getElementById('shareForm');
+            if (shareForm) {
+                shareForm.addEventListener('submit', function () {
+                    // Hide the share modal
+                    var modalEl = document.getElementById('shareModal');
+                    var modal = bootstrap.Modal.getInstance(modalEl);
+                    if (modal) modal.hide();
 
-</body>
+                    // Show the loading overlay
+                    var overlay = document.getElementById('loadingOverlay');
+                    var text = document.getElementById('loadingText');
+                    if (text) text.textContent = 'Sending emails…';
+                    if (overlay) overlay.style.display = 'flex';
+
+                    // Let the form submit normally — overlay stays until the
+                    // server responds and the page reloads.
+                });
+            }
+        </script>
+    </body>
 </html>

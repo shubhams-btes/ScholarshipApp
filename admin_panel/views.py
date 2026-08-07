@@ -4,11 +4,13 @@ from django.contrib import messages
 from django.core.mail import send_mail
 from django.conf import settings
 from django.core.paginator import Paginator
+from django.views.decorators.http import require_POST
 from django.forms import modelformset_factory
 from .forms import QuestionForm, CollegeForm, ExamScheduleForm, CollegeOfficialForm,CollegeOfficialEditForm
 from tests.models import Result, Question
 from admin_panel.models import College, CollegeOfficial, ExamSchedule, ExamScheduleHistory
 from students.models import Student
+from tests.models import Result, Question, ExamProgress
 from utils.qr_utils import generate_qr_attachment
 import datetime
 from django.utils.timezone import make_aware, get_default_timezone
@@ -30,6 +32,8 @@ from collections import defaultdict
 from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives
 from django.db.models import Count
+from django.utils import timezone
+from django.conf import settings
 # -----------------------------
 # Decorators
 # -----------------------------
@@ -99,6 +103,7 @@ def dashboard(request):
         'college_query': college_query,
         'from_date': from_date_str,
         'to_date': to_date_str,
+        'title': 'Dashboard'
     })
 
 
@@ -223,6 +228,7 @@ def edit_official(request, pk):
 
 
 @superuser_required
+@require_POST
 def toggle_college_official(request, pk):
     official = get_object_or_404(CollegeOfficial, pk=pk)
     official.is_active = not official.is_active
@@ -313,7 +319,7 @@ def add_exam_schedule(request):
                 messages.error(request, "You cannot select a past date for the quiz.")
                 return redirect('quiz_management')
         except Exception as e:
-            messages.error(request, f"Invalid date/time format: {e}")
+            # messages.error(request, f"Invalid date/time format: {e}")
             return redirect('quiz_management')
 
         # Check if a schedule already exists for this college
@@ -363,24 +369,80 @@ def edit_exam_schedule(request, pk):
         form = ExamScheduleForm(instance=schedule)
     return render(request, 'admin_panel/add_edit_exam_schedule.html', {'form': form, 'title': 'Edit Exam Schedule'})
 
+def finalize_abandoned_attempts(college, quiz_date):
+    from tests.models import ExamProgress
+    now = timezone.now()
+    count = 0
+
+    history, _ = ExamScheduleHistory.objects.get_or_create(
+        college=college,
+        quiz_date=quiz_date,
+    )
+
+    stale = ExamProgress.objects.filter(
+        student__exam_schedule__college=college,
+        end_time__lt=now,
+    ).select_related('student')
+
+    for progress in stale:
+        student = progress.student
+
+        if Result.objects.filter(student=student, exam_schedule=history).exists():
+            progress.delete()
+            continue
+
+        answers = progress.answers or {}
+        score = 0
+        for qid_str, value in answers.items():
+            if not qid_str.isdigit():
+                continue
+            if int(qid_str) not in progress.question_ids:
+                continue
+            try:
+                q = Question.objects.get(id=int(qid_str))
+                if str(value) == str(q.correct_option):
+                    score += 1
+            except Question.DoesNotExist:
+                continue
+
+        Result.objects.create(
+            student=student,
+            exam_schedule=history,
+            quiz_date=quiz_date,
+            score=score,
+            total_questions=str(len(progress.question_ids)),
+        )
+        progress.delete()
+        count += 1
+
+    return count
 
 @superuser_required
+@require_POST
 def toggle_quiz_status(request, pk):
     schedule = get_object_or_404(ExamSchedule, pk=pk)
-    
+
     if schedule.quiz_enabled:
-        # Currently enabled → disable and clear date
+        # Capture the date BEFORE clearing it — the finalizer needs it to
+        # resolve the correct history row.
+        original_quiz_date = schedule.quiz_date
+
         schedule.quiz_enabled = False
         schedule.quiz_date = None
         schedule.registration_enabled = False
+        schedule.save(update_fields=['quiz_enabled', 'quiz_date', 'registration_enabled'])
+
+        finalized = finalize_abandoned_attempts(schedule.college, original_quiz_date)
+        messages.success(
+            request,
+            f"Quiz disabled for {schedule.college.name}. "
+            f"{finalized} abandoned attempt(s) finalized."
+        )
     else:
-        # Currently disabled → enable (keep date empty for now, user can set)
         schedule.quiz_enabled = True
-        
-    schedule.save(update_fields=['quiz_enabled', 'quiz_date','registration_enabled'])
-    
-    status = "enabled" if schedule.quiz_enabled else "disabled"
-    messages.success(request, f"Quiz {status} for {schedule.college.name}.")
+        schedule.save(update_fields=['quiz_enabled'])
+        messages.success(request, f"Quiz enabled for {schedule.college.name}.")
+
     return redirect('quiz_management')
 
 
@@ -389,6 +451,7 @@ def toggle_quiz_status(request, pk):
 # Quiz Management (optional simplified)
 # -----------------------------
 @superuser_required
+@require_POST
 def share_registration_link(request, schedule_id):
 
     schedule = get_object_or_404(
@@ -398,7 +461,7 @@ def share_registration_link(request, schedule_id):
 
     link = (
         f"{settings.SITE_URL}/register/"
-        f"?college_id={schedule.college.id}"
+        f"?schedule_id={schedule.id}"
     )
 
     schedule.registration_link = link
@@ -424,6 +487,7 @@ def share_registration_link(request, schedule_id):
         "quiz_date": schedule.quiz_date.strftime(
             "%d-%m-%Y %I:%M %p"
         ),
+        "site_name": settings.SITE_NAME
     }
 
     html_content = render_to_string(
@@ -433,7 +497,7 @@ def share_registration_link(request, schedule_id):
 
     email = EmailMultiAlternatives(
         subject=(
-            f"BTES Scholarship Test Registration - "
+            f"{settings.SITE_NAME} Registration - "
             f"{schedule.college.name}"
         ),
         body="Please view this email in HTML format.",
@@ -465,6 +529,7 @@ def share_registration_link(request, schedule_id):
 
 
 @superuser_required
+@require_POST
 def share_quiz_link(request, schedule_id):
 
     schedule = get_object_or_404(
@@ -481,7 +546,7 @@ def share_quiz_link(request, schedule_id):
 
     link = (
         f"{settings.SITE_URL}/login/"
-        f"?college_id={schedule.college.id}"
+        f"?schedule_id={schedule.id}"
     )
 
     schedule.quiz_link = link
@@ -518,7 +583,8 @@ def share_quiz_link(request, schedule_id):
                 "quiz_date": local_quiz_time.strftime(
                     "%d-%m-%Y %I:%M %p"
                 ),
-                "access_time": "10 minutes before the test",
+                "access_time": "10 minutes before the BTES TalentQuest",
+                "site_name": settings.SITE_NAME
             }
 
             html_content = render_to_string(
@@ -528,8 +594,8 @@ def share_quiz_link(request, schedule_id):
 
             email = EmailMultiAlternatives(
                 subject=(
-                    "Your Quiz Link & Hall Ticket "
-                    "- Scholarship Test"
+                    f"Your Quiz Link & Hall Ticket "
+                    f"- {settings.SITE_NAME}"
                 ),
                 body=(
                     "Please view this email "
@@ -565,18 +631,34 @@ def share_quiz_link(request, schedule_id):
 
 
 @superuser_required
+@require_POST
 def update_quiz_date(request, pk):
     schedule = get_object_or_404(ExamSchedule, pk=pk)
-    if request.method == 'POST':
-        quiz_date = request.POST.get('quiz_date')
-        if quiz_date:
-            schedule.quiz_date = quiz_date
-            schedule.save(update_fields=['quiz_date'])
-            messages.success(request, f"Quiz date updated for {schedule.college.name}.")
+    quiz_date_str = request.POST.get('quiz_date')
+
+    if not quiz_date_str:
+        messages.error(request, "Quiz date is required.")
+        return redirect('quiz_management')
+
+    try:
+        naive_dt = datetime.strptime(quiz_date_str, "%Y-%m-%dT%H:%M")
+        aware_dt = make_aware(naive_dt, get_default_timezone())
+    except Exception:
+        # messages.error(request, "Invalid date/time format.")
+        return redirect('quiz_management')
+
+    if aware_dt < timezone.now():
+        messages.error(request, "You cannot select a past date for the quiz.")
+        return redirect('quiz_management')
+
+    schedule.quiz_date = aware_dt
+    schedule.save(update_fields=['quiz_date'])
+    messages.success(request, f"Quiz date updated for {schedule.college.name}.")
     return redirect('quiz_management')
 
 
 @superuser_required
+@require_POST
 def toggle_registration(request, pk):
     schedule = get_object_or_404(ExamSchedule, pk=pk)
     schedule.registration_enabled = not schedule.registration_enabled
@@ -692,6 +774,7 @@ def edit_question(request, pk):
 
 
 @superuser_required
+@require_POST
 def toggle_question(request, pk):
     question = get_object_or_404(Question, pk=pk)
     question.is_active = not question.is_active
@@ -701,6 +784,7 @@ def toggle_question(request, pk):
     return redirect('manage_questions')
 
 @superuser_required
+@require_POST
 def toggle_all_questions(request, action):
     if action == 'enable':
         Question.objects.update(is_active=True)
@@ -708,6 +792,8 @@ def toggle_all_questions(request, action):
     elif action == 'disable':
         Question.objects.update(is_active=False)
         messages.success(request, "All questions have been disabled.")
+    else:
+        messages.error(request, "Invalid action.")
     return redirect('manage_questions')
 
 @superuser_required
@@ -728,6 +814,10 @@ def upload_questions(request):
             return redirect('upload_questions')
 
         try:
+            MAX_UPLOAD_BYTES = 2 * 1024 * 1024  # 2 MB
+            if file.size > MAX_UPLOAD_BYTES:
+                messages.error(request, "File too large. Maximum allowed size is 2 MB.")
+                return redirect('upload_questions')
             # Read file
             data = file.read().decode('utf-8')
 
@@ -801,7 +891,7 @@ def upload_questions(request):
             return redirect('manage_questions')
 
         except Exception as e:
-            messages.error(request, f"Error processing file: {str(e)}")
+            # messages.error(request, f"Error processing file: {str(e)}")
             return redirect('upload_questions')
 
     # GET request
@@ -887,3 +977,26 @@ def export_results(request, schedule_id):
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     wb.save(response)
     return response
+
+@superuser_required
+@require_POST
+def reset_student_session(request, student_id):
+    student = get_object_or_404(Student, pk=student_id)
+
+    # Clear ONLY the login lock. Do NOT touch ExamProgress — that holds the
+    # student's saved answers, question set, and deadline, so they resume
+    # exactly where they left off after logging back in.
+    student.current_session = None
+    student.save(update_fields=["current_session"])
+
+    messages.success(
+        request,
+        f"Login reset for {student.name} ({student.hall_ticket}). "
+        f"They can now log in again."
+    )
+
+    # Redirect back to the same registrations page.
+    schedule_id = request.POST.get("schedule_id")
+    if schedule_id:
+        return redirect("college_registrations", schedule_id=schedule_id)
+    return redirect("dashboard")

@@ -4,9 +4,57 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Scholarship Application-BTES</title>
+    <title>{{ site_name }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="{% static 'tests/css/custom.css' %}" rel="stylesheet" />
+    <style>
+        .message-container {
+            margin-bottom: 16px;
+        }
+        .app-alert {
+            padding: 12px 16px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            font-size: 14px;
+            border: 1px solid transparent;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        .app-alert.hide {
+            opacity: 0;
+            transform: translateY(-6px);
+        }
+        .app-alert-error {
+            background: #fdecea;
+            color: #a12622;
+            border-color: #f5c6cb;
+        }
+        .app-alert-success {
+            background: #e8f5e9;
+            color: #1e7a34;
+            border-color: #c3e6cb;
+        }
+        .app-alert-info {
+            background: #e7f3fe;
+            color: #0c5289;
+            border-color: #bee5eb;
+        }
+        .app-alert-warning {
+            background: #fff8e1;
+            color: #8a6d1b;
+            border-color: #ffe08a;
+        }
+        .spinner {
+        width: 48px;
+        height: 48px;
+        border: 5px solid #ddd;
+        border-top-color: #f47c20;   /* your orange accent */
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    </style>
 </head>
 <body>
 
@@ -32,10 +80,20 @@
 
 		<!-- RIGHT PANEL -->
 		<main class="right-panel">
-
+            
 			<div class="content-area">
                 <section class="question-section">
-                    <form method="post">
+                    {% if messages %}
+                        <div class="message-container">
+                            {% for message in messages %}
+                                <div class="app-alert app-alert-{{ message.tags }}">
+                                    {{ message }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <form method="post" action="?schedule_id={{ request.GET.schedule_id }}">
                         {% csrf_token %}
 
                         <h2 class="section-title">
@@ -129,7 +187,31 @@
 
 	</div>
 
+    <div id="loadingOverlay" style="display:none; position:fixed; inset:0;
+     background:rgba(255,255,255,0.8); z-index:9999;
+     align-items:center; justify-content:center; flex-direction:column;">
+    <div class="spinner"></div>
+    <p style="margin-top:16px; font-weight:600; color:#333;">Sending OTP…</p>
+</div>
     <script src="{% static 'tests/js/script.js' %}"></script>
-
+    <script>
+        window.addEventListener("DOMContentLoaded", function () {
+            document.querySelectorAll(".app-alert").forEach(function (alert) {
+                setTimeout(function () {
+                    alert.classList.add("hide");
+                    setTimeout(function () {
+                        alert.remove();
+                    }, 500);           // matches the 0.5s CSS transition
+                }, 4000);              // visible for 4s before fading
+            });
+        });
+    </script>
+    <script>
+    document.querySelector("form").addEventListener("submit", function () {
+        var overlay = document.getElementById("loadingOverlay");
+        if (overlay) overlay.style.display = "flex";
+        // Form submits normally; overlay stays until the page navigates.
+    });
+</script>
 </body>
 </html>

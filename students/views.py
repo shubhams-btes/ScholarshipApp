@@ -12,25 +12,26 @@ import random, string
 from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
+import secrets, time
+from django.db import IntegrityError
 
-
-def generate_otp(length=6):
-    return ''.join(random.choices(string.digits, k=length))
 
 
 def student_register(request):
-    college_id = request.GET.get('college_id')
-    college = get_object_or_404(College, id=college_id)
+    schedule_id = request.GET.get('schedule_id')
 
-    # Get latest active exam schedule
-    try:
-        exam_schedule = ExamSchedule.objects.filter(
-            college=college,
-            registration_enabled=True
-        ).latest('quiz_date')
-    except ExamSchedule.DoesNotExist:
+    if not schedule_id:
         return render(request, 'tests/message.html', {
-            'message': "Registrations are currently closed for this college. Please contact the administrator."
+            'message': "Invalid registration link. Please use the link sent to your college."
+        })
+
+    exam_schedule = get_object_or_404(ExamSchedule, pk=schedule_id)
+    college = exam_schedule.college
+
+    # Registration must be open for this specific exam.
+    if not exam_schedule.registration_enabled:
+        return render(request, 'tests/message.html', {
+            'message': "Registrations are currently closed for this exam. Please contact the administrator."
         })
 
     # Ensure there's a matching ExamScheduleHistory record
@@ -47,9 +48,11 @@ def student_register(request):
             # Prevent duplicate registration for same exam
             if Student.objects.filter(email=email, exam_schedule=exam_schedule_history).exists():
                 messages.error(request, "You are already registered for this quiz.")
-                return redirect(f"{request.path}?college_id={college_id}")
+                return redirect(f"{request.path}?schedule_id={schedule_id}")
+                
+            # Generate OTP with a CSPRNG
+            otp = ''.join(secrets.choice(string.digits) for _ in range(6))
 
-            # ✅ Save form data in session (not DB)
             request.session['pending_registration'] = {
                 'name': form.cleaned_data['name'],
                 'email': email,
@@ -58,41 +61,35 @@ def student_register(request):
                 'mobile_number': form.cleaned_data['mobile_number'],
                 'exam_schedule_id': exam_schedule_history.id
             }
-
-            # ✅ Generate and send OTP
-            otp = generate_otp()
             request.session['email_otp'] = otp
+            request.session['otp_expiry'] = time.time() + 600   # 10 minutes
+            request.session['otp_attempts'] = 0
+            request.session['otp_last_sent'] = time.time()
 
-            
             try:
                 html_message = render_to_string(
                     "students/emails/otp_email.html",
-                    {
-                        "name": form.cleaned_data["name"],
-                        "otp": otp,
-                    }
+                    {"name": form.cleaned_data["name"], "otp": otp, "site_name": settings.SITE_NAME}
                 )
-
                 email_message = EmailMultiAlternatives(
-                    subject="Verify Your Email – BTES Scholarship Test Registration",
-                    body=f"Your OTP is {otp}",  # Plain text fallback
+                    subject=f"Verify Your Email – {settings.SITE_NAME} Registration",
+                    body=f"Your OTP is {otp}",
                     from_email=settings.DEFAULT_FROM_EMAIL,
                     to=[email],
                 )
-
-                email_message.attach_alternative(
-                    html_message,
-                    "text/html"
-                )
-
+                email_message.attach_alternative(html_message, "text/html")
                 email_message.send()
 
-                messages.info(request, f"An OTP has been sent to {email}.{otp} Please verify to complete registration.")
-            except Exception as e:
-                messages.error(request, f"❌ Failed to send OTP to {email}. Please try again later.")
+                messages.info(request, f"An OTP has been sent to {email}. Please verify to complete registration.")
+                return redirect('verify_email')
 
-            
-            return redirect('verify_email')
+            except Exception:
+                # Send failed → clear pending state so the user isn't stranded
+                # with an OTP they never received; let them retry registration.
+                for key in ['email_otp', 'otp_expiry', 'otp_attempts', 'pending_registration']:
+                    request.session.pop(key, None)
+                messages.error(request, f"Failed to send OTP to {email}. Please try registering again.")
+                return redirect(f"{request.path}?schedule_id={schedule_id}")
     else:
         form = StudentRegistrationForm()
 
@@ -106,97 +103,184 @@ def student_register(request):
 
 def verify_email(request):
     if request.method == 'POST':
+
         otp = request.POST.get('otp')
         saved_otp = request.session.get('email_otp')
         pending_data = request.session.get('pending_registration')
+        expiry = request.session.get('otp_expiry', 0)
+        attempts = request.session.get('otp_attempts', 0)
 
-        if not pending_data:
+        if not pending_data or not saved_otp:
             messages.error(request, "Session expired or invalid. Please register again.")
             return redirect('student_register')
 
+        # Expiry check
+        if time.time() > expiry:
+            for key in ['email_otp', 'otp_expiry', 'otp_attempts', 'pending_registration']:
+                request.session.pop(key, None)
+            messages.error(request, "Your OTP has expired. Please register again.")
+            return redirect('student_register')
+
+        # Attempt-limit check (max 5 wrong tries)
+        if attempts >= 5:
+            for key in ['email_otp', 'otp_expiry', 'otp_attempts', 'pending_registration']:
+                request.session.pop(key, None)
+            messages.error(request, "Too many incorrect attempts. Please register again.")
+            return redirect('student_register')
+
         if otp == saved_otp:
-            # ✅ Create the student only after OTP verification
             exam_schedule = ExamScheduleHistory.objects.get(id=pending_data['exam_schedule_id'])
+            try:
+                student = Student.objects.create(
+                    name=pending_data['name'],
+                    email=pending_data['email'],
+                    password=pending_data['password'],
+                    exam_schedule=exam_schedule,
+                    stream=pending_data['stream'],
+                    mobile_number=pending_data['mobile_number'],
+                    is_active=True
+                )
+            except IntegrityError:
+                # Race / double-submit: already registered for this exam.
+                for key in ['email_otp', 'otp_expiry', 'otp_attempts', 'pending_registration']:
+                    request.session.pop(key, None)
+                messages.error(request, "You are already registered for this BTES TalentQuest.")
+                return redirect('student_register')
 
-            student = Student.objects.create(
-                name=pending_data['name'],
-                email=pending_data['email'],
-                password=pending_data['password'],
-                exam_schedule=exam_schedule,
-                stream=pending_data['stream'],
-                mobile_number=pending_data['mobile_number'],
-                is_active=True
-            )
-
-            # Cleanup session data
-            for key in ['email_otp', 'pending_registration']:
+            for key in ['email_otp', 'otp_expiry', 'otp_attempts', 'pending_registration']:
                 request.session.pop(key, None)
 
-            messages.success(request, "Email verified. Registration complete!")
             success_message = (
                 f"You have been registered successfully. Your hall ticket is {student.hall_ticket}. "
-                "You will receive the quiz link 10 minutes prior to the quiz."
+                "The login link for your BTES TalentQuest will be sent 10 minutes prior to the start."
             )
             return render(request, 'tests/message.html', {'message': success_message})
 
         else:
-            messages.error(request, "Invalid OTP. Try again.")
+            request.session['otp_attempts'] = attempts + 1
+            remaining = 5 - request.session['otp_attempts']
+            messages.error(request, f"Invalid OTP. {remaining} attempt(s) remaining.")
             return redirect('verify_email')
 
-    return render(request, 'students/verify_email.html')
+    # GET branch (bottom of verify_email)
+    expiry = request.session.get('otp_expiry')
+    pending = request.session.get('pending_registration')
 
+    # No pending registration → nothing to verify; send them back.
+    if not pending or not expiry:
+        messages.error(request, "Session expired. Please register again.")
+        return redirect('student_register')
+
+    resend_at = request.session.get('otp_last_sent', 0) + 60   # cooldown ends here
+
+    return render(request, 'students/verify_email.html', {
+        'otp_expiry': expiry,       # Unix seconds
+        'resend_at': resend_at,     # Unix seconds — resend allowed from this moment
+    })
 
 
 def login_view(request):
-    college_id = request.GET.get('college_id')
+    schedule_id = request.GET.get('schedule_id')
     college = None
-    if college_id:
-        college = get_object_or_404(College, id=college_id)
+    
+    if not schedule_id:
+        return render(request, 'tests/message.html', {
+            'message': "Invalid login link. Please use the link sent to your email."
+        })
+        
+    exam_schedule = get_object_or_404(ExamSchedule, pk=schedule_id)
+    college = exam_schedule.college
+    
+    exam_schedule_history, _ = ExamScheduleHistory.objects.get_or_create(
+        college=college,
+        quiz_date=exam_schedule.quiz_date
+    )
 
     if request.method == "POST":
         email = request.POST.get("email")
         password = request.POST.get("password")
 
-        try:
-            student = Student.objects.get(email=email)
+        # Resolve the student against this exact exam's history row.
+        student = Student.objects.filter(
+            email=email,
+            exam_schedule=exam_schedule_history
+        ).first()
 
-            # 1️⃣ Check password
-            if not check_password(password, student.password):
-                messages.error(request, "Invalid credentials")
-                return redirect(request.path + (f"?college_id={college_id}" if college_id else ""))
-
-            # 2️⃣ Check student belongs to this college
-            if college and student.exam_schedule.college.id != college.id:
-                messages.error(request, "This account does not belong to the selected college.")
-                return redirect(request.path + f"?college_id={college_id}")
-
-            # ✅ Prevent multiple logins
-            if student.current_session:
-                messages.error(request, "You are already logged in from another device/browser.")
-                return redirect(request.path + (f"?college_id={college_id}" if college_id else ""))
-
-            # 3️⃣ Check if student already attempted the quiz
-            already_attempted = Result.objects.filter(
-                student_id=student.id,
-                exam_schedule_id=student.exam_schedule.id
-            ).exists()
-
-            if already_attempted:
-                messages.warning(request, "You have already attempted this quiz.")
-                return redirect(request.path + (f"?college_id={college_id}" if college_id else ""))
-
-            # 4️⃣ Log in
-            request.session['student_id'] = student.id
-            student.current_session = request.session.session_key
-            student.save()
-            next_url = request.GET.get('next', '/quiz/start_quiz/')
-            return redirect(next_url)
-
-        except Student.DoesNotExist:
-            print(password, email)
+        if student is None:
             messages.error(request, "Invalid credentials")
-            return redirect(request.path + (f"?college_id={college_id}" if college_id else ""))
+            return redirect(f"{request.path}?schedule_id={schedule_id}")
+
+        # 1️⃣ Password
+        if not check_password(password, student.password):
+            messages.error(request, "Invalid credentials")
+            return redirect(f"{request.path}?schedule_id={schedule_id}")
+
+        # 2️⃣ Single-session lock
+        if student.current_session:
+            messages.error(request, "You are already logged in from another device/browser.")
+            return redirect(f"{request.path}?schedule_id={schedule_id}")
+
+        # 3️⃣ Already attempted?
+        already_attempted = Result.objects.filter(
+            student=student,
+            exam_schedule=exam_schedule_history
+        ).exists()
+        if already_attempted:
+            messages.warning(request, "You have already attempted this BTES TalentQuest.")
+            return redirect(f"{request.path}?schedule_id={schedule_id}")
+
+        # 4️⃣ Log in
+        request.session['student_id'] = student.id
+        if not request.session.session_key:
+            request.session.save()
+        student.current_session = request.session.session_key
+        student.save(update_fields=["current_session"])
+
+        next_url = request.GET.get('next', '/quiz/start_quiz/')
+        return redirect(next_url)
 
     return render(request, "students/login.html", {"college": college})
+
+def resend_otp(request):
+
+    pending = request.session.get('pending_registration')
+    if not pending:
+        messages.error(request, "Session expired. Please register again.")
+        return redirect('student_register')
+
+    # Rate-limit resends: at most once every 60 seconds.
+    last_sent = request.session.get('otp_last_sent', 0)
+    now = time.time()
+    if now - last_sent < 60:
+        wait = int(60 - (now - last_sent))
+        messages.error(request, f"Please wait {wait}s before requesting another OTP.")
+        return redirect('verify_email')
+
+    # New OTP + fresh 10-minute window, reset attempt counter.
+    otp = ''.join(secrets.choice(string.digits) for _ in range(6))
+    request.session['email_otp'] = otp
+    request.session['otp_expiry'] = now + 600
+    request.session['otp_attempts'] = 0
+    request.session['otp_last_sent'] = now
+
+    email = pending['email']
+    try:
+        html_message = render_to_string(
+            "students/emails/otp_email.html",
+            {"name": pending['name'], "otp": otp, "site_name": settings.SITE_NAME}
+        )
+        msg = EmailMultiAlternatives(
+            subject=f"Your new OTP – {settings.SITE_NAME} Registration",
+            body=f"Your OTP is {otp}",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[email],
+        )
+        msg.attach_alternative(html_message, "text/html")
+        msg.send()
+        messages.info(request, f"A new OTP has been sent to {email}.")
+    except Exception:
+        messages.error(request, "Failed to resend OTP. Please try again.")
+
+    return redirect('verify_email')
 
 

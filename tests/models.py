@@ -52,3 +52,18 @@ class Result(models.Model):
 
     def __str__(self):
         return f"{self.student} - {self.score}/{self.total_questions}"
+    
+
+class ExamProgress(models.Model):
+    student = models.OneToOneField(
+        Student,
+        on_delete=models.CASCADE,
+        related_name="progress"
+    )
+    question_ids = models.JSONField(default=list)   # the fixed set of 20 question IDs
+    answers = models.JSONField(default=dict)         # {"123": "2", "456": "4"}
+    end_time = models.DateTimeField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Progress: {self.student}"

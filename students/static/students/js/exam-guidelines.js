@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", function () {
             await document.documentElement.requestFullscreen();
         } catch (err) {
             console.error(err);
-            alert("Full screen is required to start the test. Please allow full screen and try again.");
+            alert("Full screen is required to start BTES TalentQuest. Please allow full screen and try again.");
             startBtn.disabled = false;
             return;
         }
@@ -34,14 +34,14 @@ document.addEventListener("DOMContentLoaded", function () {
             data = await response.json();
         } catch (err) {
             console.error(err);
-            alert("Could not start the test. Please check your connection and try again.");
+            alert("Could not start BTES TalentQuest. Please check your connection and try again.");
             startBtn.disabled = false;
             if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
             return;
         }
 
         if (!data || !data.success) {
-            alert((data && data.message) || "Unable to start the test.");
+            alert((data && data.message) || "Unable to start BTES TalentQuest.");
             startBtn.disabled = false;
             if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
             return;

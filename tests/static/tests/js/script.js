@@ -178,7 +178,7 @@ function showResumeOverlay(warningNumber) {
                 "One more violation will submit your test automatically.";
         } else {
             textEl.innerHTML =
-                "Your test is still in progress and must be taken in full screen.<br><br>" +
+                "BTES TalentQuest is still in progress and must be taken in full screen.<br><br>" +
                 "The timer has kept running while you were away. Click below to return and continue.";
         }
     }
@@ -226,13 +226,30 @@ function showWarningDialog(warningNumber) {
     if (textEl) {
         textEl.innerHTML =
             "Warning <strong>" + warningNumber + "</strong> of 2<br><br>" +
-            "Switching tabs or windows is not allowed during the test.<br><br>" +
-            "One more violation will submit your test automatically.";
+            "Switching tabs or windows is not allowed during BTES TalentQuest.<br><br>" +
+            "One more violation will submit your BTES TalentQuest automatically.";
     }
 
     if (modal) {
         modal.style.display = "flex";
     }
+}
+
+// =============================
+// AUTOSAVE ANSWER TO SERVER
+// =============================
+function saveAnswer(qid, value) {
+    const token = document.querySelector('[name=csrfmiddlewaretoken]');
+    fetch(window.examConfig.saveAnswerUrl, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "X-CSRFToken": token ? token.value : ""
+        },
+        body: "qid=" + encodeURIComponent(qid) +
+              "&value=" + encodeURIComponent(value)
+    }).catch(err => console.error("autosave failed", err));
 }
 
 // Called by exam_guidelines.js after start_exam succeeds,
@@ -498,6 +515,9 @@ document.addEventListener(
 
         updateProgress();
         updateNavButtonState(questionNo);
+        
+        // Autosave to server. name is "q<id>", so strip the leading "q".
+        saveAnswer(e.target.name.slice(1), e.target.value);
 
         block
             .querySelectorAll(".option")
@@ -517,6 +537,33 @@ document.addEventListener(
 // PAGE LOAD
 // =============================
 
+// =============================
+// RESTORE SAVED ANSWERS (refresh / re-login)
+// =============================
+function restoreAnswers(saved) {
+    if (!saved) return;
+
+    Object.keys(saved).forEach(function (qid) {
+        const input = document.querySelector(
+            'input[name="q' + qid + '"][value="' + saved[qid] + '"]'
+        );
+        if (!input) return;
+
+        input.checked = true;
+
+        const block = input.closest(".question-block");
+        if (block) {
+            const qnum = parseInt(block.dataset.qnum);
+            if (!isNaN(qnum)) attempted[qnum] = true;
+        }
+        const opt = input.closest(".option");
+        if (opt) opt.classList.add("selected");
+    });
+
+    updateProgress();
+    refreshNavigation();
+}
+
 window.addEventListener(
     "DOMContentLoaded",
     function () {
@@ -526,6 +573,8 @@ window.addEventListener(
         refreshNavigation();
 
         showQuestion(1);
+
+        restoreAnswers(window.examConfig.savedAnswers);
 
         //  if (window.examConfig.examEndTime) {
         //     // Exam already in progress (e.g. page refreshed) → resume timer + proctoring

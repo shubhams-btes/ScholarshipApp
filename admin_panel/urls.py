@@ -37,6 +37,7 @@ urlpatterns = [
     # College Results
     path("results/<int:schedule_id>/", views.college_results, name="college_results"),
     path('registrations/<int:schedule_id>/', views.college_registrations, name='college_registrations'),
+    path('reset-session/<int:student_id>/', views.reset_student_session, name='reset_student_session'),
 
     # Export Results
 
