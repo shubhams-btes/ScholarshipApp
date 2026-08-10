@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-9t0cebmbf2*1976a39xev%wrjah92+^_zss=@p#xvxe_gj-d@n
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['182.76.176.205', 'localhost','127.0.0.1']
+ALLOWED_HOSTS = ['182.76.176.205', 'localhost','127.0.0.1','talentquest.btes.co.in']
 
 
 
