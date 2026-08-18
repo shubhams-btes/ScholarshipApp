@@ -161,6 +161,6 @@ EMAIL_USE_TLS = False                    # TLS only for port 587
 EMAIL_HOST_USER = config("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD")
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-SITE_URL = config("SITE_URL")
+SITE_URL = "http://talentquest.btes.co.in"
 
 SITE_NAME = "BTES TalentQuest"
