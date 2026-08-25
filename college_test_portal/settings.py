@@ -164,3 +164,4 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 SITE_URL = "http://talentquest.btes.co.in"
 
 SITE_NAME = "BTES TalentQuest"
+EMAIL_TIMEOUT = 10

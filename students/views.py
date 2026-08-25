@@ -14,8 +14,26 @@ from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
 import secrets, time
 from django.db import IntegrityError
+import threading
+import logging
+logger = logging.getLogger(__name__)
 
-
+def _send_otp_email(email, name, otp):
+    try:
+        html_message = render_to_string(
+            "students/emails/otp_email.html",
+            {"name": name, "otp": otp, "site_name": settings.SITE_NAME},
+        )
+        msg = EmailMultiAlternatives(
+            subject=f"Verify Your Email – {settings.SITE_NAME} Registration",
+            body=f"Your OTP is {otp}",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[email],
+        )
+        msg.attach_alternative(html_message, "text/html")
+        msg.send()
+    except Exception:
+        logger.exception("Failed to send OTP email to %s", email)
 
 def student_register(request):
     schedule_id = request.GET.get('schedule_id')
@@ -66,30 +84,14 @@ def student_register(request):
             request.session['otp_attempts'] = 0
             request.session['otp_last_sent'] = time.time()
 
-            try:
-                html_message = render_to_string(
-                    "students/emails/otp_email.html",
-                    {"name": form.cleaned_data["name"], "otp": otp, "site_name": settings.SITE_NAME}
-                )
-                email_message = EmailMultiAlternatives(
-                    subject=f"Verify Your Email – {settings.SITE_NAME} Registration",
-                    body=f"Your OTP is {otp}",
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    to=[email],
-                )
-                email_message.attach_alternative(html_message, "text/html")
-                email_message.send()
+            threading.Thread(
+                target=_send_otp_email,
+                args=(email, form.cleaned_data['name'], otp),
+                daemon=True,
+            ).start()
 
-                messages.info(request, f"An OTP has been sent to {email}. Please verify to complete registration.")
-                return redirect('verify_email')
-
-            except Exception:
-                # Send failed → clear pending state so the user isn't stranded
-                # with an OTP they never received; let them retry registration.
-                for key in ['email_otp', 'otp_expiry', 'otp_attempts', 'pending_registration']:
-                    request.session.pop(key, None)
-                messages.error(request, f"Failed to send OTP to {email}. Please try registering again.")
-                return redirect(f"{request.path}?schedule_id={schedule_id}")
+            messages.info(request, f"An OTP has been sent to {email}. Please verify to complete registration.")
+            return redirect('verify_email')
     else:
         form = StudentRegistrationForm()
 

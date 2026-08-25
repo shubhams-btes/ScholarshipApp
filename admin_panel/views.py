@@ -1,3 +1,4 @@
+from multiprocessing.dummy import connection
 from django.contrib.auth.decorators import user_passes_test
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
@@ -30,10 +31,14 @@ from django.core.paginator import Paginator
 from django.db.models import Q, Prefetch
 from collections import defaultdict
 from django.template.loader import render_to_string
-from django.core.mail import EmailMultiAlternatives
+from django.core.mail import EmailMultiAlternatives,get_connection
 from django.db.models import Count
 from django.utils import timezone
 from django.conf import settings
+import logging
+import threading
+
+logger = logging.getLogger(__name__)
 # -----------------------------
 # Decorators
 # -----------------------------
@@ -526,107 +531,87 @@ def share_registration_link(request, schedule_id):
 
     return redirect("quiz_management")
 
+def _send_quiz_links(college_name, students_data, link, quiz_date_str):
+    connection = get_connection()
+    connection.open()
+    sent = 0
+    try:
+        for s in students_data:
+            try:
+                context = {
+                    "student_name": s["name"],
+                    "college_name": college_name,
+                    "hall_ticket": s["hall_ticket"],
+                    "quiz_link": link,
+                    "quiz_date": quiz_date_str,
+                    "access_time": "10 minutes before the BTES TalentQuest",
+                    "site_name": settings.SITE_NAME,
+                }
+                html_content = render_to_string("emails/quiz_link.html", context)
+                email = EmailMultiAlternatives(
+                    subject=f"Your Quiz Link & Hall Ticket - {settings.SITE_NAME}",
+                    body="Please view this email in HTML format.",
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    to=[s["email"]],
+                    connection=connection,
+                )
+                email.attach_alternative(html_content, "text/html")
+                email.send()
+                sent += 1
+            except Exception:
+                logger.exception("Quiz link failed for %s", s["email"])
+    finally:
+        connection.close()
+    logger.info("Quiz links: sent %s/%s for %s", sent, len(students_data), college_name)
 
 
 @superuser_required
 @require_POST
 def share_quiz_link(request, schedule_id):
+    schedule = get_object_or_404(ExamSchedule, pk=schedule_id)
 
-    schedule = get_object_or_404(
-        ExamSchedule,
-        pk=schedule_id
+    schedule_history, _ = ExamScheduleHistory.objects.get_or_create(
+        college=schedule.college,
+        quiz_date=schedule.quiz_date,
     )
 
-    schedule_history, _ = (
-        ExamScheduleHistory.objects.get_or_create(
-            college=schedule.college,
-            quiz_date=schedule.quiz_date,
-        )
-    )
-
-    link = (
-        f"{settings.SITE_URL}/login/"
-        f"?schedule_id={schedule.id}"
-    )
-
+    link = f"{settings.SITE_URL}/login/?schedule_id={schedule.id}"
     schedule.quiz_link = link
     schedule.save(update_fields=["quiz_link"])
 
-    local_quiz_time = timezone.localtime(
-        schedule.quiz_date
-    )
+    local_quiz_time = timezone.localtime(schedule.quiz_date)
 
-    students = Student.objects.filter(
-        exam_schedule=schedule_history
-    )
-
+    students = Student.objects.filter(exam_schedule=schedule_history)
     if not students.exists():
-
-        messages.error(
-            request,
-            "No registered students found."
-        )
-
+        messages.error(request, "No registered students found.")
         return redirect("quiz_management")
 
-    success_count = 0
+    # Snapshot the data the thread needs, as plain values.
+    students_data = [
+        {
+            "name": s.name,
+            "email": s.email,
+            "hall_ticket": s.hall_ticket,
+        }
+        for s in students
+    ]
 
-    try:
+    threading.Thread(
+        target=_send_quiz_links,
+        args=(
+            schedule.college.name,
+            students_data,
+            link,
+            local_quiz_time.strftime("%d-%m-%Y %I:%M %p"),
+        ),
+        daemon=True,
+    ).start()
 
-        for student in students:
-
-            context = {
-                "student_name": student.name,
-                "college_name": schedule.college.name,
-                "hall_ticket": student.hall_ticket,
-                "quiz_link": link,
-                "quiz_date": local_quiz_time.strftime(
-                    "%d-%m-%Y %I:%M %p"
-                ),
-                "access_time": "10 minutes before the BTES TalentQuest",
-                "site_name": settings.SITE_NAME
-            }
-
-            html_content = render_to_string(
-                "emails/quiz_link.html",
-                context
-            )
-
-            email = EmailMultiAlternatives(
-                subject=(
-                    f"Your Quiz Link & Hall Ticket "
-                    f"- {settings.SITE_NAME}"
-                ),
-                body=(
-                    "Please view this email "
-                    "in HTML format."
-                ),
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                to=[student.email],
-            )
-
-            email.attach_alternative(
-                html_content,
-                "text/html"
-            )
-
-            email.send()
-
-            success_count += 1
-
-        messages.success(
-            request,
-            f"Quiz links sent successfully "
-            f"to {success_count} students."
-        )
-
-    except Exception as e:
-
-        messages.error(
-            request,
-            f"Failed to send quiz emails: {e}"
-        )
-
+    messages.success(
+        request,
+        f"Sending quiz links to {len(students_data)} students. "
+        "They will arrive over the next couple of minutes."
+    )
     return redirect("quiz_management")
 
 
