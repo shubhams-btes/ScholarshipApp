@@ -599,65 +599,29 @@ window.addEventListener(
 );
 function openSubmitConfirmation() {
 
-    const attemptedCount =
-        attempted.filter(Boolean).length;
+    const attemptedCount = attempted.filter(Boolean).length;
+    const remaining      = total - attemptedCount;
 
-    const remainingCount =
-        total - attemptedCount;
+    // cards
+    const attemptedEl = document.getElementById("attemptedCount");
+    if (attemptedEl) attemptedEl.textContent = attemptedCount;
 
-    const confirmText =
-        document.querySelector(".confirm-text");
+    const remainingEl = document.getElementById("remainingCount");
+    if (remainingEl) remainingEl.textContent = remaining;
 
-    if (confirmText) {
+    // hero sentence
+    // const inlineEl = document.getElementById("csUnansweredInline .msg");
 
-        if (remainingCount > 0) {
+    // const askEl    = document.querySelector("#submitConfirmModal .msg");
+    // if (remaining > 0) {
+    //     inlineEl.textContent = remaining;
+    // } else if (askEl) {
+    //     askEl.textContent = "You have answered all questions.";
+    // }
 
-            confirmText.innerHTML = `
-                You still have
-                <strong>${remainingCount}</strong>
-                unanswered question(s).
-
-                <br><br>
-
-                Are you sure you want to submit?
-            `;
-
-        } else {
-
-            confirmText.innerHTML = `
-                You have answered all questions.
-
-                <br><br>
-
-                Are you sure you want to submit?
-            `;
-        }
-    }
-
-    const attemptedEl =
-        document.getElementById("attemptedCount");
-
-    if (attemptedEl) {
-        attemptedEl.textContent =
-            attemptedCount;
-    }
-
-    const remainingEl =
-        document.getElementById("remainingCount");
-
-    if (remainingEl) {
-        remainingEl.textContent =
-            remainingCount;
-    }
-
-    const modal =
-        document.getElementById(
-            "submitConfirmModal"
-        );
-
-    if (modal) {
-        modal.style.display = "flex";
-    }
+    // show
+    const modal = document.getElementById("submitConfirmModal");
+    if (modal) modal.style.display = "flex";
 }
 
 // =============================

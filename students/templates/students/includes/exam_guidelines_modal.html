@@ -1,33 +1,138 @@
 {% load static %}
-<div id="guidelinesModal" class="guidelines-modal">
+<div class="tq-overlay" id="guidelinesModal">
+    <div class="tq-modal" role="dialog" aria-modal="true" aria-labelledby="tqTitle" tabindex="-1" id="tqModal">
 
-    <div class="guidelines-card">
+      <!-- LEFT : brand panel -->
+      <aside class="tq-panel" aria-hidden="true">
+        <span class="plane plane-1"></span>
+        <span class="plane plane-2"></span>
+        <span class="hairline hairline-1"></span>
+        <span class="hairline hairline-2"></span>
 
-
-        <h2>{{ site_name }} Guidelines</h2>
-
-        <ul class="guidelines-list">
-            <li>Total Questions: 20</li>
-            <li>Total Duration: 20 Minutes</li>
-            <li>Each student can attempt only once.</li>
-            <li>Test will auto-submit after time expires.</li>
-            <li>Do not refresh the page during the exam.</li>
-            <li>Use a stable internet connection.</li>
-            <li>Switching tabs may lead to auto submission.</li>
-        </ul>
-
-        <div class="agreement">
-            <input type="checkbox" id="guidelineCheck">
-
-            <label for="guidelineCheck">
-                I have read and understood all the exam guidelines and agree to proceed with the {{ site_name }}.
-            </label>
+        <div class="tq-brand">
+          <div class="tq-brand-row">
+            <a href="#"><img src="{% static 'tests/images/logo-white.png' %}" width="150" alt="BTES" /></a>
+          </div>
         </div>
 
-        <button id="startExamBtn" disabled>
-            Start {{ site_name }}
+        <div class="tq-illus">
+          <svg viewBox="0 0 180 200" fill="none">
+            <defs>
+              <radialGradient id="tqGlow" cx="50%" cy="45%" r="55%">
+                <stop offset="0%" stop-color="#FFFFFF" stop-opacity=".14" />
+                <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0" />
+              </radialGradient>
+            </defs>
+            <circle cx="90" cy="96" r="86" fill="url(#tqGlow)" />
+            <path d="M90 8 L160 33 V95 C160 148 129 180 90 194 C51 180 20 148 20 95 V33 Z"
+              fill="rgba(255,255,255,.045)" stroke="rgba(255,255,255,.32)" stroke-width="2.5" stroke-linejoin="round" />
+            <path d="M90 22 L148 43 V95 C148 140 122 168 90 180 C58 168 32 140 32 95 V43 Z"
+              stroke="rgba(255,255,255,.13)" stroke-width="1.6" stroke-linejoin="round" />
+            <rect x="58" y="58" width="64" height="84" rx="9" fill="#F4F8FC" />
+            <rect x="76" y="50" width="28" height="16" rx="5" fill="#0B3157" />
+            <rect x="68" y="80" width="11" height="11" rx="3" stroke="#082b65" stroke-width="2.4" fill="none" />
+            <path d="M70.5 85.5 L73 88 L77 83.5" stroke="#082b65" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+            <rect x="86" y="83" width="26" height="5" rx="2.5" fill="#C7D3E2" />
+            <rect x="68" y="100" width="11" height="11" rx="3" stroke="#082b65" stroke-width="2.4" fill="none" />
+            <path d="M70.5 105.5 L73 108 L77 103.5" stroke="#082b65" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+            <rect x="86" y="103" width="26" height="5" rx="2.5" fill="#C7D3E2" />
+            <rect x="68" y="120" width="11" height="11" rx="3" stroke="#B9C7D8" stroke-width="2.4" fill="none" />
+            <rect x="86" y="123" width="20" height="5" rx="2.5" fill="#DDE5EE" />
+            <circle cx="122" cy="140" r="15" fill="#F58220" />
+            <path d="M115.5 140.5 L120 145 L129 135.5" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+          </svg>
+        </div>
+      </aside>
+
+      <!-- RIGHT : content -->
+      <div class="tq-content">
+        <!-- close button kept for design fidelity but UNWIRED (see note) -->
+        <!-- <button class="tq-close" id="tqClose" type="button" aria-label="Close guidelines">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <path d="M18 6 6 18M6 6l12 12" />
+          </svg>
+        </button> -->
+
+        <h1 class="tq-title" id="tqTitle">BTES TalentQuest <span class="accent">Guidelines</span></h1>
+
+        <ul class="tq-list">
+          <li class="tq-item">
+            <span class="chip">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z" /><path d="M15 2v5h5" /><path d="M9 13h6M9 17h4" />
+              </svg>
+            </span>
+            <p>Total Questions: 20</p>
+          </li>
+          <li class="tq-item">
+            <span class="chip">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="9" /><path d="M12 7v5l3.2 2" />
+              </svg>
+            </span>
+            <p>Total Duration: 20 Minutes</p>
+          </li>
+          <li class="tq-item">
+            <span class="chip">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="8" r="4" /><path d="M4.5 20.5c.6-3.6 3.7-5.5 7.5-5.5s6.9 1.9 7.5 5.5" />
+              </svg>
+            </span>
+            <p>Each student can attempt only once.</p>
+          </li>
+          <li class="tq-item">
+            <span class="chip">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 22h14" /><path d="M5 2h14" /><path d="M17 22v-4.2a2 2 0 0 0-.6-1.4L12 12l-4.4 4.4A2 2 0 0 0 7 17.8V22" /><path d="M7 2v4.2a2 2 0 0 0 .6 1.4L12 12l4.4-4.4A2 2 0 0 0 17 6.2V2" />
+              </svg>
+            </span>
+            <p>Test will auto-submit after time expires.</p>
+          </li>
+          <li class="tq-item">
+            <span class="chip">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 12a9 9 0 0 1 15-6.7L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-15 6.7L3 16" /><path d="M3 21v-5h5" />
+              </svg>
+            </span>
+            <p>Do not refresh the page during the exam.</p>
+          </li>
+          <li class="tq-item">
+            <span class="chip">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12.55a11 11 0 0 1 14.08 0" /><path d="M1.42 9a16 16 0 0 1 21.16 0" /><path d="M8.53 16.11a6 6 0 0 1 6.95 0" /><circle cx="12" cy="20" r="1" fill="currentColor" stroke="none" />
+              </svg>
+            </span>
+            <p>Use a stable internet connection.</p>
+          </li>
+          <li class="tq-item">
+            <span class="chip">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M8 3 4 7l4 4" /><path d="M4 7h16" /><path d="m16 21 4-4-4-4" /><path d="M20 17H4" />
+              </svg>
+            </span>
+            <p>Switching tabs may lead to auto submission.</p>
+          </li>
+        </ul>
+
+        <!-- id swapped: tqAgree -> guidelineCheck (label 'for' updated to match) -->
+        <label class="tq-consent" for="guidelineCheck">
+          <input type="checkbox" id="guidelineCheck">
+          <span class="box" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 6 9 17l-5-5" />
+            </svg>
+          </span>
+          <span>I have read and understood all the exam guidelines and agree to proceed with the BTES TalentQuest.</span>
+        </label>
+
+        <!-- id swapped: tqStart -> startExamBtn -->
+        <button class="tq-start" id="startExamBtn" type="button" disabled>
+          Start BTES TalentQuest
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14" /><path d="m13 6 6 6-6 6" />
+          </svg>
         </button>
+      </div>
 
     </div>
-
-</div>
+  </div>

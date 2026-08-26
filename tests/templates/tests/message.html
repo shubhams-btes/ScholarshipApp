@@ -40,7 +40,9 @@
                 {% if countdown_seconds %}
                     <div style="font-size:80px;">⏳</div>
                 {% else %}
-                    <div style="font-size:80px;">ℹ️</div>
+                    <div style="font-size:80px;">
+                        <img src="{% static 'tests/images/examination_status.png' %}" alt="examination_status" />
+                    </div>
                 {% endif %}
 
                 <h2 class="section-title">

@@ -1,149 +1,563 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
 
-
-.guidelines-modal,
-.guidelines-card,
-.guidelines-card *{
-    font-family:'Montserrat',sans-serif;
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
 }
 
-.guidelines-modal{
-    position:fixed;
-    inset:0;
-
-    display:flex;
-    justify-content:center;
-    align-items:center;
-
-    background:rgba(0,0,0,.65);
-    backdrop-filter:blur(4px);
-
-    z-index:9999;
-}
-
-.guidelines-card{
-    width:650px;
-    max-width:90%;
-
-    padding:42px 48px;
-
-    border-radius:18px;
-
-    background:
-    linear-gradient(
-        rgba(3,30,74,.94),
-        rgba(3,30,74,.94)
-    ),
-    url("../images/bg-sidebar.png");
-
-    background-size:cover;
-    background-position:center;
-
-    color:#fff;
+body {
+	font-family: 'Montserrat', sans-serif;
+	background: #fff;
 }
 
 
 
-.guidelines-card h2{
-    text-align:left;
-    margin-bottom:25px;
-    color:#fff;
-    font-size:28px;
-    font-weight:700;
+.tq-overlay{
+  position:fixed;
+  inset:0;
+  z-index:1000;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:16px;
+  background:rgba(4, 20, 36, .9);
 }
 
-.guidelines-card h2:after{
-    content:"";
-    display:block;
-    width:70px;
-    height:4px;
-    background:#f58220;
-    margin:12px 0 0;
-    border-radius:4px;
+.tq-overlay[hidden]{
+  display:none;
 }
 
-.guidelines-list{
-    list-style:none;
-    margin:0;
-    padding:0;
+/* ---------- Modal shell ---------- */
+
+.tq-modal{
+  width:min(880px, 100%);
+  max-height:min(92vh, 780px);
+  border-radius:18px;
+  box-shadow:0 30px 80px rgba(7, 38, 67, .38);
+  display:grid;
+  grid-template-columns:300px 1fr;
+  grid-template-rows:minmax(0, 1fr);
+  overflow:hidden;
 }
 
-.guidelines-list li{
-    position:relative;
-    padding-left:28px;
-    margin-bottom:14px;
-   
+@media (prefers-reduced-motion: no-preference){
+  .tq-overlay{
+    animation:tqFade .22s ease both;
+  }
+
+  .tq-modal{
+    animation:tqPop .3s cubic-bezier(.22,1,.36,1) both;
+  }
+
+  @keyframes tqFade{
+    from{
+      opacity:0;
+    }
+  }
+
+  @keyframes tqPop{
+    from{
+      opacity:0;
+      transform:translateY(10px) scale(.965);
+    }
+  }
+}
+
+/* ============================================================
+   LEFT — brand panel
+   ============================================================ */
+
+.tq-panel{
+  position:relative;
+  background:#072643;
+  overflow:hidden;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  padding:30px 26px;
+}
+
+/* layered diagonal planes */
+
+.tq-panel .plane{
+  position:absolute;
+  pointer-events:none;
+}
+
+.tq-panel .plane-1{
+  left:-40%;
+  bottom:-18%;
+  width:150%;
+  height:70%;
+  background:linear-gradient(
+    115deg,
+    #0B3157 0%,
+    rgba(11,49,87,0) 62%
+  );
+  transform:rotate(-32deg);
+  transform-origin:left bottom;
+}
+
+.tq-panel .plane-2{
+  left:-30%;
+  bottom:-34%;
+  width:150%;
+  height:60%;
+  background:linear-gradient(
+    115deg,
+    #113D6B 0%,
+    rgba(17,61,107,0) 55%
+  );
+  transform:rotate(-32deg);
+  transform-origin:left bottom;
+}
+
+/* gold hairlines */
+
+.tq-panel .hairline{
+  position:absolute;
+  height:2px;
+  width:150%;
+  left:-20%;
+  background:linear-gradient(
+    90deg,
+    rgba(232,162,61,0) 0%,
+    #E8A23D 35%,
+    rgba(232,162,61,0) 100%
+  );
+  transform:rotate(-32deg);
+  transform-origin:left bottom;
+  opacity:.75;
+  pointer-events:none;
+}
+
+.tq-panel .hairline-1{
+  bottom:26%;
+}
+
+.tq-panel .hairline-2{
+  bottom:14%;
+  opacity:.4;
+}
+
+/* brand block */
+
+.tq-brand{
+  position:relative;
+  z-index:1;
+}
+
+.tq-brand-row{
+  display:block;
+  text-align:center;
+}
+
+.tq-brand-row svg{
+  flex:none;
+}
+
+.tq-brand-name{
+  color:#FFFFFF;
+  font-size:27px;
+  font-weight:700;
+  letter-spacing:1.5px;
+  line-height:1;
+}
+
+.tq-brand-tag{
+  margin-top:5px;
+  color:rgba(255,255,255,.72);
+  font-size:10.5px;
+  font-weight:500;
+  letter-spacing:.6px;
+}
+
+/* shield illustration */
+
+.tq-illus{
+  position:relative;
+  z-index:1;
+  flex:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:16px 0 26px;
+}
+
+.tq-illus svg{
+  width:176px;
+  height:auto;
+}
+
+/* ============================================================
+   RIGHT — content
+   ============================================================ */
+
+.tq-content{
+  position:relative;
+  min-height:0;
+  padding:32px 42px 30px;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  background: #fff;
+}
+
+.tq-close{
+  position:absolute;
+  top:16px;
+  right:16px;
+  width:42px;
+  height:42px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:transparent;
+  border:0;
+  border-radius:10px;
+  color:#93A0AF;
+  transition:background .18s ease, color .18s ease;
+}
+
+.tq-close:hover{
+  background:#F1F4F8;
+  color:#072643;
+}
+
+.tq-title{
+  color:#072643;
+  font-size:27px;
+  font-weight:700;
+  line-height:1.18;
+}
+
+.tq-title .accent{
+  color:#F58220;
+}
+
+/* guidelines list */
+
+.tq-list{
+  list-style:none;
+  margin-top:16px;
+}
+
+.tq-item{
+  position:relative;
+  display:grid;
+  grid-template-columns:40px 1fr;
+  align-items:center;
+  gap:16px;
+  padding:10px 0;
+}
+
+.tq-item:not(:last-child)::after{
+  content:"";
+  position:absolute;
+  left:56px;
+  right:0;
+  bottom:0;
+  height:1px;
+  background:#E7ECF2;
+}
+
+.tq-item .chip{
+  width:40px;
+  height:40px;
+  border-radius:50%;
+  background:#EEF3F9;
+  border:1px solid #E0E8F1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#0B3157;
+}
+
+.tq-item .chip svg{
+  width:19px;
+  height:19px;
+}
+
+.tq-item p{
+  font-size:14.5px;
+  font-weight:500;
+  color:#000;
+  line-height:1.45;
+}
+
+/* consent */
+
+.tq-consent{
+  margin-top:14px;
+  display:flex;
+  align-items:flex-start;
+  gap:12px;
+  background:#F4F6FA;
+  border-radius:12px;
+  padding:12px 14px;
+  cursor:pointer;
+}
+
+.tq-consent input{
+  position:absolute;
+  width:1px;
+  height:1px;
+  opacity:0;
+  overflow:hidden;
+  clip:rect(0 0 0 0);
+}
+
+.tq-consent .box{
+  flex:none;
+  width:22px;
+  height:22px;
+  margin-top:1px;
+  border-radius:6px;
+  border:2px solid #C4CEDA;
+  background:#FFFFFF;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#FFFFFF;
+  transition:background .16s ease, border-color .16s ease;
+}
+
+.tq-consent .box svg{
+  width:13px;
+  height:13px;
+  opacity:0;
+  transform:scale(.6);
+  transition:.16s ease;
+}
+
+.tq-consent input:checked + .box{
+  background:#F58220;
+  border-color:#F58220;
+}
+
+.tq-consent input:checked + .box svg{
+  opacity:1;
+  transform:scale(1);
+}
+
+.tq-consent input:focus-visible + .box{
+  outline:2px solid #F58220;
+  outline-offset:2px;
+}
+
+.tq-consent span{
+  font-size:13px;
+  font-weight:500;
+  color:#48566A;
+  line-height:1.55;
+}
+
+/* CTA */
+
+.tq-start{
+  margin-top:16px;
+  width:100%;
+  min-height:52px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  background:#F58220;
+  color:#FFFFFF;
+  border:0;
+  border-radius:12px;
+  font-size:16px;
+  font-weight:600;
+  letter-spacing:.2px;
+  transition:
+    background .18s ease,
+    transform .18s ease,
+    box-shadow .18s ease,
+    opacity .18s ease;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.tq-start svg{
+  width:19px;
+  height:19px;
+  transition:transform .18s ease;
+}
+
+.tq-start:not(:disabled):hover{
+  background:#DE6F0F;
+  transform:translateY(-1px);
+  box-shadow:0 12px 26px rgba(245,130,32,.35);
+}
+
+.tq-start:not(:disabled):hover svg{
+  transform:translateX(3px);
+}
+
+.tq-start:not(:disabled):active{
+  transform:translateY(0);
+  box-shadow:none;
+}
+
+.tq-start:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+}
+
+
+
+/* ---------- Responsive ---------- */
+
+/* short viewports (laptops) */
+
+@media (max-height: 740px){
+
+  .tq-content{
+    padding:22px 36px 22px;
+  }
+
+  .tq-title{
+    font-size:23px;
+  }
+
+  .tq-list{
+    margin-top:10px;
+  }
+
+  .tq-item{
+    padding:7px 0;
+    grid-template-columns:36px 1fr;
+    gap:14px;
+  }
+
+  .tq-item:not(:last-child)::after{
+    left:50px;
+  }
+
+  .tq-item .chip{
+    width:36px;
+    height:36px;
+  }
+
+  .tq-item .chip svg{
+    width:17px;
+    height:17px;
+  }
+
+  .tq-item p{
+    font-size:13.5px;
+  }
+
+  .tq-consent{
+    margin-top:12px;
+    padding:10px 12px;
+  }
+
+  .tq-consent span{
+    font-size:12.5px;
+  }
+
+  .tq-start{
+    margin-top:12px;
+    min-height:48px;
     font-size:15px;
-    font-weight:500;
-    line-height:1.7;
-    list-style: none;
+  }
 }
 
-.guidelines-list li{
-    position:relative;
-    padding-left:28px;
-    margin-bottom:12px;
-    line-height:1.7;
-     
+@media (max-width: 780px){
+
+  .tq-modal{
+    grid-template-columns:1fr;
+    grid-template-rows:auto minmax(0, 1fr);
+    max-height:94vh;
+  }
+
+  .tq-panel{
+    flex-direction:row;
+    align-items:center;
+    justify-content:space-between;
+    padding:18px 22px;
+  }
+
+  .tq-illus{
+    flex:none;
+    padding:0;
+  }
+
+  .tq-illus svg{
+    width:56px;
+  }
+
+  .tq-panel .hairline-1{
+    bottom:8%;
+  }
+
+  .tq-panel .hairline-2{
+    display:none;
+  }
+
+  .tq-content{
+    padding:26px 22px 24px;
+  }
+
+  .tq-title{
+    font-size:23px;
+    padding-right:36px;
+  }
+
+  .tq-item p{
+    font-size:13.5px;
+  }
 }
 
-.guidelines-list li:before{
-    content:"✓";
-    position:absolute;
-    left:0;
-    color:#f58220;
-    font-weight:700;
+.cs-overlay{
+  position:fixed;
+  inset:0;
+  z-index:1000;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:16px;
+  background:rgba(4,20,36,.9);
 }
 
-.agreement{
-    display:flex;
-    align-items:flex-start;
-    gap:12px;
-
-    margin-top:25px;
-    margin-bottom:28px;
-
-    font-size:14px;
-    line-height:1.7;
+.cs-overlay[hidden]{
+  display:none;
 }
 
-.agreement input{
-    width:18px;
-    height:18px;
-    accent-color:#f58220;
-    margin-top:2px;
+/* ---------- Modal shell ---------- */
+
+.cs-modal{
+  width:min(600px,100%);
+  max-height:92vh;
+  overflow-y:auto;  
+  border-radius:20px;
+  box-shadow:0 30px 80px rgba(7,38,67,.38);
 }
 
-#startExamBtn{
-    width:100%;
+@media (prefers-reduced-motion:no-preference){
 
-    background:#f58220;
-    color:#fff;
+  .cs-overlay{
+    animation:csFade .22s ease both;
+  }
 
-    border:1px solid #f58220;
-    border-radius:8px;
+  .cs-modal{
+    animation:csPop .3s cubic-bezier(.22,1,.36,1) both;
+  }
 
-    height:54px;
+  @keyframes csFade{
+    from{
+      opacity:0;
+    }
+  }
 
-    font-size:16px;
-    font-weight:600;
-
-    cursor:pointer;
-
-    transition:.25s ease;
+  @keyframes csPop{
+    from{
+      opacity:0;
+      transform:translateY(10px) scale(.965);
+    }
+  }
 }
 
-#startExamBtn:hover:not(:disabled){
-    transform:translateY(-1px);
-}
-
-#startExamBtn:disabled{
-    background:transparent;
-    color:#ffffff;
-    border:1px solid rgba(255,255,255,.6);
-    cursor:not-allowed;
-    opacity:.8;
-}
 /* ==========================
    SUBMIT CONFIRMATION MODAL
    ========================== */
@@ -231,4 +645,577 @@
 .secondary-btn{
     background:#ffffff;
     color:#16365E;
+}
+
+.guidelines-modal,
+.guidelines-card,
+.guidelines-card *{
+    font-family:'Montserrat',sans-serif;
+}
+
+.guidelines-modal{
+    position:fixed;
+    inset:0;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:rgba(0,0,0,.65);
+    backdrop-filter:blur(4px);
+    z-index:9999;
+}
+
+.guidelines-card{
+    width:650px;
+    max-width:90%;
+    padding:42px 48px;
+    border-radius:18px;
+    background:
+      linear-gradient(rgba(3,30,74,.94), rgba(3,30,74,.94)),
+      url("../images/bg-sidebar.png");
+    background-size:cover;
+    background-position:center;
+    color:#fff;
+}
+
+.guidelines-card h2{
+    text-align:left;
+    margin-bottom:25px;
+    color:#fff;
+    font-size:28px;
+    font-weight:700;
+}
+
+.guidelines-card h2:after{
+    content:"";
+    display:block;
+    width:70px;
+    height:4px;
+    background:#f58220;
+    margin:12px 0 0;
+    border-radius:4px;
+}
+
+/* ---------- Navy hero ---------- */
+
+.cs-hero{
+  position:relative;
+  background:#072643;
+  text-align:center;
+  padding:52px 32px 88px;
+}
+
+.cs-hero .dots{
+  position:absolute;
+  right:26px;
+  top:44%;
+  width:104px;
+  height:148px;
+  background-image:radial-gradient(
+    rgba(255,255,255,.16) 1.3px,
+    transparent 1.4px
+  );
+  background-size:15px 15px;
+  pointer-events:none;
+}
+
+.cs-close{
+  position:absolute;
+  top:16px;
+  right:16px;
+  width:42px;
+  height:42px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:transparent;
+  border:0;
+  border-radius:10px;
+  color:rgba(255,255,255,.72);
+  transition:background .18s ease,color .18s ease;
+}
+
+.cs-close:hover{
+  background:rgba(255,255,255,.1);
+  color:#FFFFFF;
+}
+
+/* ---------- Confirmation badge ---------- */
+
+.cs-badge{
+  position:relative;
+  width:168px;
+  height:168px;
+  margin:0 auto;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.cs-badge .ring{
+  position:absolute;
+  inset:0;
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:50%;
+}
+
+.cs-badge .ring-dot{
+  position:absolute;
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:#F58220;
+}
+
+.cs-badge .ring-dot-1{
+  top:14px;
+  right:22px;
+}
+
+.cs-badge .ring-dot-2{
+  bottom:20px;
+  left:12px;
+  opacity:.85;
+}
+
+.cs-badge .disc{
+  position:relative;
+  width:118px;
+  height:118px;
+  border-radius:50%;
+  background:#FFFFFF;
+  box-shadow:0 14px 34px rgba(0,0,0,.28);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.cs-badge .disc > svg{
+  width:56px;
+  height:auto;
+}
+
+.cs-badge .warn{
+  position:absolute;
+  right:2px;
+  bottom:4px;
+  filter:drop-shadow(0 4px 10px rgba(0,0,0,.25));
+}
+
+/* ---------- Hero text ---------- */
+
+.cs-hero h2{
+  margin-top:26px;
+  color:#FFFFFF;
+  font-size:29px;
+  font-weight:700;
+  letter-spacing:.2px;
+}
+
+.cs-hero .rule{
+  width:44px;
+  height:3px;
+  border-radius:2px;
+  background:#F58220;
+  margin:12px auto 18px;
+}
+
+.cs-hero .msg{
+  color:rgba(255,255,255,.92);
+  font-size:15px;
+  font-weight:400;
+  line-height:1.6;
+}
+
+.cs-hero .msg strong{
+  color:#F58220;
+  font-weight:700;
+}
+
+.cs-hero .ask{
+  margin-top:10px;
+  color:#FFFFFF;
+  font-size:15px;
+  font-weight:500;
+}
+
+/* ---------- White sheet ---------- */
+
+.cs-sheet{
+  padding:0 32px 30px;
+  background: #fff;
+}
+
+/* ---------- Stat cards ---------- */
+
+.cs-cards{
+  position:relative;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:18px;
+  margin-top:-64px;
+}
+
+.cs-card{
+  border-radius:14px;
+  padding:20px 20px 16px;
+  min-height:122px;
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  box-shadow:0 10px 26px rgba(7,38,67,.10);
+}
+
+.cs-card .label{
+  font-size:14px;
+  font-weight:600;
+  color:#0B3157;
+}
+
+.cs-card .value{
+  margin-top:6px;
+  font-size:42px;
+  font-weight:700;
+  line-height:1;
+}
+
+.cs-card .icon{
+  margin-top:14px;
+  flex:none;
+}
+
+/* Attempted */
+
+.cs-card.attempted{
+  background:#E9F1FC;
+}
+
+.cs-card.attempted .value{
+  color:#082b65;
+}
+
+/* Unattempted */
+
+.cs-card.unattempted{
+  background:#FCEFE2;
+}
+
+.cs-card.unattempted .value{
+  color:#F58220;
+}
+
+/* ---------- Actions ---------- */
+
+.cs-actions{
+  margin-top:26px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:18px;
+}
+
+.cs-btn{
+  min-height:56px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  border-radius:12px;
+  font-size:15.5px;
+  font-weight:600;
+  letter-spacing:.2px;
+  font-family: 'Montserrat', sans-serif;
+  transition:
+    background .18s ease,
+    transform .18s ease,
+    box-shadow .18s ease,
+    border-color .18s ease;
+}
+
+.cs-btn svg{
+  width:19px;
+  height:19px;
+  transition:transform .18s ease;
+}
+
+/* Outline button */
+
+.cs-btn-outline{
+  background:#FFFFFF;
+  color:#072643;
+  border:1.5px solid #24446A;
+}
+
+.cs-btn-outline:hover{
+  background:#F3F7FB;
+}
+
+.cs-btn-outline:active{
+  background:#E9F0F7;
+}
+
+/* Primary button */
+
+.cs-btn-primary{
+  background:#F58220;
+  color:#FFFFFF;
+  border:0;
+}
+
+.cs-btn-primary:hover{
+  background:#DE6F0F;
+  transform:translateY(-1px);
+  box-shadow:0 12px 26px rgba(245,130,32,.35);
+}
+
+.cs-btn-primary:hover svg{
+  transform:translateX(3px);
+}
+
+.cs-btn-primary:active{
+  transform:translateY(0);
+  box-shadow:none;
+}
+
+/* ---------- Demo-only reopen chip ---------- */
+
+.cs-reopen{
+  position:fixed;
+  left:50%;
+  bottom:28px;
+  transform:translateX(-50%);
+  padding:12px 22px;
+  border-radius:999px;
+  background:#FFFFFF;
+  color:#072643;
+  border:1px solid #D8E0E9;
+  box-shadow:0 8px 24px rgba(7,38,67,.14);
+  font-size:14px;
+  font-weight:600;
+}
+
+.cs-reopen[hidden]{
+  display:none;
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width:480px){
+
+  .cs-hero{
+    padding:44px 20px 82px;
+  }
+
+  .cs-hero h2{
+    font-size:24px;
+  }
+
+  .cs-hero .dots{
+    display:none;
+  }
+
+  .cs-sheet{
+    padding:0 18px 22px;
+  }
+
+  .cs-cards{
+    gap:12px;
+  }
+
+  .cs-card{
+    padding:16px 14px 14px;
+    min-height:108px;
+  }
+
+  .cs-card .value{
+    font-size:34px;
+  }
+
+  .cs-actions{
+    grid-template-columns:1fr;
+    gap:12px;
+  }
+}
+
+#resumeFullscreenModal.guidelines-modal,
+#autoSubmitModal.guidelines-modal,
+#warningModal.guidelines-modal{
+  background:rgba(4, 20, 36, .9);
+  backdrop-filter:blur(2px);
+}
+
+/* ---- Card: navy panel, rounded, matches .cs-modal/.cs-hero ---- */
+#resumeFullscreenModal .guidelines-card,
+#autoSubmitModal .guidelines-card,
+#warningModal .guidelines-card{
+  width:min(600px, 100%);
+  max-width:600px;
+  padding:44px 40px 36px;
+  border-radius:20px;
+  background:#072643;                 /* solid navy, no image */
+  box-shadow:0 30px 80px rgba(7, 38, 67, .38);
+  text-align:center;                  /* centered like the submit popup */
+  color:#FFFFFF;
+}
+
+/* ---- Title: white heading + orange underline rule ---- */
+#resumeFullscreenModal .guidelines-card h2,
+#autoSubmitModal .guidelines-card h2,
+#warningModal .guidelines-card h2{
+  color:#FFFFFF;
+  font-size:29px;
+  font-weight:700;
+  letter-spacing:.2px;
+  text-align:center;
+  margin-bottom:0;
+}
+
+/* the orange rule under the title (replaces .guidelines h2:after,
+   recreated here centered) */
+#resumeFullscreenModal .guidelines-card h2::after,
+#autoSubmitModal .guidelines-card h2::after,
+#warningModal .guidelines-card h2::after{
+  content:"";
+  display:block;
+  width:44px;
+  height:3px;
+  border-radius:2px;
+  background:#F58220;
+  margin:12px auto 18px;              /* auto = centered */
+}
+
+/* ---- Message text: light, centered, orange <strong> accents ---- */
+#resumeFullscreenModal .confirm-text,
+#autoSubmitModal .confirm-text,
+#warningModal .confirm-text{
+  color:rgba(255, 255, 255, .92);
+  font-size:15px;
+  font-weight:400;
+  line-height:1.6;
+  text-align:center;
+  margin-bottom:26px;
+}
+
+#resumeFullscreenModal .confirm-text strong,
+#autoSubmitModal .confirm-text strong,
+#warningModal .confirm-text strong{
+  color:#F58220;
+  font-weight:700;
+}
+
+/* ---- Actions row ---- */
+#resumeFullscreenModal .confirm-actions,
+#warningModal .confirm-actions{
+  display:flex;
+  justify-content:center;
+  gap:14px;
+  margin-top:4px;
+}
+
+/* ---- Primary button: matches .cs-btn-primary ---- */
+#resumeFullscreenModal .confirm-actions .primary-btn,
+#warningModal .confirm-actions .primary-btn{
+  min-height:52px;
+  padding:0 26px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  background:#F58220;
+  color:#FFFFFF;
+  border:0;
+  border-radius:12px;
+  font-size:15.5px;
+  font-weight:600;
+  letter-spacing:.2px;
+  cursor:pointer;
+  transition:background .18s ease, transform .18s ease, box-shadow .18s ease, opacity .18s ease;
+}
+
+#resumeFullscreenModal .confirm-actions .primary-btn:hover:not(:disabled),
+#warningModal .confirm-actions .primary-btn:hover:not(:disabled){
+  background:#DE6F0F;
+  transform:translateY(-1px);
+  box-shadow:0 12px 26px rgba(245, 130, 32, .35);
+}
+
+#resumeFullscreenModal .confirm-actions .primary-btn:active:not(:disabled),
+#warningModal .confirm-actions .primary-btn:active:not(:disabled){
+  transform:translateY(0);
+  box-shadow:none;
+}
+
+#resumeFullscreenModal .confirm-actions .primary-btn:disabled,
+#warningModal .confirm-actions .primary-btn:disabled{
+  opacity:.55;
+  cursor:not-allowed;
+}
+
+/* ============================================================
+   PROCTORING MODALS — sleek glowing gold diagonals in the
+   corners (top-left + bottom-right), over flat navy.
+   Pure CSS, no HTML change. Scoped to the three modal IDs.
+   Paste AFTER the proctoring restyle CSS so its background wins.
+   ============================================================ */
+
+#resumeFullscreenModal .guidelines-card,
+#autoSubmitModal .guidelines-card,
+#warningModal .guidelines-card{
+  position:relative;                 /* anchor for the glow pseudo-elements */
+  overflow:hidden;                   /* clip the streaks to the rounded card */
+  background-color:#072643;
+  /* keep whatever emblem/other background you had OFF here so the
+     gradients below aren't overridden; this rule owns the background */
+  background-image:none;
+}
+
+/* Shared streak: a thin bright gold core that fades at both ends,
+   rotated to the panel's -32deg, with a soft glow via drop-shadow. */
+#resumeFullscreenModal .guidelines-card::before,
+#resumeFullscreenModal .guidelines-card::after,
+#autoSubmitModal .guidelines-card::before,
+#autoSubmitModal .guidelines-card::after,
+#warningModal .guidelines-card::before,
+#warningModal .guidelines-card::after{
+  content:"";
+  position:absolute;
+  width:190%;
+  height:3px;
+  left:-45%;
+  background:linear-gradient(
+    90deg,
+    rgba(232,162,61,0)   0%,
+    rgba(232,162,61,0)   30%,
+    #E8A23D              50%,
+    rgba(232,162,61,0)   70%,
+    rgba(232,162,61,0)   100%
+  );
+  filter:drop-shadow(0 0 6px rgba(232,162,61,.55));
+  transform:rotate(-32deg);
+  pointer-events:none;
+  z-index:0;
+}
+
+/* Top-left streak */
+#resumeFullscreenModal .guidelines-card::before,
+#autoSubmitModal .guidelines-card::before,
+#warningModal .guidelines-card::before{
+  top:14%;
+  transform-origin:left center;
+}
+
+/* Bottom-right streak (fainter, like the panel's second hairline) */
+#resumeFullscreenModal .guidelines-card::after,
+#autoSubmitModal .guidelines-card::after,
+#warningModal .guidelines-card::after{
+  bottom:12%;
+  opacity:.7;
+  transform-origin:left center;
+}
+
+/* Keep the modal's real content above the streaks */
+#resumeFullscreenModal .guidelines-card > *,
+#autoSubmitModal .guidelines-card > *,
+#warningModal .guidelines-card > *{
+  position:relative;
+  z-index:1;
 }
