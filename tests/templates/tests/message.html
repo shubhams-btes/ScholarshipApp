@@ -92,22 +92,24 @@ function updateTimer() {
             "Starting Quiz...";
 
         setTimeout(() => {
-
             window.location.href =
                 "{% url 'start_quiz' %}";
-
         }, 1000);
 
         return;
     }
 
-    const minutes =
-        Math.floor(timeLeft / 60);
+    const hours = Math.floor(timeLeft / 3600);
 
-    const seconds =
-        timeLeft % 60;
+    const minutes = Math.floor(
+        (timeLeft % 3600) / 60
+    );
+
+    const seconds = timeLeft % 60;
 
     document.getElementById("timer").innerHTML =
+        String(hours).padStart(2, "0")
+        + ":" +
         String(minutes).padStart(2, "0")
         + ":" +
         String(seconds).padStart(2, "0");
@@ -121,6 +123,5 @@ updateTimer();
 
 </script>
 {% endif %}
-
 </body>
 </html>
