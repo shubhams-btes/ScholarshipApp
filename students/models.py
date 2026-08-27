@@ -23,7 +23,7 @@ class Student(models.Model):
 
     exam_schedule = models.ForeignKey(
         'admin_panel.ExamScheduleHistory',
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='students',
         null=True,
         blank=True

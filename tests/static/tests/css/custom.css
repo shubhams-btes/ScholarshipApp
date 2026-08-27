@@ -689,3 +689,8 @@ Thank You card
     border: 1px solid #ddd;
     border-radius: 8px;
 }
+
+#examination_status {
+	max-width: 100%;
+	height: 100px;
+}

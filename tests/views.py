@@ -31,143 +31,71 @@ def student_login_required(view_func):
         return view_func(request, *args, **kwargs)
     return wrapper
 
+
+
 @student_login_required
 @cache_control(no_cache=True, must_revalidate=True, no_store=True)
 def quiz_view(request):
     student = request.student
     now = timezone.now()
     ist = pytz.timezone('Asia/Kolkata')
-    guidelines_accepted = request.session.get(
-        "guidelines_accepted",
-        False
-    )
-    
+    guidelines_accepted = request.session.get("guidelines_accepted", False)
 
-    try:
-        schedule = ExamSchedule.objects.get(
-            college=student.exam_schedule.college
-        )
-    except ExamSchedule.DoesNotExist:
-        return render(
-            request,
-            'tests/message.html',
-            {'message': 'No active BTES TalentQuest schedule for your college.'}
-        )
+    # The occurrence the student is BOUND to — the single source of truth.
+    event = student.exam_schedule
+    if event is None:
+        return render(request, 'tests/message.html',
+                      {'message': 'No BTES TalentQuest registration found for your account.'})
 
-    if not schedule.quiz_date:
-        return render(
-            request,
-            'tests/message.html',
-            {'message': 'BTES TalentQuest date & time not set yet.'}
-        )
+    # Event must still be live.
+    if not event.is_active:
+        return render(request, 'tests/message.html',
+                      {'message': 'This BTES TalentQuest is no longer available.'})
 
-    quiz_datetime = schedule.quiz_date
+    if not event.quiz_date:
+        return render(request, 'tests/message.html',
+                      {'message': 'BTES TalentQuest date & time not set yet.'})
+
+    quiz_datetime = event.quiz_date
     quiz_datetime_ist = quiz_datetime.astimezone(ist)
 
+    # Not started yet → countdown.
     if now < quiz_datetime:
         time_diff = (quiz_datetime - now).total_seconds()
+        return render(request, 'tests/message.html', {
+            'message': f'BTES TalentQuest will start at {quiz_datetime_ist.strftime("%Y-%m-%d %H:%M")}.',
+            'countdown_seconds': int(time_diff),
+        })
 
-        return render(
-            request,
-            'tests/message.html',
-            {
-                'message': (
-                    f'BTES TalentQuest will start at '
-                    f'{quiz_datetime_ist.strftime("%Y-%m-%d %H:%M")}.'
-                ),
-                'countdown_seconds': int(time_diff)
-            }
-        )
+    # Quiz must be enabled by admin.
+    if not event.quiz_enabled:
+        return render(request, 'tests/message.html',
+                      {'message': 'BTES TalentQuest has not been enabled yet.'})
 
-    if not schedule.quiz_enabled:
-        return render(
-            request,
-            'tests/message.html',
-            {'message': 'BTES TalentQuest has not been enabled yet.'}
-        )
-
-    # Prevent multiple attempts
-    # Prevent multiple attempts — scoped to THIS exam schedule,
-    # matching the check in submit_quiz.
-    try:
-        history = ExamScheduleHistory.objects.get(
-            college=student.exam_schedule.college,
-            quiz_date=schedule.quiz_date,
-        )
-        already_attempted = Result.objects.filter(
-            student=student,
-            exam_schedule=history,
-        ).exists()
-    except ExamScheduleHistory.DoesNotExist:
-        # No history row yet → nobody from this college has submitted,
-        # so this student can't have attempted.
-        already_attempted = False
-
-    if already_attempted:
-        return render(
-            request,
-            'tests/message.html',
-            {'message': 'You have already attempted the BTES TalentQuest.'}
-        )
+    # Already attempted? — scoped to the student's occurrence.
+    if Result.objects.filter(student=student, exam_schedule=event).exists():
+        return render(request, 'tests/message.html',
+                      {'message': 'You have already attempted the BTES TalentQuest.'})
 
     EXAM_DURATION_MINUTES = 20
 
-    # -----------------------------
-    # Load / create the student's progress record (DB, survives re-login)
-    # -----------------------------
     progress, _ = ExamProgress.objects.get_or_create(student=student)
 
-    # Build the question set ONCE and persist it, so a refresh OR a re-login
-    # gets back the SAME 20 questions instead of re-randomising.
     if not progress.question_ids:
-
-        technical = list(
-            Question.objects.filter(category="TECH", is_active=True)
-        )
-        reasoning = list(
-            Question.objects.filter(category="REAS", is_active=True)
-        )
-
+        technical = list(Question.objects.filter(category="TECH", is_active=True))
+        reasoning = list(Question.objects.filter(category="REAS", is_active=True))
         if len(technical) < 10 or len(reasoning) < 10:
-            return render(
-                request,
-                'tests/message.html',
-                {
-                    'message': (
-                        'Not enough active questions available. '
-                        'Contact admin.'
-                    )
-                }
-            )
-
-        selected = (
-            random.sample(technical, 10) +
-            random.sample(reasoning, 10)
-        )
+            return render(request, 'tests/message.html',
+                          {'message': 'Not enough active questions available. Contact admin.'})
+        selected = random.sample(technical, 10) + random.sample(reasoning, 10)
         random.shuffle(selected)
-
         progress.question_ids = [q.id for q in selected]
         progress.save(update_fields=["question_ids", "updated_at"])
 
     question_ids = progress.question_ids
+    question_map = {q.id: q for q in Question.objects.filter(id__in=question_ids)}
+    selected_questions = [question_map[qid] for qid in question_ids if qid in question_map]
 
-    question_map = {
-        q.id: q
-        for q in Question.objects.filter(id__in=question_ids)
-    }
-
-    selected_questions = [
-        question_map[qid]
-        for qid in question_ids
-        if qid in question_map
-    ]
-
-    # -----------------------------
-    # Deadline + saved answers for the template.
-    # Only expose the end time when guidelines are already accepted (same-session
-    # refresh → resume overlay). On a fresh/new session the guidelines modal
-    # handles entry, so we send "" to avoid triggering BOTH overlays at once.
-    # -----------------------------
     if guidelines_accepted and progress.end_time:
         exam_end_time = progress.end_time.isoformat()
     else:
@@ -175,28 +103,21 @@ def quiz_view(request):
 
     saved_answers_json = json.dumps(progress.answers or {})
 
-    # Save active session
     request.session['student_id'] = student.id
-
     if not request.session.session_key:
         request.session.save()
-
     student.current_session = request.session.session_key
-    student.save()
+    student.save(update_fields=["current_session"])
 
-    return render(
-        request,
-        "tests/exam.html",
-        {
-            "student": student,
-            "questions": selected_questions,
-            "duration": EXAM_DURATION_MINUTES,
-            "exam_end_time": exam_end_time,
-            "saved_answers_json": saved_answers_json,
-            "schedule": schedule,
-            "guidelines_accepted": guidelines_accepted,
-        }
-    )
+    return render(request, "tests/exam.html", {
+        "student": student,
+        "questions": selected_questions,
+        "duration": EXAM_DURATION_MINUTES,
+        "exam_end_time": exam_end_time,
+        "saved_answers_json": saved_answers_json,
+        "schedule": event,             # the occurrence
+        "guidelines_accepted": guidelines_accepted,
+    })
 
 @student_login_required
 def start_exam(request):
@@ -223,25 +144,29 @@ def start_exam(request):
         "exam_end_time": progress.end_time.isoformat(),
     })
 
+
 @student_login_required
 @cache_control(no_cache=True, must_revalidate=True, no_store=True)
 def submit_quiz(request):
     if request.method != "POST":
-        return redirect("exam")  # fallback
+        return redirect("exam")
 
-    student = request.student  # assuming OneToOne with User
+    student = request.student
+
+    # The occurrence the student is BOUND to — source of truth.
+    event = student.exam_schedule
+    if event is None:
+        return render(request, "tests/message.html", {
+            "message": "No BTES TalentQuest registration found for your account."
+        })
 
     # -------------------------------------------------
-    # 1. SERVER-SIDE DEADLINE CHECK (from DB, survives re-login)
+    # 1. DEADLINE CHECK
     # -------------------------------------------------
-    GRACE_SECONDS = 15  # allow latency / auto-submit lag
-
+    GRACE_SECONDS = 15
     progress = ExamProgress.objects.filter(student=student).first()
 
-    # No progress row → exam was never started, or already submitted
-    # (double submit). Treat as invalid/late.
     is_late = True
-
     if progress and progress.end_time:
         deadline = progress.end_time + timedelta(seconds=GRACE_SECONDS)
         is_late = timezone.now() > deadline
@@ -250,89 +175,55 @@ def submit_quiz(request):
     # 2. GRADE ANSWERS
     # -------------------------------------------------
     score = 0
-    answered_qids = []
-
+    question_ids = progress.question_ids if progress else []
     for key, value in request.POST.items():
         if key.startswith("q") and key != "csrfmiddlewaretoken":
-            qid = key[1:]  # remove the 'q' prefix
+            qid = key[1:]
             if not qid.isdigit():
+                continue
+            if int(qid) not in question_ids:
                 continue
             try:
                 q = Question.objects.get(id=int(qid))
-                # OPTIONAL: enforce that qid belongs to this student's exam
-                if int(qid) not in progress.question_ids:
-                    continue
-                answered_qids.append(qid)
-                if str(value) == str(q.correct_option):
-                    score += 1
             except Question.DoesNotExist:
                 continue
+            if str(value) == str(q.correct_option):
+                score += 1
 
     # -------------------------------------------------
-    # 3. RESOLVE EXAM SCHEDULE
+    # 3. PREVENT DOUBLE ATTEMPT — scoped to the student's occurrence
     # -------------------------------------------------
-    try:
-        schedule = ExamSchedule.objects.get(
-            college=student.exam_schedule.college
-        )
-    except ExamSchedule.DoesNotExist:
-        return render(request, "tests/message.html", {
-            "message": "No active BTES TalentQuest schedule found for your college."
-        })
-
-    history, _ = ExamScheduleHistory.objects.get_or_create(
-        college=student.exam_schedule.college,
-        quiz_date=schedule.quiz_date,
-    )
-
-    # -------------------------------------------------
-    # 4. PREVENT DOUBLE ATTEMPT
-    # -------------------------------------------------
-    if Result.objects.filter(student=student, exam_schedule=history).exists():
+    if Result.objects.filter(student=student, exam_schedule=event).exists():
         return render(request, "tests/message.html", {
             "message": "You have already attempted the BTES TalentQuest."
         })
 
     # -------------------------------------------------
-    # 5. RECORD RESULT (flag if late)
+    # 4. RECORD RESULT
     # -------------------------------------------------
-    if is_late:
-        # POLICY CHOICE — pick one:
-        #   (a) record the real score but mark it for review,
-        #   (b) zero it out,
-        #   (c) reject entirely (return before creating Result).
-        # Below records the attempt so it can't be retried, scored 0.
-        # Change to `final_score = score` if you'd rather keep it.
-        final_score = 0
-    else:
-        final_score = score
+    final_score = 0 if is_late else score
 
     result = Result.objects.create(
         student=student,
-        exam_schedule=history,
-        quiz_date=schedule.quiz_date,
+        exam_schedule=event,                       # the bound occurrence
+        quiz_date=event.quiz_date,                 # stamped from that occurrence
         score=final_score,
-        total_questions="20",
-        # is_flagged=is_late,   # add this field to your model if you want an audit trail
+        total_questions=len(question_ids),         # real int count
     )
 
     # -------------------------------------------------
-    # 6. CLEAR PROGRESS / SESSION / LOGOUT
+    # 5. CLEAR PROGRESS / SESSION / LOGOUT
     # -------------------------------------------------
-    # Remove the transient progress record so the attempt can't be resumed.
     ExamProgress.objects.filter(student=student).delete()
 
     student.current_session = None
-    student.save()
+    student.save(update_fields=["current_session"])
 
     auth_logout(request)
     request.session.pop("guidelines_accepted", None)
     request.session.flush()
 
-    return render(request, "tests/submitted.html", {
-        "result": result
-    })
-
+    return render(request, "tests/submitted.html", {"result": result})
 
 @student_login_required
 def quiz_submitted(request):

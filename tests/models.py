@@ -44,7 +44,7 @@ class Question(models.Model):
 
 class Result(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
-    exam_schedule = models.ForeignKey(ExamScheduleHistory, on_delete=models.SET_NULL, null=True, blank=True)
+    exam_schedule = models.ForeignKey(ExamScheduleHistory, on_delete=models.PROTECT, null=True, blank=True)
     quiz_date = models.DateTimeField(null=True, blank=True)
     score = models.IntegerField(default=0)
     total_questions = models.IntegerField(default=0)

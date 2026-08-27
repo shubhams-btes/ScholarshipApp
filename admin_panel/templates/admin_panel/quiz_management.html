@@ -98,100 +98,110 @@
                 </thead>
                 <tbody>
                     {% for row in rows %}
-                    <tr>
-                        <td>{{ forloop.counter }}</td>
-                        <td>{{ row.college.name }}</td>
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ row.college.name }}</td>
 
-                        {% if row.schedule and row.schedule.quiz_date %}
-                        <td>{{ row.schedule.quiz_date|date:"d-m-Y H:i" }}</td>
-                        <td>
-                            <form
-                                method="post"
-                                action="{% url 'toggle_registration' row.schedule.id %}"
-                                style="margin: 0"
-                            >
-                                {% csrf_token %}
-                                <button
-                                    type="submit"
-                                    class="btn btn-sm {% if row.schedule.registration_enabled %}btn-danger{% else %}btn-success{% endif %}"
-                                >
-                                    {% if row.schedule.registration_enabled %}Close Registrations{% else %}Open Registrations{% endif %}
-                                </button>
-                            </form>
-                        </td>
-                        <td>
-                            {% if row.schedule.quiz_enabled %}
-                                <button
-                                    type="button"
-                                    class="btn btn-sm btn-danger disable-quiz-btn"
-                                    data-action="{% url 'toggle_quiz_status' row.schedule.id %}"
-                                    data-college="{{ row.schedule.college.name }}"
-                                >
-                                    Disable Quiz
-                                </button>
-                            {% else %}
-                                <form
-                                    method="post"
-                                    action="{% url 'toggle_quiz_status' row.schedule.id %}"
-                                    style="margin: 0"
-                                    onsubmit="return confirm('Enable the quiz for {{ row.college.name|escapejs }}?');"
-                                >
+                            {% if row.schedule and row.schedule.quiz_date %}
+                            <!-- QUIZ DATE cell: text + pencil, toggles to inline editor -->
+                            <td>
+                                <div class="qd-view d-flex align-items-center gap-2">
+                                    <span>{{ row.schedule.quiz_date|date:"d-m-Y H:i" }}</span>
+                                    {% if row.schedule.is_active %}
+                                    <button type="button"
+                                            class="btn btn-sm btn-link p-0 qd-edit-btn"
+                                            title="Edit date" aria-label="Edit date">
+                                        ✏️
+                                    </button>
+                                    {% endif %}
+                                </div>
+
+                                {% if row.schedule.is_active %}
+                                <form method="post" action="{% url 'update_quiz_date' row.schedule.pk %}"
+                                    class="qd-edit d-none align-items-center gap-1 mt-1">
                                     {% csrf_token %}
-                                    <button type="submit" class="btn btn-sm btn-success">
-                                        Enable Quiz
+                                    <input type="text" name="quiz_date"
+                                        class="form-control form-control-sm qd-flatpickr"
+                                        value="{{ row.schedule.quiz_date|date:'Y-m-d\TH:i' }}"
+                                        placeholder="Select Date & Time" required autocomplete="off">
+                                    <button type="submit" class="btn btn-sm btn-primary">Save</button>
+                                    <button type="button" class="btn btn-sm btn-secondary qd-cancel-btn">Cancel</button>
+                                </form>
+                                {% endif %}
+                            </td>
+
+                            <!-- REGISTRATION STATUS -->
+                            <td>
+                                <form method="post" action="{% url 'toggle_registration' row.schedule.id %}" style="margin:0">
+                                    {% csrf_token %}
+                                    <button type="submit"
+                                            class="btn btn-sm {% if row.schedule.registration_enabled %}btn-danger{% else %}btn-success{% endif %}">
+                                        {% if row.schedule.registration_enabled %}Close Registrations{% else %}Open Registrations{% endif %}
                                     </button>
                                 </form>
+                            </td>
+
+                            <!-- QUIZ STATUS -->
+                            <td>
+                                {% if row.schedule.quiz_enabled %}
+                                <button type="button"
+                                        class="btn btn-sm btn-danger disable-quiz-btn"
+                                        data-action="{% url 'toggle_quiz_status' row.schedule.id %}"
+                                        data-college="{{ row.schedule.college.name }}">
+                                    Disable Quiz
+                                </button>
+                                {% else %}
+                                <form method="post" action="{% url 'toggle_quiz_status' row.schedule.id %}" style="margin:0"
+                                    onsubmit="return confirm('Enable the quiz for {{ row.college.name|escapejs }}?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-success">Enable Quiz</button>
+                                </form>
+                                {% endif %}
+                            </td>
+
+                            <!-- ACTIONS: share links only (Update Date removed) -->
+                            <td>
+                                {% if row.schedule.registration_enabled %}
+                                <button type="button"
+                                        class="btn btn-sm btn-info share-btn"
+                                        data-action="{% url 'share_registration_link' row.schedule.id %}"
+                                        data-college="{{ row.schedule.college.name }}"
+                                        data-kind="registration link">
+                                    Share Reg Link
+                                </button>
+                                {% endif %}
+                                {% if row.schedule.quiz_enabled %}
+                                <button type="button"
+                                        class="btn btn-sm btn-primary share-btn"
+                                        data-action="{% url 'share_quiz_link' row.schedule.id %}"
+                                        data-college="{{ row.schedule.college.name }}"
+                                        data-kind="quiz link (emails will be sent to every registered student)">
+                                    Share Quiz Link
+                                </button>
+                                {% endif %}
+                            </td>
+
+                            {% else %}
+                            <!-- UNSCHEDULED college: create form -->
+                            <td colspan="4">
+                                <form method="post" action="{% url 'add_exam_schedule' %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="college" value="{{ row.college.id }}" />
+                                    <div class="input-group">
+                                        <input type="text" name="quiz_date"
+                                            class="form-control quiz-datetimepicker"
+                                            placeholder="Select Date & Time" required />
+                                        <button type="submit" class="btn btn-sm btn-primary">Save</button>
+                                    </div>
+                                </form>
+                            </td>
                             {% endif %}
-                        </td>
-                        <td>
-                            {% if row.schedule.registration_enabled %}
-                            <button
-                                type="button"
-                                class="btn btn-sm btn-info share-btn"
-                                data-action="{% url 'share_registration_link' row.schedule.id %}"
-                                data-college="{{ row.schedule.college.name }}"
-                                data-kind="registration link"
-                            >
-                                Share Reg Link
-                            </button>
-                            {% endif %} {% if row.schedule.quiz_enabled %}
-                            <button
-                                type="button"
-                                class="btn btn-sm btn-primary share-btn"
-                                data-action="{% url 'share_quiz_link' row.schedule.id %}"
-                                data-college="{{ row.schedule.college.name }}"
-                                data-kind="quiz link (emails will be sent to every registered student)"
-                            >
-                                Share Quiz Link
-                            </button>
-                            {% endif %}
-                        </td>
-                        {% else %}
-                        <td colspan="4">
-                            <form method="post" action="{% url 'add_exam_schedule' %}">
-                                {% csrf_token %}
-                                <input type="hidden" name="college" value="{{ row.college.id }}" />
-                                <div class="input-group">
-                                    <input
-                                        type="text"
-                                        name="quiz_date"
-                                        class="form-control quiz-datetimepicker"
-                                        placeholder="Select Date & Time"
-                                        required
-                                    />
-                                    <button type="submit" class="btn btn-sm btn-primary">
-                                        Save
-                                    </button>
-                                </div>
-                            </form>
-                        </td>
-                        {% endif %}
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="6" class="text-center">No colleges found.</td>
-                    </tr>
-                    {% endfor %}
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center">No colleges found.</td>
+                        </tr>
+                        {% endfor %}
                 </tbody>
             </table>
             {% if rows.has_other_pages %}
@@ -235,10 +245,13 @@
                 // Initialize Flatpickr for all input fields with class quiz-datetimepicker
                 flatpickr('.quiz-datetimepicker', {
                     enableTime: true,
-                    dateFormat: 'Y-m-d\\TH:i', // Matches your backend format
+                    dateFormat: 'Y-m-d\\TH:i',   // submitted value — unchanged, backend already parses this
+                    altInput: true,              // show a friendly field...
+                    altFormat: 'd-m-Y h:i K',    // ...12-hour with AM/PM (K)
+                    time_24hr: false,
                     minDate: "{{ now|date:'Y-m-d H:i' }}",
-                    time_24hr: true,
                 });
+
 
                 // Alert auto-dismiss
                 const alerts = document.querySelectorAll('.alert');
@@ -250,6 +263,17 @@
                     }, 2000);
                 });
             });
+            function initQdPicker(el) {
+                if (el._flatpickr) return;
+                flatpickr(el, {
+                    enableTime: true,
+                    dateFormat: 'Y-m-d\\TH:i',   // SAME submit format as create → same view parser
+                    altInput: true,
+                    altFormat: 'd-m-Y h:i K',    // 12-hour AM/PM display
+                    time_24hr: false,
+                    minDate: "{{ now|date:'Y-m-d H:i' }}",
+                });
+            }
         </script>
         <!-- Disable Quiz confirm -->
         <div class="modal fade" id="disableQuizModal" tabindex="-1" aria-hidden="true">
@@ -357,6 +381,25 @@
                     // server responds and the page reloads.
                 });
             }
+            document.addEventListener('click', function (e) {
+                // Pencil → show editor
+                if (e.target.closest('.qd-edit-btn')) {
+                    const td = e.target.closest('td');
+                    td.querySelector('.qd-view').classList.add('d-none');
+                    const form = td.querySelector('.qd-edit');
+                    form.classList.remove('d-none');
+                    form.classList.add('d-flex');
+                    initQdPicker(form.querySelector('.qd-flatpickr'));   // init on reveal
+                }
+                // Cancel → back to text view
+                if (e.target.closest('.qd-cancel-btn')) {
+                    const td = e.target.closest('td');
+                    const form = td.querySelector('.qd-edit');
+                    form.classList.add('d-none');
+                    form.classList.remove('d-flex');
+                    td.querySelector('.qd-view').classList.remove('d-none');
+                }
+            });
         </script>
     </body>
 </html>

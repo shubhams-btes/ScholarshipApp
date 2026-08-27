@@ -242,64 +242,43 @@ def toggle_college_official(request, pk):
     messages.success(request, f"{official.name} ({official.college.name}) has been {status}.")
     return redirect('college_management')
 
-
-# -----------------------------
-# Exam Schedule Management
-# -----------------------------
 @superuser_required
 def exam_schedule_management(request):
     now = timezone.now()
+    q = request.GET.get("q", "").strip()
+
     colleges = (
         College.objects
-        .prefetch_related('exam_schedules')
-        .annotate(
-            active_schedule_count=Count(
-                'exam_schedules',
-                filter=Q(exam_schedules__quiz_date__gte=now)
-            )
-        )
-        .order_by('-active_schedule_count', 'name')
+        .select_related('exam_schedule', 'exam_schedule__current_event')   # OneToOne + its live event, one JOIN
+        .order_by('name')
     )
-    
-    
-    # Prepare rows: one per college per schedule, or dummy if no schedule
-    q = request.GET.get("q", "").strip().lower()
-
-    
     if q:
-        colleges = [c for c in colleges if q in c.name.lower()]
+        colleges = colleges.filter(name__icontains=q)
+
     rows = []
     for college in colleges:
-        schedules = college.exam_schedules.all()
-        if schedules.exists():
-            for schedule in schedules:
-                rows.append({
-                    "college": college,
-                    "schedule": schedule
-                })
-        else:
-            rows.append({
-                "college": college,
-                "schedule": None
-            })
-    max_date = timezone.make_aware(datetime.max) 
+        # OneToOne: access raises DoesNotExist if the college has no schedule yet
+        schedule = getattr(college, 'exam_schedule', None)
+        rows.append({"college": college, "schedule": schedule})
+
+    # active (has a live current event) first, then by that event's date, then name
+    max_date = timezone.make_aware(datetime.max)
     rows.sort(
         key=lambda r: (
-            r["schedule"] is None,
-            r["schedule"].quiz_date if r["schedule"] and r["schedule"].quiz_date else max_date,
+            not (r["schedule"] and r["schedule"].is_active),                       # active events first
+            r["schedule"].quiz_date if (r["schedule"] and r["schedule"].quiz_date) else max_date,
             r["college"].name.lower(),
         )
     )
-            
-    paginator = Paginator(rows, 10)   # 10 rows per page
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+
+    paginator = Paginator(rows, 10)
+    page_obj = paginator.get_page(request.GET.get('page'))
 
     return render(request, 'admin_panel/quiz_management.html', {
-        "rows": page_obj,      # use page_obj for template loop
-        "page_obj": page_obj,  # use for pagination links
-        "q": q,                # keep search value in template
-        "now": timezone.localtime(timezone.now())
+        "rows": page_obj,
+        "page_obj": page_obj,
+        "q": q,
+        "now": timezone.localtime(now),
     })
 
 @superuser_required
@@ -307,92 +286,74 @@ def add_exam_schedule(request):
     college_id = request.POST.get('college') or request.GET.get('college_id')
     college = get_object_or_404(College, pk=college_id)
 
-    if request.method == 'POST':
-        quiz_date_str = request.POST.get('quiz_date')
-        if not quiz_date_str:
-            messages.error(request, "Quiz date is required.")
-            return redirect('quiz_management')
-
-        try:
-            # Convert string from datetime-local input to naive datetime
-            # Example format from datetime-local: '2025-08-27T17:15'
-            naive_dt = datetime.strptime(quiz_date_str, "%Y-%m-%dT%H:%M")
-            
-            # Make it timezone-aware in your local timezone (Asia/Kolkata)
-            aware_dt = make_aware(naive_dt, get_default_timezone())
-            if aware_dt < timezone.now():
-                messages.error(request, "You cannot select a past date for the quiz.")
-                return redirect('quiz_management')
-        except Exception as e:
-            # messages.error(request, f"Invalid date/time format: {e}")
-            return redirect('quiz_management')
-
-        # Check if a schedule already exists for this college
-        schedule, created = ExamSchedule.objects.get_or_create(
-            college=college,
-            defaults={
-                'quiz_date': aware_dt,
-                'registration_enabled': True,
-                'quiz_enabled': False,
-                'is_active': False
-            }
-        )
-
-        if not created:
-            # Update the existing schedule
-            schedule.quiz_date = aware_dt
-            schedule.registration_enabled = True
-            schedule.quiz_enabled = False
-            schedule.is_active = False
-            schedule.save(update_fields=['quiz_date', 'registration_enabled', 'quiz_enabled', 'is_active'])
-            messages.success(request, f"Exam schedule updated for {college.name}.")
-        else:
-            messages.success(request, f"Exam schedule created for {college.name}.")
-         # ✅ always log in history
-        
-        ExamScheduleHistory.objects.create(college=college, quiz_date=aware_dt)
-
+    if request.method != 'POST':
+        messages.error(request, "Invalid request method.")
         return redirect('quiz_management')
 
-    # If GET, just show inline datepicker (handled in your template)
-    messages.error(request, "Invalid request method.")
+    quiz_date_str = request.POST.get('quiz_date')
+    if not quiz_date_str:
+        messages.error(request, "Quiz date is required.")
+        return redirect('quiz_management')
+
+    try:
+        naive_dt = datetime.strptime(quiz_date_str, "%Y-%m-%dT%H:%M")
+        aware_dt = make_aware(naive_dt, get_default_timezone())
+    except Exception:
+        messages.error(request, "Invalid date/time format.")
+        return redirect('quiz_management')
+
+    if aware_dt < timezone.now():
+        messages.error(request, "You cannot select a past date for the quiz.")
+        return redirect('quiz_management')
+
+    # The stable pointer row (one per college).
+    schedule, _ = ExamSchedule.objects.get_or_create(college=college)
+
+    event = schedule.current_event
+
+    if event and event.is_active:
+        # UPDATE the live occurrence in place (fix the time of the current event)
+        event.quiz_date = aware_dt
+        event.registration_enabled = True
+        event.quiz_enabled = False
+        event.save(update_fields=['quiz_date', 'registration_enabled', 'quiz_enabled'])
+        messages.success(request, f"Exam schedule updated for {college.name}.")
+    else:
+        # No live event yet → create one and point the schedule at it.
+        # Make sure no stale active occurrence lingers for this college.
+        ExamScheduleHistory.objects.filter(college=college, is_active=True).update(is_active=False)
+        event = ExamScheduleHistory.objects.create(
+            college=college,
+            quiz_date=aware_dt,
+            is_active=True,
+            registration_enabled=True,
+            quiz_enabled=False,
+        )
+        schedule.current_event = event
+        schedule.save(update_fields=['current_event'])
+        messages.success(request, f"Exam schedule created for {college.name}.")
+
     return redirect('quiz_management')
 
 
-
-
-@superuser_required
-def edit_exam_schedule(request, pk):
-    schedule = get_object_or_404(ExamSchedule, pk=pk)
-    if request.method == 'POST':
-        form = ExamScheduleForm(request.POST, instance=schedule)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Exam schedule updated successfully.")
-            return redirect('quiz_management')
-    else:
-        form = ExamScheduleForm(instance=schedule)
-    return render(request, 'admin_panel/add_edit_exam_schedule.html', {'form': form, 'title': 'Edit Exam Schedule'})
-
-def finalize_abandoned_attempts(college, quiz_date):
+def finalize_abandoned_attempts(event):
+    """Finalize students who started THIS event's quiz but never submitted.
+    `event` is the ExamScheduleHistory occurrence being disabled."""
     from tests.models import ExamProgress
     now = timezone.now()
     count = 0
 
-    history, _ = ExamScheduleHistory.objects.get_or_create(
-        college=college,
-        quiz_date=quiz_date,
-    )
-
+    # Only students bound to THIS occurrence — never the college's other events.
     stale = ExamProgress.objects.filter(
-        student__exam_schedule__college=college,
+        student__exam_schedule=event,
         end_time__lt=now,
     ).select_related('student')
 
     for progress in stale:
         student = progress.student
 
-        if Result.objects.filter(student=student, exam_schedule=history).exists():
+        # Already has a result for this occurrence → just clean up progress.
+        if Result.objects.filter(student=student, exam_schedule=event).exists():
             progress.delete()
             continue
 
@@ -401,56 +362,61 @@ def finalize_abandoned_attempts(college, quiz_date):
         for qid_str, value in answers.items():
             if not qid_str.isdigit():
                 continue
-            if int(qid_str) not in progress.question_ids:
+            qid = int(qid_str)
+            if qid not in progress.question_ids:
                 continue
             try:
-                q = Question.objects.get(id=int(qid_str))
-                if str(value) == str(q.correct_option):
-                    score += 1
+                q = Question.objects.get(id=qid)
             except Question.DoesNotExist:
                 continue
+            if str(value) == str(q.correct_option):
+                score += 1
 
         Result.objects.create(
             student=student,
-            exam_schedule=history,
-            quiz_date=quiz_date,
+            exam_schedule=event,
+            quiz_date=event.quiz_date,          # stamp from the occurrence
             score=score,
-            total_questions=str(len(progress.question_ids)),
+            total_questions=len(progress.question_ids),   # int, not str
         )
         progress.delete()
         count += 1
 
     return count
 
+
 @superuser_required
 @require_POST
 def toggle_quiz_status(request, pk):
     schedule = get_object_or_404(ExamSchedule, pk=pk)
+    event = schedule.current_event
 
-    if schedule.quiz_enabled:
-        # Capture the date BEFORE clearing it — the finalizer needs it to
-        # resolve the correct history row.
-        original_quiz_date = schedule.quiz_date
+    if not event:
+        messages.error(request, f"No active event for {schedule.college.name}.")
+        return redirect('quiz_management')
 
-        schedule.quiz_enabled = False
-        schedule.quiz_date = None
-        schedule.registration_enabled = False
-        schedule.save(update_fields=['quiz_enabled', 'quiz_date', 'registration_enabled'])
+    if event.quiz_enabled:
+        # DISABLE: flip the occurrence fully inactive. Do NOT touch quiz_date.
+        event.quiz_enabled = False
+        event.registration_enabled = False
+        event.is_active = False
+        event.save(update_fields=['quiz_enabled', 'registration_enabled', 'is_active'])
 
-        finalized = finalize_abandoned_attempts(schedule.college, original_quiz_date)
+        finalized = finalize_abandoned_attempts(event)   # resolve by occurrence, not (college, date)
+        schedule.current_event = None
+        schedule.save(update_fields=['current_event'])
         messages.success(
             request,
             f"Quiz disabled for {schedule.college.name}. "
             f"{finalized} abandoned attempt(s) finalized."
         )
     else:
-        schedule.quiz_enabled = True
-        schedule.save(update_fields=['quiz_enabled'])
+        # ENABLE: turn the quiz on for the live occurrence.
+        event.quiz_enabled = True
+        event.save(update_fields=['quiz_enabled'])
         messages.success(request, f"Quiz enabled for {schedule.college.name}.")
 
     return redirect('quiz_management')
-
-
 
 # -----------------------------
 # Quiz Management (optional simplified)
@@ -459,10 +425,7 @@ def toggle_quiz_status(request, pk):
 @require_POST
 def share_registration_link(request, schedule_id):
 
-    schedule = get_object_or_404(
-        ExamSchedule,
-        pk=schedule_id
-    )
+    schedule = get_object_or_404(ExamSchedule,pk=schedule_id)
 
     link = (
         f"{settings.SITE_URL}/register/"
@@ -478,20 +441,29 @@ def share_registration_link(request, schedule_id):
         .values_list("email", flat=True)
     )
 
+    
+    
     if not emails:
         messages.error(
             request,
             "No active college officials found."
         )
         return redirect("quiz_management")
+    
+    
 
+    event = schedule.current_event
+    
+    if not event.registration_enabled:
+        messages.error(request, f"Registration is closed for {schedule.college.name}.")
+        return redirect("quiz_management")
+    
+    
     context = {
         "college_name": schedule.college.name,
         "registration_link": link,
         "registration_qr_cid": registration_qr_cid,
-        "quiz_date": schedule.quiz_date.strftime(
-            "%d-%m-%Y %I:%M %p"
-        ),
+        "quiz_date": schedule.quiz_date.strftime("%d-%m-%Y %I:%M %p"),
         "site_name": settings.SITE_NAME
     }
 
@@ -570,29 +542,28 @@ def _send_quiz_links(college_name, students_data, link, quiz_date_str):
 def share_quiz_link(request, schedule_id):
     schedule = get_object_or_404(ExamSchedule, pk=schedule_id)
 
-    schedule_history, _ = ExamScheduleHistory.objects.get_or_create(
-        college=schedule.college,
-        quiz_date=schedule.quiz_date,
-    )
+    event = schedule.current_event
+    if not event:
+        messages.error(request, f"No active event for {schedule.college.name}. Set a schedule first.")
+        return redirect("quiz_management")
 
-    link = f"{settings.SITE_URL}/login/?schedule_id={schedule.id}"
+    link = f"{settings.SITE_URL}/login/?schedule_id={schedule.id}"   # stable id — correct
     schedule.quiz_link = link
     schedule.save(update_fields=["quiz_link"])
 
-    local_quiz_time = timezone.localtime(schedule.quiz_date)
+    local_quiz_time = timezone.localtime(event.quiz_date)
+    if not event.is_active:
+        messages.error(request, f"This event is disabled for {schedule.college.name}.")
+        return redirect("quiz_management")
 
-    students = Student.objects.filter(exam_schedule=schedule_history)
+    # Students bound to THIS occurrence — the live event only.
+    students = Student.objects.filter(exam_schedule=event)
     if not students.exists():
         messages.error(request, "No registered students found.")
         return redirect("quiz_management")
 
-    # Snapshot the data the thread needs, as plain values.
     students_data = [
-        {
-            "name": s.name,
-            "email": s.email,
-            "hall_ticket": s.hall_ticket,
-        }
+        {"name": s.name, "email": s.email, "hall_ticket": s.hall_ticket}
         for s in students
     ]
 
@@ -614,13 +585,17 @@ def share_quiz_link(request, schedule_id):
     )
     return redirect("quiz_management")
 
-
 @superuser_required
 @require_POST
 def update_quiz_date(request, pk):
     schedule = get_object_or_404(ExamSchedule, pk=pk)
-    quiz_date_str = request.POST.get('quiz_date')
 
+    event = schedule.current_event
+    if not event:
+        messages.error(request, f"No active event for {schedule.college.name}. Create a schedule first.")
+        return redirect('quiz_management')
+
+    quiz_date_str = request.POST.get('quiz_date')
     if not quiz_date_str:
         messages.error(request, "Quiz date is required.")
         return redirect('quiz_management')
@@ -629,29 +604,34 @@ def update_quiz_date(request, pk):
         naive_dt = datetime.strptime(quiz_date_str, "%Y-%m-%dT%H:%M")
         aware_dt = make_aware(naive_dt, get_default_timezone())
     except Exception:
-        # messages.error(request, "Invalid date/time format.")
+        messages.error(request, "Invalid date/time format.")
         return redirect('quiz_management')
 
     if aware_dt < timezone.now():
         messages.error(request, "You cannot select a past date for the quiz.")
         return redirect('quiz_management')
 
-    schedule.quiz_date = aware_dt
-    schedule.save(update_fields=['quiz_date'])
+    event.quiz_date = aware_dt
+    event.save(update_fields=['quiz_date'])
     messages.success(request, f"Quiz date updated for {schedule.college.name}.")
     return redirect('quiz_management')
-
 
 @superuser_required
 @require_POST
 def toggle_registration(request, pk):
     schedule = get_object_or_404(ExamSchedule, pk=pk)
-    schedule.registration_enabled = not schedule.registration_enabled
-    schedule.save(update_fields=['registration_enabled'])
-    status = "opened" if schedule.registration_enabled else "closed"
+
+    event = schedule.current_event
+    if not event:
+        messages.error(request, f"No active event for {schedule.college.name}.")
+        return redirect('quiz_management')
+
+    event.registration_enabled = not event.registration_enabled
+    event.save(update_fields=['registration_enabled'])
+
+    status = "opened" if event.registration_enabled else "closed"
     messages.success(request, f"Registration {status} for {schedule.college.name}.")
     return redirect('quiz_management')
-
 
 # -----------------------------
 # Results per College

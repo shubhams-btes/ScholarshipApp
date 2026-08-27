@@ -1,6 +1,6 @@
 from django import forms
 from tests.models import Question
-from .models import College, CollegeOfficial, ExamSchedule
+from .models import College, CollegeOfficial, ExamSchedule,ExamScheduleHistory
 from django.core.exceptions import ValidationError
 import re
 
@@ -105,12 +105,24 @@ class CollegeOfficialEditForm(forms.ModelForm):
 
         return name
 
+# class ExamScheduleForm(forms.ModelForm):
+#     class Meta:
+#         model = ExamSchedule
+#         fields = ['college', 'quiz_date', 'is_active']
+#         widgets = {
+#             'college': forms.Select(attrs={'class': 'form-select'}),
+#             'quiz_date': forms.DateInput(attrs={'class': 'form-control datetimepicker', 'placeholder': 'Select Date & Time'}),
+#             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+#         }
+
+
 class ExamScheduleForm(forms.ModelForm):
     class Meta:
-        model = ExamSchedule
-        fields = ['college', 'quiz_date', 'is_active']
+        model = ExamScheduleHistory
+        fields = ['quiz_date', 'registration_enabled', 'quiz_enabled', 'is_active']
         widgets = {
-            'college': forms.Select(attrs={'class': 'form-select'}),
-            'quiz_date': forms.DateInput(attrs={'class': 'form-control datetimepicker', 'placeholder': 'Select Date & Time'}),
+            'quiz_date': forms.DateTimeInput(attrs={'class': 'form-control datetimepicker', 'placeholder': 'Select Date & Time'}),
+            'registration_enabled': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'quiz_enabled': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }

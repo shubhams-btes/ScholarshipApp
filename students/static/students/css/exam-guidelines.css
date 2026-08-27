@@ -367,7 +367,7 @@ body {
   border:0;
   border-radius:12px;
   font-size:16px;
-  font-weight:600;
+  /* font-weight:600; */
   letter-spacing:.2px;
   transition:
     background .18s ease,
@@ -459,7 +459,7 @@ body {
   .tq-start{
     margin-top:12px;
     min-height:48px;
-    font-size:15px;
+    font-size:16px;
   }
 }
 
@@ -626,7 +626,7 @@ body {
 
     font-family:'Montserrat',sans-serif;
     font-size:16px;
-    font-weight:600;
+    /* font-weight:600; */
 
     cursor:pointer;
 
@@ -920,8 +920,8 @@ body {
   justify-content:center;
   gap:10px;
   border-radius:12px;
-  font-size:15.5px;
-  font-weight:600;
+  font-size:16px;
+  /* font-weight:600; */
   letter-spacing:.2px;
   font-family: 'Montserrat', sans-serif;
   transition:
@@ -989,8 +989,8 @@ body {
   color:#072643;
   border:1px solid #D8E0E9;
   box-shadow:0 8px 24px rgba(7,38,67,.14);
-  font-size:14px;
-  font-weight:600;
+  font-size:16px;
+  /* font-weight:600; */
 }
 
 .cs-reopen[hidden]{
@@ -1124,8 +1124,8 @@ body {
   color:#FFFFFF;
   border:0;
   border-radius:12px;
-  font-size:15.5px;
-  font-weight:600;
+  font-size:16px;
+  /* font-weight:600; */
   letter-spacing:.2px;
   cursor:pointer;
   transition:background .18s ease, transform .18s ease, box-shadow .18s ease, opacity .18s ease;

@@ -35,6 +35,7 @@ def _send_otp_email(email, name, otp):
     except Exception:
         logger.exception("Failed to send OTP email to %s", email)
 
+
 def student_register(request):
     schedule_id = request.GET.get('schedule_id')
 
@@ -46,29 +47,29 @@ def student_register(request):
     exam_schedule = get_object_or_404(ExamSchedule, pk=schedule_id)
     college = exam_schedule.college
 
-    # Registration must be open for this specific exam.
-    if not exam_schedule.registration_enabled:
+    # Resolve the LIVE occurrence this stable link points at.
+    event = exam_schedule.current_event
+    if not event or not event.is_active:
+        return render(request, 'tests/message.html', {
+            'message': "This exam is not currently open. Please contact the administrator."
+        })
+
+    # Registration must be open for this specific event.
+    if not event.registration_enabled:
         return render(request, 'tests/message.html', {
             'message': "Registrations are currently closed for this exam. Please contact the administrator."
         })
-
-    # Ensure there's a matching ExamScheduleHistory record
-    exam_schedule_history, _ = ExamScheduleHistory.objects.get_or_create(
-        college=exam_schedule.college,
-        quiz_date=exam_schedule.quiz_date
-    )
 
     if request.method == 'POST':
         form = StudentRegistrationForm(request.POST)
         if form.is_valid():
             email = form.cleaned_data['email']
 
-            # Prevent duplicate registration for same exam
-            if Student.objects.filter(email=email, exam_schedule=exam_schedule_history).exists():
+            # Duplicate guard is per-OCCURRENCE — re-registration for a NEW event is allowed.
+            if Student.objects.filter(email=email, exam_schedule=event).exists():
                 messages.error(request, "You are already registered for this quiz.")
                 return redirect(f"{request.path}?schedule_id={schedule_id}")
-                
-            # Generate OTP with a CSPRNG
+
             otp = ''.join(secrets.choice(string.digits) for _ in range(6))
 
             request.session['pending_registration'] = {
@@ -77,10 +78,10 @@ def student_register(request):
                 'password': make_password(form.cleaned_data['password']),
                 'stream': form.cleaned_data['stream'],
                 'mobile_number': form.cleaned_data['mobile_number'],
-                'exam_schedule_id': exam_schedule_history.id
+                'exam_schedule_id': event.id           # ← bind to the live occurrence
             }
             request.session['email_otp'] = otp
-            request.session['otp_expiry'] = time.time() + 600   # 10 minutes
+            request.session['otp_expiry'] = time.time() + 600
             request.session['otp_attempts'] = 0
             request.session['otp_last_sent'] = time.time()
 
@@ -100,8 +101,6 @@ def student_register(request):
         'college': college,
         'exam_schedule': exam_schedule,
     })
-
-
 
 def verify_email(request):
     if request.method == 'POST':
@@ -181,57 +180,47 @@ def verify_email(request):
     })
 
 
+
 def login_view(request):
     schedule_id = request.GET.get('schedule_id')
-    college = None
-    
+
     if not schedule_id:
         return render(request, 'tests/message.html', {
             'message': "Invalid login link. Please use the link sent to your email."
         })
-        
+
     exam_schedule = get_object_or_404(ExamSchedule, pk=schedule_id)
     college = exam_schedule.college
-    
-    exam_schedule_history, _ = ExamScheduleHistory.objects.get_or_create(
-        college=college,
-        quiz_date=exam_schedule.quiz_date
-    )
+
+    # The live occurrence this stable link points at.
+    event = exam_schedule.current_event
+    if not event or not event.is_active:
+        return render(request, 'tests/message.html', {
+            'message': "This exam is not currently available. Please contact the administrator."
+        })
 
     if request.method == "POST":
         email = request.POST.get("email")
         password = request.POST.get("password")
 
-        # Resolve the student against this exact exam's history row.
-        student = Student.objects.filter(
-            email=email,
-            exam_schedule=exam_schedule_history
-        ).first()
+        # Resolve the student against THIS occurrence.
+        student = Student.objects.filter(email=email, exam_schedule=event).first()
 
-        if student is None:
+        if student is None or not check_password(password, student.password):
             messages.error(request, "Invalid credentials")
             return redirect(f"{request.path}?schedule_id={schedule_id}")
 
-        # 1️⃣ Password
-        if not check_password(password, student.password):
-            messages.error(request, "Invalid credentials")
-            return redirect(f"{request.path}?schedule_id={schedule_id}")
-
-        # 2️⃣ Single-session lock
+        # Single-session lock
         if student.current_session:
             messages.error(request, "You are already logged in from another device/browser.")
             return redirect(f"{request.path}?schedule_id={schedule_id}")
 
-        # 3️⃣ Already attempted?
-        already_attempted = Result.objects.filter(
-            student=student,
-            exam_schedule=exam_schedule_history
-        ).exists()
-        if already_attempted:
+        # Already attempted?
+        if Result.objects.filter(student=student, exam_schedule=event).exists():
             messages.warning(request, "You have already attempted this BTES TalentQuest.")
             return redirect(f"{request.path}?schedule_id={schedule_id}")
 
-        # 4️⃣ Log in
+        # Log in
         request.session['student_id'] = student.id
         if not request.session.session_key:
             request.session.save()
