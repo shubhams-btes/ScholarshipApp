@@ -122,6 +122,7 @@
                         <th scope="col">College</th>
                         <th scope="col">Quiz Date</th>
                         <th scope="col">Created At</th>
+                        <th scope="col">Status</th>
                         <th scope="col">Registrations</th>
                         <th scope="col">Results</th>
                     </tr>
@@ -132,6 +133,19 @@
                         <td>{{ schedule.college.name }}</td>
                         <td>{{ schedule.quiz_date|date:"Y-m-d H:i" }}</td>
                         <td>{{ schedule.created_at|date:"Y-m-d H:i" }}</td>
+                        <td>
+                            {% if schedule.is_active %}
+                                <span class="badge bg-success">Live</span>
+                                {% if schedule.registration_enabled %}
+                                    <span class="badge bg-info text-dark">Reg Open</span>
+                                {% endif %}
+                                {% if schedule.quiz_enabled %}
+                                    <span class="badge bg-primary">Quiz On</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="badge bg-secondary">Archived</span>
+                            {% endif %}
+                        </td>
                         <td class="text-center">
                             <a
                                 href="{% url 'college_registrations' schedule.id %}"
