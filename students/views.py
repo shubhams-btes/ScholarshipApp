@@ -216,9 +216,11 @@ def login_view(request):
             return redirect(f"{request.path}?schedule_id={schedule_id}")
 
         # Already attempted?
+        # with:
         if Result.objects.filter(student=student, exam_schedule=event).exists():
-            messages.warning(request, "You have already attempted this BTES TalentQuest.")
-            return redirect(f"{request.path}?schedule_id={schedule_id}")
+            return render(request, 'tests/message.html', {
+                'message': "You have already attempted this BTES TalentQuest. Your response has been recorded."
+            })
 
         # Log in
         request.session['student_id'] = student.id
