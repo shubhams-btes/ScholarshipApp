@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <title>{{ site_name }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/x-icon" href="{% static 'tests/images/favicon.png' %}" version="1.0" />
     <link href="{% static 'tests/css/custom.css' %}" rel="stylesheet" />
 </head>
 <body>
@@ -15,7 +16,7 @@
 		<!-- LEFT PANEL -->
 		<aside class="left-panel">
 			<section class="sidebar-content">
-				<div class="logo">
+                <div class="logo">
 					<a href="#"><img src="{% static 'tests/images/logo-white.png' %}" alt="BTES" /></a>
 				</div>
 
@@ -32,8 +33,11 @@
 
 		<!-- RIGHT PANEL -->
 		<main class="right-panel">
-
-			<div class="content-area">
+            <div class="content-area">
+                
+                <div class="logo">
+					<a href="#"><img src="{% static 'tests/images/logo1.png' %}" alt="BTES" /></a>
+			    </div>
                 <section class="question-section">
 
                 {% if messages %}

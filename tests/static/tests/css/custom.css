@@ -272,6 +272,22 @@ RIGHT PANEL
 	position: relative;
 }
 
+
+/* Right logo — mirror the left one */
+.right-panel .content-area .logo {
+	margin-top: 0;          /* pin to top, like the left logo */
+	margin-bottom: 50px;    /* same as .logo on the left */
+	text-align: center;
+}
+
+.right-panel .content-area .logo img {
+	max-width: 200px;       /* identical to the left cap → identical size */
+	height: auto;
+	display: block;
+	margin: 0 auto;
+}
+
+
 /* timer */
 
 .timer-card {
@@ -489,7 +505,7 @@ RIGHT PANEL
 	max-width: 650px;
 	display: flex;
 	flex-direction: column;
-	justify-content: center;
+	justify-content: flex-start;
 	height: 100%;
 }
 
@@ -543,7 +559,7 @@ RIGHT PANEL
 	.right-panel {
 		flex: 1;
 		background: #fff;
-		padding: 70px 90px;
+		padding: 40px 90px;
 		position: relative;
 	}
 
