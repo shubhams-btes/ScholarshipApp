@@ -79,7 +79,8 @@ LEFT PANEL
 	opacity: .95;
 }
 .left-panel .sidebar-content .logo img {
-	max-width: 200px;
+	max-width: 220px;
+	margin-top:20px;
 }
 
 /* =========================
@@ -553,7 +554,7 @@ RIGHT PANEL
 			justify-content: center !important;
 
 			color: #ffffff !important;
-			font-size: 24px;
+			font-size: 21px;
 			font-weight: 400;
 
 			white-space: nowrap;
