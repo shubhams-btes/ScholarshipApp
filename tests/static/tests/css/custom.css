@@ -261,6 +261,10 @@ COPYRIGHT
 	display: none;
 }
 
+.copyright1 {
+	display: none;
+}
+
 /* =========================
 RIGHT PANEL
 ========================= */
@@ -533,15 +537,52 @@ RIGHT PANEL
 		width: 40%;
 	}
 
-	.copyright {
+	/* .copyright {
 		text-align: center;
 		color: #fff;
 		font-size: 12px;
 		margin-top: 20px;
 		opacity: .9;
 		display: block;
-	}
+	} */
 
+		.copyright {
+			display: flex !important;
+			flex-direction: row !important;
+			align-items: center !important;
+			justify-content: center !important;
+
+			color: #ffffff !important;
+			font-size: 18px;
+			font-weight: 400;
+
+			white-space: nowrap;
+			gap: 5px;
+
+			width: 100%;
+			line-height: 1;
+		}
+
+		.copyright .footer_logo {
+			display: inline-block !important;
+			width: 75px;
+			height: auto;
+			max-width: 100%;
+			margin: 0 !important;
+			padding: 0 !important;
+			vertical-align: middle;
+		}
+
+	.copyright1 {
+		text-align: left;
+		color: #000;
+		font-size: 12px;
+		position: absolute;
+    	bottom: 50px;
+    	margin: 0;
+		opacity: .9;
+		display: block;
+	}
 	.question-grid {
 		grid-template-columns: repeat(5, 1fr);
 	}
@@ -559,7 +600,7 @@ RIGHT PANEL
 	.right-panel {
 		flex: 1;
 		background: #fff;
-		padding: 40px 90px;
+		padding: 130px 90px;
 		position: relative;
 	}
 
