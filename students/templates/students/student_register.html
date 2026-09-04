@@ -65,7 +65,7 @@
 		<aside class="left-panel">
 			<section class="sidebar-content">
 				<div class="logo">
-					<a href="#"><img src="{% static 'tests/images/logo-white.png' %}" alt="BTES" /></a>
+					<a href="#"><img src="{% static 'tests/images/logo1.png' %}" alt="BTES" /></a>
 				</div>
 
 				<figure>
@@ -73,7 +73,7 @@
 				</figure>
 
 				<div class="copyright">
-					Copyright © BTES. All rights reserved.
+					Powered by <img src="{% static 'tests/images/logo_footer.png' %}" alt="BTES" class="footer_logo"/>
 				</div>
 			</section>
 
@@ -83,9 +83,7 @@
 		<main class="right-panel">
             
 			<div class="content-area">
-                <div class="logo">
-					<a href="#"><img src="{% static 'tests/images/logo1.png' %}" alt="BTES" /></a>
-			    </div>
+               
                 <section class="question-section">
                     {% if messages %}
                         <div class="message-container">
@@ -185,6 +183,10 @@
 
                     </form>
                 </section>
+                <div class="copyright1">
+					Copyright © BTES. All rights reserved.
+				</div>
+			</div>
 			</div>
 
 		</main>

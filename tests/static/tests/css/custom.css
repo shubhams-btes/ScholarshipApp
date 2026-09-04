@@ -80,7 +80,7 @@ LEFT PANEL
 }
 .left-panel .sidebar-content .logo img {
 	max-width: 220px;
-	margin-top:20px;
+	margin-top:40px;
 }
 
 /* =========================
@@ -286,6 +286,28 @@ RIGHT PANEL
 }
 
 .right-panel .content-area .logo img {
+	max-width: 200px;       /* identical to the left cap → identical size */
+	height: auto;
+	display: block;
+	margin: 0 auto;
+}
+
+.right-panel1 {
+	flex: 1;
+	background: #fff;
+	padding: 20px;
+	position: relative;
+}
+
+
+/* Right logo — mirror the left one */
+.right-panel1 .content-area .logo {
+	margin-top: 0;          /* pin to top, like the left logo */
+	margin-bottom: 50px;    /* same as .logo on the left */
+	text-align: center;
+}
+
+.right-panel1 .content-area .logo img {
 	max-width: 200px;       /* identical to the left cap → identical size */
 	height: auto;
 	display: block;
@@ -603,6 +625,12 @@ RIGHT PANEL
 		flex: 1;
 		background: #fff;
 		padding: 130px 90px;
+		position: relative;
+	}
+	.right-panel1 {
+		flex: 1;
+		background: #fff;
+		padding: 50px 90px;
 		position: relative;
 	}
 
