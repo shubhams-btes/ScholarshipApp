@@ -553,7 +553,7 @@ RIGHT PANEL
 			justify-content: center !important;
 
 			color: #ffffff !important;
-			font-size: 18px;
+			font-size: 24px;
 			font-weight: 400;
 
 			white-space: nowrap;
@@ -565,7 +565,7 @@ RIGHT PANEL
 
 		.copyright .footer_logo {
 			display: inline-block !important;
-			width: 75px;
+			width: 95px;
 			height: auto;
 			max-width: 100%;
 			margin: 0 !important;
@@ -575,7 +575,8 @@ RIGHT PANEL
 
 	.copyright1 {
 		text-align: left;
-		color: #000;
+		font-weight: 600;
+		color: #082B65;
 		font-size: 12px;
 		position: absolute;
     	bottom: 50px;
