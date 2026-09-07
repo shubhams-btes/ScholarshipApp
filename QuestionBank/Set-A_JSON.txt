@@ -82,7 +82,7 @@
 },
 {
 "category": "REASONING",
-"question_text": "Average of 5 students is 60. Excluding one student, the average becomes 65. What were that student’s marks?",
+"question_text": "Average of 5 students is 60. Excluding one student, the average becomes 65. What were that student's marks?",
 "option_1": "35",
 "option_2": "45",
 "option_3": "55",
@@ -212,7 +212,7 @@
 "option_1": "Floyd–Warshall",
 "option_2": "Dijkstra",
 "option_3": "DFS",
-"option_4": "Prim’s",
+"option_4": "Prim's",
 "correct_option": 2
 },
 {
