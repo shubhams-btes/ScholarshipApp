@@ -1,0 +1,362 @@
+[
+  {
+    "category": "REASONING",
+    "question_text": "The average of four consecutive even numbers is 27. What is the largest of these numbers?",
+    "option_1": "28",
+    "option_2": "30",
+    "option_3": "32",
+    "option_4": "34",
+    "correct_option": 2
+  },
+  {
+    "category": "REASONING",
+    "question_text": "A man spends 40% of his salary on rent, 20% on food, and saves the rest. If his savings are ₹9,000, what is his salary?",
+    "option_1": "₹18,000",
+    "option_2": "₹20,000",
+    "option_3": "₹22,500",
+    "option_4": "₹25,000",
+    "correct_option": 3
+  },
+  {
+    "category": "REASONING",
+    "question_text": "A train of length 120 m crosses a pole in 12 seconds. What is the speed of the train in km/h?",
+    "option_1": "30 km/h",
+    "option_2": "36 km/h",
+    "option_3": "40 km/h",
+    "option_4": "45 km/h",
+    "correct_option": 2
+  },
+  {
+    "category": "REASONING",
+    "question_text": "A bag contains 5 red balls, 4 blue balls, and 3 green balls. One ball is drawn at random. What is the probability that it is not red?",
+    "option_1": "1/2",
+    "option_2": "7/12",
+    "option_3": "2/3",
+    "option_4": "3/4",
+    "correct_option": 3
+  },
+  {
+    "category": "REASONING",
+    "question_text": "If 12 workers can complete a task in 15 days, how many workers are needed to complete the same in 10 days?",
+    "option_1": "15",
+    "option_2": "16",
+    "option_3": "18",
+    "option_4": "20",
+    "correct_option": 4
+  },
+  {
+    "category": "REASONING",
+    "question_text": "Find the odd one out: 4, 9, 16, 25, 36, 48",
+    "option_1": "9",
+    "option_2": "25",
+    "option_3": "36",
+    "option_4": "48",
+    "correct_option": 4
+  },
+  {
+    "category": "REASONING",
+    "question_text": "In a certain code language, COMPUTER → RFUVQNPC. How is SCIENCE written in that code?",
+    "option_1": "EFOFJDT",
+    "option_2": "UEQMDGF",
+    "option_3": "EDOFJDS",
+    "option_4": "UFRMDGF",
+    "correct_option": 1
+  },
+  {
+    "category": "REASONING",
+    "question_text": "A shopkeeper marks an item at ₹800 and allows a discount of 10%. If he still gains 20%, what is the cost price of the item?",
+    "option_1": "₹560",
+    "option_2": "₹600",
+    "option_3": "₹640",
+    "option_4": "₹660",
+    "correct_option": 2
+  },
+  {
+    "category": "REASONING",
+    "question_text": "If the clock shows 3:00, what is the angle between the hour and minute hands?",
+    "option_1": "0°",
+    "option_2": "7.5°",
+    "option_3": "30°",
+    "option_4": "90°",
+    "correct_option": 4
+  },
+  {
+    "category": "REASONING",
+    "question_text": "Rahul’s age is twice that of Rina. Five years hence, their age ratio will be 9:5. What is Rahul’s present age?",
+    "option_1": "18",
+    "option_2": "24",
+    "option_3": "36",
+    "option_4": "40",
+    "correct_option": 4
+  },
+  {
+    "category": "TECHNICAL",
+    "question_text": "Output of the code?\nint x = 5;\nSystem.out.println(x++ + ++x);",
+    "option_1": "10",
+    "option_2": "11",
+    "option_3": "12",
+    "option_4": "13",
+    "correct_option": 3
+  },
+  {
+    "category": "TECHNICAL",
+    "question_text": "Which collection class allows duplicate elements and maintains insertion order?",
+    "option_1": "HashSet",
+    "option_2": "TreeSet",
+    "option_3": "ArrayList",
+    "option_4": "HashMap",
+    "correct_option": 3
+  },
+  {
+    "category": "TECHNICAL",
+    "question_text": "What will the following code print?\nString str = \"abc\";\nstr.toUpperCase();\nSystem.out.println(str);",
+    "option_1": "abc",
+    "option_2": "ABC",
+    "option_3": "null",
+    "option_4": "Compilation error",
+    "correct_option": 1
+  },
+  {
+    "category": "TECHNICAL",
+    "question_text": "What will this code output?\nint[] arr = new int[5];\nSystem.out.println(arr[0]);",
+    "option_1": "0",
+    "option_2": "null",
+    "option_3": "Compilation error",
+    "option_4": "Garbage value",
+    "correct_option": 1
+  },
+  {
+    "category": "TECHNICAL",
+    "question_text": "Which keyword is used in Java to prevent a class from being inherited?",
+    "option_1": "final",
+    "option_2": "static",
+    "option_3": "const",
+    "option_4": "abstract",
+    "correct_option": 1
+  },
+  {
+    "category": "TECHNICAL",
+    "question_text": "What is the output of this program?\nclass Demo {\n    public static void main(String args[]) {\n        System.out.println(10 + 20 + \"Java\");\n        System.out.println(\"Java\" + 10 + 20);\n    }\n}",
+    "option_1": "30Java, Java30",
+    "option_2": "30Java, Java1020",
+    "option_3": "Java30, Java30",
+    "option_4": "Compilation error",
+    "correct_option": 2
+  },
+  {
+    "category": "TECHNICAL",
+    "question_text": "Which of these exceptions is a checked exception?",
+    "option_1": "NullPointerException",
+    "option_2": "IOException",
+    "option_3": "ArithmeticException",
+    "option_4": "ArrayIndexOutOfBoundsException",
+    "correct_option": 2
+  },
+  {
+    "category": "TECHNICAL",
+    "question_text": "Output of the following code?\nfor(int i=1; i<5; i++) {\n    if(i == 3)\n        continue;\n    System.out.print(i);\n}",
+    "option_1": "1234",
+    "option_2": "124",
+    "option_3": "134",
+    "option_4": "234",
+    "correct_option": 2
+  },
+  {
+    "category": "TECHNICAL",
+    "question_text": "What will be the output?\ntry {\n    int x = 5/0;\n    System.out.println(\"Hello\");\n}\ncatch(ArithmeticException e) {\n    System.out.println(\"Error\");\n}\nfinally {\n    System.out.println(\"Finally\");\n}",
+    "option_1": "Hello Finally",
+    "option_2": "Error Finally",
+    "option_3": "Error",
+    "option_4": "Compilation error",
+    "correct_option": 2
+  },
+  {
+    "category": "TECHNICAL",
+    "question_text": "What will be the output?\nclass Test {\n    public static void main(String[] args) {\n        String s = \"123\";\n        int n = Integer.parseInt(s);\n        System.out.println(n * 2);\n    }\n}",
+    "option_1": "123123",
+    "option_2": "246",
+    "option_3": "Compilation error",
+    "option_4": "NumberFormatException",
+    "correct_option": 2
+  },
+  {
+    "category": "REASONING",
+    "question_text": "What is the time complexity of linear search?",
+    "option_1": "O(1)",
+    "option_2": "O(log n)",
+    "option_3": "O(n)",
+    "option_4": "O(n log n)",
+    "correct_option": 3
+  },
+  {
+    "category": "REASONING",
+    "question_text": "Output of the pseudocode?\nsum = 0\nfor i = 1 to 4:\n    sum = sum + i*i\nprint(sum)",
+    "option_1": "14",
+    "option_2": "20",
+    "option_3": "30",
+    "option_4": "40",
+    "correct_option": 3
+  },
+  {
+    "category": "REASONING",
+    "question_text": "Which data structure is best suited for implementing recursion?",
+    "option_1": "Queue",
+    "option_2": "Stack",
+    "option_3": "Array",
+    "option_4": "Graph",
+    "correct_option": 2
+  },
+  {
+    "category": "REASONING",
+    "question_text": "Which traversal prints a binary tree in sorted order (for BST)?",
+    "option_1": "Pre-order",
+    "option_2": "In-order",
+    "option_3": "Post-order",
+    "option_4": "Level-order",
+    "correct_option": 2
+  },
+  {
+    "category": "REASONING",
+    "question_text": "What is the worst-case time complexity of quicksort?",
+    "option_1": "O(n)",
+    "option_2": "O(n log n)",
+    "option_3": "O(n²)",
+    "option_4": "O(log n)",
+    "correct_option": 3
+  },
+  {
+    "category": "REASONING",
+    "question_text": "What will be the value of count?\ncount = 0\nfor i = 1 to 3:\n    for j = 1 to 2:\n        count++\nprint(count)",
+    "option_1": "3",
+    "option_2": "4",
+    "option_3": "5",
+    "option_4": "6",
+    "correct_option": 4
+  },
+  {
+    "category": "REASONING",
+    "question_text": "Which data structure uses FIFO?",
+    "option_1": "Stack",
+    "option_2": "Queue",
+    "option_3": "Tree",
+    "option_4": "Heap",
+    "correct_option": 2
+  },
+  {
+    "category": "REASONING",
+    "question_text": "What does a hash function do?",
+    "option_1": "Sorts elements",
+    "option_2": "Maps data to a fixed-size value",
+    "option_3": "Encrypts data",
+    "option_4": "Traverses data sequentially",
+    "correct_option": 2
+  },
+  {
+    "category": "REASONING",
+    "question_text": "Which algorithm is used for finding minimum spanning tree?",
+    "option_1": "Dijkstra",
+    "option_2": "Kruskal",
+    "option_3": "DFS",
+    "option_4": "Floyd-Warshall",
+    "correct_option": 2
+  },
+  {
+    "category": "REASONING",
+    "question_text": "What is the space complexity of an array of size n?",
+    "option_1": "O(1)",
+    "option_2": "O(log n)",
+    "option_3": "O(n)",
+    "option_4": "O(n²)",
+    "correct_option": 3
+  },
+  {
+    "category": "AI",
+    "question_text": "Which model is used for prediction of continuous values?",
+    "option_1": "Classify",
+    "option_2": "Cluster",
+    "option_3": "Regression",
+    "option_4": "Associate",
+    "correct_option": 3
+  },
+  {
+    "category": "AI",
+    "question_text": "Which technique reduces feature dimensions?",
+    "option_1": "PCA",
+    "option_2": "KNN",
+    "option_3": "SVM",
+    "option_4": "Apriori",
+    "correct_option": 1
+  },
+  {
+    "category": "AI",
+    "question_text": "What is training data?",
+    "option_1": "New data",
+    "option_2": "Test data",
+    "option_3": "Learn data",
+    "option_4": "Random data",
+    "correct_option": 3
+  },
+  {
+    "category": "AI",
+    "question_text": "Which is a reinforcement learning element?",
+    "option_1": "Label",
+    "option_2": "Reward",
+    "option_3": "Feature",
+    "option_4": "Cluster",
+    "correct_option": 2
+  },
+  {
+    "category": "AI",
+    "question_text": "Which metric is used for classification accuracy?",
+    "option_1": "MSE",
+    "option_2": "Accuracy",
+    "option_3": "Loss",
+    "option_4": "Variance",
+    "correct_option": 2
+  },
+  {
+    "category": "DATABASE",
+    "question_text": "Which command adds new data?",
+    "option_1": "SELECT",
+    "option_2": "INSERT",
+    "option_3": "DELETE",
+    "option_4": "DROP",
+    "correct_option": 2
+  },
+  {
+    "category": "DATABASE",
+    "question_text": "Which constraint avoids NULL values?",
+    "option_1": "UNIQUE",
+    "option_2": "PRIMARY",
+    "option_3": "NOT NULL",
+    "option_4": "DEFAULT",
+    "correct_option": 3
+  },
+  {
+    "category": "DATABASE",
+    "question_text": "Which clause filters rows?",
+    "option_1": "ORDER BY",
+    "option_2": "GROUP BY",
+    "option_3": "WHERE",
+    "option_4": "JOIN",
+    "correct_option": 3
+  },
+  {
+    "category": "DATABASE",
+    "question_text": "Which key links two tables?",
+    "option_1": "Primary",
+    "option_2": "Foreign",
+    "option_3": "Candidate",
+    "option_4": "Super",
+    "correct_option": 2
+  },
+  {
+    "category": "DATABASE",
+    "question_text": "Which operation removes a table?",
+    "option_1": "DELETE",
+    "option_2": "REMOVE",
+    "option_3": "DROP",
+    "option_4": "CLEAR",
+    "correct_option": 3
+  }
+]
