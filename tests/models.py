@@ -5,12 +5,16 @@ from django.conf import settings
 class Question(models.Model):
     TECHNICAL = 'TECH'
     REASONING = 'REAS'
+    DATABASE = 'DB'
+    ARTIFICIAL_INTELLIGENCE = 'AI'
     CATEGORY_CHOICES = [
         (TECHNICAL, 'Technical'),
         (REASONING, 'Reasoning'),
+        (DATABASE, 'Database'),
+        (ARTIFICIAL_INTELLIGENCE, 'Artificial Intelligence'),
     ]
 
-    category = models.CharField(max_length=4, choices=CATEGORY_CHOICES)
+    category = models.CharField(max_length=10, choices=CATEGORY_CHOICES)
     question_text = models.TextField()
     option_1 = models.CharField(max_length=255)
     option_2 = models.CharField(max_length=255)

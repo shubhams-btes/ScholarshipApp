@@ -797,7 +797,7 @@ def upload_questions(request):
                 messages.error(request, "Invalid JSON format: root must be a list of questions.")
                 return redirect('upload_questions')
 
-            allowed_categories = ["TECHNICAL", "REASONING"]
+            allowed_categories = ["TECHNICAL", "REASONING","DATABASE", "AI"]
 
             count = 0
             for q in questions_data:
@@ -817,7 +817,7 @@ def upload_questions(request):
                 if category not in allowed_categories:
                     messages.error(
                         request,
-                        f"Invalid category '{category}'. Allowed categories: TECHNICAL or REASONING only."
+                        f"Invalid category '{category}'. Allowed categories: TECHNICAL, REASONING, DATABASE, ARTIFICIAL_INTELLIGENCE only."
                     )
                     return redirect('upload_questions')
 
