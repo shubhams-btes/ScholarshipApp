@@ -82,19 +82,41 @@ def quiz_view(request):
     progress, _ = ExamProgress.objects.get_or_create(student=student)
 
     if not progress.question_ids:
-        technical = list(Question.objects.filter(category="TECH", is_active=True))
-        reasoning = list(Question.objects.filter(category="REAS", is_active=True))
-        if len(technical) < 10 or len(reasoning) < 10:
-            return render(request, 'tests/message.html',
-                          {'message': 'Not enough active questions available. Contact admin.'})
-        selected = random.sample(technical, 10) + random.sample(reasoning, 10)
+        available_questions = list(
+            Question.objects.filter(
+                is_active=True,
+                category__in=["TECHNICAL", "REASONING", "AI", "DATABASE"]
+            )
+        )
+
+        if len(available_questions) < 20:
+            return render(
+                request,
+                'tests/message.html',
+                {
+                    'message': 'Not enough active questions available. Contact admin.'
+                }
+            )
+
+        selected = random.sample(available_questions, 20)
+
         random.shuffle(selected)
+
         progress.question_ids = [q.id for q in selected]
         progress.save(update_fields=["question_ids", "updated_at"])
 
     question_ids = progress.question_ids
-    question_map = {q.id: q for q in Question.objects.filter(id__in=question_ids)}
-    selected_questions = [question_map[qid] for qid in question_ids if qid in question_map]
+
+    question_map = {
+        q.id: q
+        for q in Question.objects.filter(id__in=question_ids)
+    }
+
+    selected_questions = [
+        question_map[qid]
+        for qid in question_ids
+        if qid in question_map
+    ]
 
     if guidelines_accepted and progress.end_time:
         exam_end_time = progress.end_time.isoformat()
