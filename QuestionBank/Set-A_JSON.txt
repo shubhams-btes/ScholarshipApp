@@ -1,0 +1,362 @@
+[
+{
+"category": "REASONING",
+"question_text": "A number is increased by 20% and then decreased by 20%. What is the net percentage change?",
+"option_1": "0%",
+"option_2": "4%",
+"option_3": "2%",
+"option_4": "5%",
+"correct_option": 2
+},
+{
+"category": "REASONING",
+"question_text": "A shopkeeper buys 80 pens at ₹10 each and sells them at ₹12 each. What is the total profit?",
+"option_1": "₹120",
+"option_2": "₹160",
+"option_3": "₹180",
+"option_4": "₹200",
+"correct_option": 2
+},
+{
+"category": "REASONING",
+"question_text": "If the simple interest on ₹5,000 in 3 years is ₹600, what is the rate per annum?",
+"option_1": "3%",
+"option_2": "4%",
+"option_3": "5%",
+"option_4": "6%",
+"correct_option": 4
+},
+{
+"category": "REASONING",
+"question_text": "What is the least number which when divided by 6, 9 and 15 leaves a remainder 3?",
+"option_1": "63",
+"option_2": "93",
+"option_3": "183",
+"option_4": "243",
+"correct_option": 3
+},
+{
+"category": "REASONING",
+"question_text": "A man can row 30 km downstream in 3 hours and upstream in 6 hours. What is the speed of the current?",
+"option_1": "2.5 km/h",
+"option_2": "3 km/h",
+"option_3": "3.5 km/h",
+"option_4": "5 km/h",
+"correct_option": 1
+},
+{
+"category": "REASONING",
+"question_text": "What comes next in the series: 2, 6, 12, 20, 30, ?",
+"option_1": "36",
+"option_2": "40",
+"option_3": "42",
+"option_4": "48",
+"correct_option": 3
+},
+{
+"category": "REASONING",
+"question_text": "In a class, 60% students are boys. If there are 24 girls, find total strength.",
+"option_1": "40",
+"option_2": "50",
+"option_3": "60",
+"option_4": "80",
+"correct_option": 3
+},
+{
+"category": "REASONING",
+"question_text": "A man walked 20 km north, then 15 km east. How far is he from the start point?",
+"option_1": "25 km",
+"option_2": "30 km",
+"option_3": "35 km",
+"option_4": "40 km",
+"correct_option": 1
+},
+{
+"category": "REASONING",
+"question_text": "If A is 25% more than B, B is what percent less than A?",
+"option_1": "15%",
+"option_2": "20%",
+"option_3": "25%",
+"option_4": "30%",
+"correct_option": 2
+},
+{
+"category": "REASONING",
+"question_text": "Average of 5 students is 60. Excluding one student, the average becomes 65. What were that student’s marks?",
+"option_1": "35",
+"option_2": "45",
+"option_3": "55",
+"option_4": "60",
+"correct_option": 1
+},
+{
+"category": "TECHNICAL",
+"question_text": "What is the output of the following code? String a = "hello"; String b = "he" + "llo"; System.out.println(a == b);",
+"option_1": "true",
+"option_2": "false",
+"option_3": "Compilation error",
+"option_4": "Runtime exception",
+"correct_option": 1
+},
+{
+"category": "TECHNICAL",
+"question_text": "Which method is called when an object is created?",
+"option_1": "finalize()",
+"option_2": "constructor",
+"option_3": "new()",
+"option_4": "create()",
+"correct_option": 2
+},
+{
+"category": "TECHNICAL",
+"question_text": "Which of the following is a valid array declaration in Java?",
+"option_1": "int arr[] = new int(5);",
+"option_2": "int arr[] = int[5];",
+"option_3": "int arr[] = new int[5];",
+"option_4": "array arr = new int[5];",
+"correct_option": 3
+},
+{
+"category": "TECHNICAL",
+"question_text": "What does break do in Java?",
+"option_1": "Terminates program",
+"option_2": "Exits method",
+"option_3": "Jumps to main",
+"option_4": "Exits loop/switch",
+"correct_option": 4
+},
+{
+"category": "TECHNICAL",
+"question_text": "What is the output of the following code? System.out.println("10" + 20 + 30);",
+"option_1": "60",
+"option_2": "102030",
+"option_3": "1050",
+"option_4": "1030",
+"correct_option": 2
+},
+{
+"category": "TECHNICAL",
+"question_text": "The this keyword refers to:",
+"option_1": "Parent class",
+"option_2": "Child class",
+"option_3": "Current object",
+"option_4": "Static method",
+"correct_option": 3
+},
+{
+"category": "TECHNICAL",
+"question_text": "Which interface can be used for sorting custom objects?",
+"option_1": "Serializable",
+"option_2": "Comparator",
+"option_3": "Iterable",
+"option_4": "Runnable",
+"correct_option": 2
+},
+{
+"category": "TECHNICAL",
+"question_text": "What is the result of Math.floor(4.7)?",
+"option_1": "4.0",
+"option_2": "5.0",
+"option_3": "4.5",
+"option_4": "4.7",
+"correct_option": 1
+},
+{
+"category": "TECHNICAL",
+"question_text": "What is the output of the following code? List list = Arrays.asList("A", "B", "C"); list.replaceAll(s -> s.toLowerCase()); System.out.println(list);",
+"option_1": "[a, b, c]",
+"option_2": "[A, B, C]",
+"option_3": "[null, null, null]",
+"option_4": "Compilation error",
+"correct_option": 1
+},
+{
+"category": "TECHNICAL",
+"question_text": "What is the effect of using finalize()?",
+"option_1": "Guarantees memory free",
+"option_2": "Manually deletes object",
+"option_3": "Cleanup before garbage collection",
+"option_4": "Finalizes variables",
+"correct_option": 3
+},
+{
+"category": "TECHNICAL",
+"question_text": "What is the time complexity of binary search?",
+"option_1": "O(n)",
+"option_2": "O(n log n)",
+"option_3": "O(log n)",
+"option_4": "O(1)",
+"correct_option": 3
+},
+{
+"category": "TECHNICAL",
+"question_text": "What is the output of the following pseudocode? count = 0; for i = 1 to 4: for j = 1 to i: count++; print(count)",
+"option_1": "6",
+"option_2": "8",
+"option_3": "10",
+"option_4": "12",
+"correct_option": 3
+},
+{
+"category": "TECHNICAL",
+"question_text": "Which data structure works on LIFO?",
+"option_1": "Queue",
+"option_2": "Array",
+"option_3": "Stack",
+"option_4": "Linked list",
+"correct_option": 3
+},
+{
+"category": "TECHNICAL",
+"question_text": "Which algorithm is used for shortest path when there are no negative edges?",
+"option_1": "Floyd–Warshall",
+"option_2": "Dijkstra",
+"option_3": "DFS",
+"option_4": "Prim’s",
+"correct_option": 2
+},
+{
+"category": "TECHNICAL",
+"question_text": "What is the space complexity of storing an adjacency matrix of a graph with N nodes?",
+"option_1": "O(N)",
+"option_2": "O(N log N)",
+"option_3": "O(N²)",
+"option_4": "O(2N)",
+"correct_option": 3
+},
+{
+"category": "TECHNICAL",
+"question_text": "What is the output of the following pseudocode? a = 5; b = 2; a = a ^ b; b = a ^ b; a = a ^ b; print(a, b)",
+"option_1": "5 2",
+"option_2": "2 5",
+"option_3": "0 0",
+"option_4": "Error",
+"correct_option": 2
+},
+{
+"category": "TECHNICAL",
+"question_text": "Which traversal visits a binary tree level by level?",
+"option_1": "In-order",
+"option_2": "Pre-order",
+"option_3": "Post-order",
+"option_4": "Level-order",
+"correct_option": 4
+},
+{
+"category": "TECHNICAL",
+"question_text": "What is the worst-case time complexity of bubble sort?",
+"option_1": "O(n)",
+"option_2": "O(log n)",
+"option_3": "O(n log n)",
+"option_4": "O(n²)",
+"correct_option": 4
+},
+{
+"category": "TECHNICAL",
+"question_text": "Which of the following is not a stable sorting algorithm?",
+"option_1": "Merge sort",
+"option_2": "Bubble sort",
+"option_3": "Quick sort",
+"option_4": "Insertion sort",
+"correct_option": 3
+},
+{
+"category": "TECHNICAL",
+"question_text": "In a hash table, collisions are commonly handled using:",
+"option_1": "BFS",
+"option_2": "Chaining",
+"option_3": "Recursion",
+"option_4": "Memoization",
+"correct_option": 2
+},
+{
+"category": "AI",
+"question_text": "Which is an example of supervised learning?",
+"option_1": "Cluster",
+"option_2": "Classify",
+"option_3": "Reduce",
+"option_4": "Associate",
+"correct_option": 2
+},
+{
+"category": "AI",
+"question_text": "Which of the following is a classification algorithm?",
+"option_1": "K-Means",
+"option_2": "Linear Reg",
+"option_3": "Decision Tree",
+"option_4": "Apriori",
+"correct_option": 3
+},
+{
+"category": "AI",
+"question_text": "What does overfitting mean?",
+"option_1": "Good new data",
+"option_2": "Poor train",
+"option_3": "Memorize data",
+"option_4": "Ignore data",
+"correct_option": 3
+},
+{
+"category": "AI",
+"question_text": "Which of the following is an unsupervised learning method?",
+"option_1": "Linear Reg",
+"option_2": "Logistic Reg",
+"option_3": "K-Means",
+"option_4": "Tree",
+"correct_option": 3
+},
+{
+"category": "AI",
+"question_text": "What is the purpose of a loss function?",
+"option_1": "Speed",
+"option_2": "Error",
+"option_3": "Store",
+"option_4": "Normalize",
+"correct_option": 2
+},
+{
+"category": "DATABASE",
+"question_text": "Which SQL command is used to retrieve data?",
+"option_1": "INSERT",
+"option_2": "UPDATE",
+"option_3": "SELECT",
+"option_4": "DELETE",
+"correct_option": 3
+},
+{
+"category": "DATABASE",
+"question_text": "What does a primary key do?",
+"option_1": "Duplicate",
+"option_2": "Unique",
+"option_3": "Null",
+"option_4": "Sort",
+"correct_option": 2
+},
+{
+"category": "DATABASE",
+"question_text": "Which normal form removes partial dependency?",
+"option_1": "1NF",
+"option_2": "2NF",
+"option_3": "3NF",
+"option_4": "BCNF",
+"correct_option": 2
+},
+{
+"category": "DATABASE",
+"question_text": "Which JOIN returns all records from both tables?",
+"option_1": "INNER",
+"option_2": "LEFT",
+"option_3": "RIGHT",
+"option_4": "FULL",
+"correct_option": 4
+},
+{
+"category": "DATABASE",
+"question_text": "What is the default sort order of ORDER BY in SQL?",
+"option_1": "Desc",
+"option_2": "Random",
+"option_3": "Asc",
+"option_4": "None",
+"correct_option": 3
+}
+]
