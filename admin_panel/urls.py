@@ -43,5 +43,6 @@ urlpatterns = [
 
     path('export/registrations/<int:schedule_id>/', views.export_registrations, name='export_registrations'),
     path('export/results/<int:schedule_id>/', views.export_results, name='export_results'),
+    path("results/<int:schedule_id>/share/", views.share_results, name="share_results"),
 
 ]

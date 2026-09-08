@@ -37,6 +37,8 @@ from django.utils import timezone
 from django.conf import settings
 import logging
 import threading
+from .services import build_results_workbook, get_filtered_results
+from io import BytesIO
 
 logger = logging.getLogger(__name__)
 # -----------------------------
@@ -908,38 +910,22 @@ def export_registrations(request, schedule_id):
 @superuser_required
 def export_results(request, schedule_id):
     schedule = get_object_or_404(ExamScheduleHistory, pk=schedule_id)
-    results = Result.objects.filter(exam_schedule=schedule).order_by('-score')
 
-    # Create Excel workbook
-    wb = openpyxl.Workbook()
-    ws = wb.active
-    ws.title = f"Results_{schedule.college.name}"
+    cutoff = request.GET.get("cutoff")
+    top_n = request.GET.get("top_n")
+    results = get_filtered_results(schedule, cutoff, top_n)
+    
+    if not results:
+        messages.warning(request, "No results match the current filter — nothing to export.")
+        return redirect("view_results", schedule_id=schedule.id)
 
-    # Header row
-    headers = ["ID", "Student Name", "Email", "Score","College", "Contact Number"]
-    for col_index, header in enumerate(headers, start=1):
-        cell = ws.cell(row=1, column=col_index, value=header.upper())
-        cell.font = Font(bold=True)
+    wb = build_results_workbook(schedule, results)
 
-    # Data rows
-    for idx, result in enumerate(results, start=1):
-        row = [
-            idx,
-            result.student.name.upper() if result.student.name else "",
-            result.student.email.upper() if result.student.email else "",
-            result.score,
-            result.exam_schedule.college.name.upper() if result.exam_schedule.college.name else "",
-            result.student.mobile_number.upper() if result.student.mobile_number else ""
-        ]
-        for col_index, value in enumerate(row, start=1):
-            ws.cell(row=idx+1, column=col_index, value=value)
-
-    # Prepare response
     response = HttpResponse(
-        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
     filename = f"Results_{schedule.college.name}_{schedule.quiz_date.date()}.xlsx"
-    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
     wb.save(response)
     return response
 
@@ -965,3 +951,61 @@ def reset_student_session(request, student_id):
     if schedule_id:
         return redirect("college_registrations", schedule_id=schedule_id)
     return redirect("dashboard")
+
+
+@superuser_required
+@require_POST
+def share_results(request, schedule_id):
+    schedule = get_object_or_404(ExamScheduleHistory, pk=schedule_id)
+
+    emails = list(
+        schedule.college.officials
+        .filter(is_active=True)
+        .values_list("email", flat=True)
+    )
+    if not emails:
+        messages.error(request, "No active college officials found.")
+        return redirect("view_results", schedule_id=schedule.id)  # adjust to your results URL name
+
+    cutoff = request.POST.get("cutoff")
+    top_n = request.POST.get("top_n")
+    results = get_filtered_results(schedule, cutoff, top_n)
+
+    if not results:
+        messages.error(request, "No results match the current filter — nothing to share.")
+        return redirect("view_results", schedule_id=schedule.id)
+
+    # Build the same Excel, into memory for attaching
+    wb = build_results_workbook(schedule, results)
+    buffer = BytesIO()
+    wb.save(buffer)
+    buffer.seek(0)
+
+    context = {
+        "college_name": schedule.college.name,
+        "quiz_date": schedule.quiz_date.strftime("%d-%m-%Y %I:%M %p"),
+        "site_name": settings.SITE_NAME,
+        "result_count": len(results),
+    }
+    html_content = render_to_string("emails/results_email.html", context)
+
+    email = EmailMultiAlternatives(
+        subject=f"{settings.SITE_NAME} Results - {schedule.college.name}",
+        body="Please view this email in HTML format.",
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=emails,
+    )
+    email.attach_alternative(html_content, "text/html")
+    email.attach(
+        f"Results_{schedule.college.name}_{schedule.quiz_date.date()}.xlsx",
+        buffer.getvalue(),
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+
+    try:
+        email.send()
+        messages.success(request, f"Results sent to {schedule.college.name} officials.")
+    except Exception as e:
+        messages.error(request, f"Failed to send email: {e}")
+
+    return redirect("college_results", schedule_id=schedule.id)
