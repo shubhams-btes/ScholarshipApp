@@ -70,6 +70,51 @@ def student_register(request):
                 messages.error(request, "You are already registered for this quiz.")
                 return redirect(f"{request.path}?schedule_id={schedule_id}")
 
+            if Student.objects.filter(email=email, exam_schedule=event).exists():
+                messages.error(request, "You are already registered for this quiz.")
+                return redirect(f"{request.path}?schedule_id={schedule_id}")
+
+            if not settings.REQUIRE_EMAIL_OTP:
+                # TEST ENVIRONMENT ONLY: skip OTP, register directly.
+                try:
+                    student = Student.objects.create(
+                        name=form.cleaned_data['name'],
+                        email=email,
+                        password=make_password(form.cleaned_data['password']),
+                        exam_schedule=event,
+                        stream=form.cleaned_data['stream'],
+                        mobile_number=form.cleaned_data['mobile_number'],
+                        is_active=True,
+                    )
+                except IntegrityError:
+                    messages.error(request, "You are already registered for this quiz.")
+                    return redirect(f"{request.path}?schedule_id={schedule_id}")
+
+                success_message = (
+                    f"You have been registered successfully. Your hall ticket is {student.hall_ticket}. "
+                    "The login link will be sent 10 minutes prior to the start."
+                )
+                return render(request, 'tests/message.html', {'message': success_message})
+
+            # NORMAL PATH: OTP verification (unchanged)
+            otp = ''.join(secrets.choice(string.digits) for _ in range(6))
+            request.session['pending_registration'] = {
+                'name': form.cleaned_data['name'],
+                'email': email,
+                'password': make_password(form.cleaned_data['password']),
+                'stream': form.cleaned_data['stream'],
+                'mobile_number': form.cleaned_data['mobile_number'],
+                'exam_schedule_id': event.id
+            }
+            request.session['email_otp'] = otp
+            request.session['otp_expiry'] = time.time() + 600
+            request.session['otp_attempts'] = 0
+            request.session['otp_last_sent'] = time.time()
+
+            threading.Thread(target=_send_otp_email, args=(email, form.cleaned_data['name'], otp), daemon=True).start()
+            messages.info(request, f"An OTP has been sent to {email}. Please verify to complete registration.")
+            return redirect('verify_email')
+        
             otp = ''.join(secrets.choice(string.digits) for _ in range(6))
 
             request.session['pending_registration'] = {
