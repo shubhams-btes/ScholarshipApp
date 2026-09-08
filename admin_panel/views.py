@@ -518,7 +518,7 @@ def _send_quiz_links(college_name, students_data, link, quiz_date_str):
                     "hall_ticket": s["hall_ticket"],
                     "quiz_link": link,
                     "quiz_date": quiz_date_str,
-                    "access_time": "10 minutes before the BTES TalentQuest",
+                    "access_time": "10 minutes before the BTES Talent Quest",
                     "site_name": settings.SITE_NAME,
                 }
                 html_content = render_to_string("emails/quiz_link.html", context)
