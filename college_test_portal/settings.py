@@ -166,5 +166,5 @@ EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD")
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 SITE_URL = "http://talentquest.btes.co.in"
 
-SITE_NAME = "BTES TalentQuest"
+SITE_NAME = "BTES Talent Quest"
 EMAIL_TIMEOUT = 10
