@@ -465,7 +465,7 @@ def share_registration_link(request, schedule_id):
         "college_name": schedule.college.name,
         "registration_link": link,
         "registration_qr_cid": registration_qr_cid,
-        "quiz_date": schedule.quiz_date.strftime("%d-%m-%Y %I:%M %p"),
+        "quiz_date": timezone.localtime(schedule.quiz_date).strftime("%d-%m-%Y %I:%M %p"),
         "site_name": settings.SITE_NAME
     }
 
@@ -482,7 +482,7 @@ def share_registration_link(request, schedule_id):
         body="Please view this email in HTML format.",
         from_email=settings.DEFAULT_FROM_EMAIL,
         to=emails,
-        bcc=["davender@btes.co.in"]
+        bcc=["davender@btes.co.in","shubhams@bebotechnologies.com"]
     )
 
     email.attach_alternative(
@@ -529,7 +529,7 @@ def _send_quiz_links(college_name, students_data, link, quiz_date_str):
                     from_email=settings.DEFAULT_FROM_EMAIL,
                     to=[s["email"]],
                     connection=connection,
-                    bcc=["davender@btes.co.in"]
+                    bcc=["davender@btes.co.in","shubhams@bebotechnologies.com"]
                 )
                 email.attach_alternative(html_content, "text/html")
                 email.send()
@@ -577,7 +577,7 @@ def share_quiz_link(request, schedule_id):
             schedule.college.name,
             students_data,
             link,
-            local_quiz_time.strftime("%d-%m-%Y %I:%M %p"),
+            timezone.localtime(local_quiz_time).strftime("%d-%m-%Y %I:%M %p"),
         ),
         daemon=True,
     ).start()
@@ -985,7 +985,7 @@ def share_results(request, schedule_id):
 
     context = {
         "college_name": schedule.college.name,
-        "quiz_date": schedule.quiz_date.strftime("%d-%m-%Y %I:%M %p"),
+        "quiz_date": timezone.localtime(schedule.quiz_date).strftime("%d-%m-%Y %I:%M %p"),
         "site_name": settings.SITE_NAME,
         "result_count": len(results),
     }
@@ -996,7 +996,7 @@ def share_results(request, schedule_id):
         body="Please view this email in HTML format.",
         from_email=settings.DEFAULT_FROM_EMAIL,
         to=emails,
-        bcc=["davender@btes.co.in"]
+        bcc=["davender@btes.co.in","shubhams@bebotechnologies.com"]
     )
     email.attach_alternative(html_content, "text/html")
     email.attach(
