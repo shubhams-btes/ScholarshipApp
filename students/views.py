@@ -244,6 +244,12 @@ def login_view(request):
             'message': "This exam is not currently available. Please contact the administrator."
         })
 
+    # NEW: block login until the quiz is actually open to take
+    if not event.quiz_enabled:   # or whatever your "quiz is startable" flag/condition is
+        return render(request, 'tests/message.html', {
+            'message': "The exam has not started yet. Please log in at the scheduled time."
+        })
+
     if request.method == "POST":
         email = request.POST.get("email")
         password = request.POST.get("password")
