@@ -142,7 +142,14 @@ def quiz_view(request):
         request.session.save()
     student.current_session = request.session.session_key
     student.save(update_fields=["current_session"])
+    now = timezone.now()
+    
+    progress, _ = ExamProgress.objects.get_or_create(student=student)
+    
+    if not progress.end_time:
+        return redirect("start_quiz")   # send them to the start/guidelines flow
 
+    
     return render(request, "tests/exam.html", {
         "student": student,
         "questions": selected_questions,
@@ -151,6 +158,8 @@ def quiz_view(request):
         "saved_answers_json": saved_answers_json,
         "schedule": event,             # the occurrence
         "guidelines_accepted": guidelines_accepted,
+        "server_now": timezone.now().isoformat(),
+        "remaining_seconds": (progress.end_time - now).total_seconds()
     })
 
 @student_login_required
@@ -172,11 +181,9 @@ def start_exam(request):
         progress.save(update_fields=["end_time", "updated_at"])
 
     request.session['guidelines_accepted'] = True
-
     return JsonResponse({
         "success": True,
-        "exam_end_time": progress.end_time.isoformat(),
-        "server_now": timezone.now().isoformat(),
+        "exam_end_time": progress.end_time.isoformat()
     })
 
 

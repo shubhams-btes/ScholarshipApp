@@ -366,8 +366,11 @@
         startExamUrl: "{% url 'start_exam' %}",
         saveAnswerUrl: "{% url 'save_answer' %}",
         savedAnswers: JSON.parse('{{ saved_answers_json|escapejs }}'),
-        serverNow: "{{ server_now|escapejs }}"
+        serverNow: "{{ server_now|escapejs }}",
+        remainingSeconds: "{{ remaining_seconds }}",
       };
+
+      console.log("examConfig:", window.examConfig);
     </script>
     <script src="{% static 'students/js/exam-guidelines.js' %}"></script>
     <script src="{% static 'tests/js/script.js' %}"></script>

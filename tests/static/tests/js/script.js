@@ -6,8 +6,8 @@ if (!window.examConfig) {
 } else {
 
 const serverNow = new Date(window.examConfig.serverNow).getTime();
-const clientNow = Date.now();
-const clockOffset = serverNow - clientNow; 
+const clockOffset = isNaN(serverNow) ? 0 : (serverNow - Date.now());
+
 
 const total = window.examConfig.totalQuestions;
 let autoSubmitting = false;
@@ -27,7 +27,6 @@ const bookmarked =
 
 
 function updateTimer() {
-
 
     const remaining =
         Math.floor((examEndTime - (Date.now() + clockOffset)) / 1000);
@@ -56,11 +55,13 @@ function updateTimer() {
     return true;
 }
 
+
+
 function startTimer() {
 
     // Display immediately
     if (!updateTimer()) return;
-
+    
     const interval = setInterval(() => {
 
         if (!updateTimer()) {
@@ -268,7 +269,7 @@ function beginExamRuntime(endTimeStr) {
         startTimer();
     }
 
-    startProctoring();
+    // startProctoring();
 }
 
 // =============================
@@ -280,7 +281,7 @@ function beginExamRuntime(endTimeStr) {
 // fullscreen" overlay and only call beginExamRuntime after its button is clicked.
 
 function resumeExamAfterReload() {
-
+    
     // Deadline already passed → don't prompt, submit immediately.
     if (isNaN(examEndTime) || examEndTime - (Date.now() + clockOffset) <= 0) {
         autoSubmitting = true;
@@ -712,12 +713,12 @@ document.addEventListener(
 // =============================
 // DISABLE COPY / PASTE / RIGHT-CLICK / SELECTION
 // =============================
-["contextmenu", "copy", "cut", "paste", "dragstart", "selectstart"]
-    .forEach(function (evt) {
-        document.addEventListener(evt, function (e) {
-            e.preventDefault();
-        });
-    });
+// ["contextmenu", "copy", "cut", "paste", "dragstart", "selectstart"]
+//     .forEach(function (evt) {
+//         document.addEventListener(evt, function (e) {
+//             e.preventDefault();
+//         });
+//     });
 
 } 
 
