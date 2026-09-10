@@ -5,10 +5,6 @@ if (!window.examConfig) {
     console.warn("examConfig not found");
 } else {
 
-const serverNow = new Date(window.examConfig.serverNow).getTime();
-const clockOffset = isNaN(serverNow) ? 0 : (serverNow - Date.now());
-
-
 const total = window.examConfig.totalQuestions;
 let autoSubmitting = false;
 let finalSubmission = false;
@@ -28,8 +24,10 @@ const bookmarked =
 
 function updateTimer() {
 
+    const now = Date.now();
+
     const remaining =
-        Math.floor((examEndTime - (Date.now() + clockOffset)) / 1000);
+        Math.floor((examEndTime - now) / 1000);
 
     if (remaining <= 0) {
 
@@ -55,13 +53,11 @@ function updateTimer() {
     return true;
 }
 
-
-
 function startTimer() {
 
     // Display immediately
     if (!updateTimer()) return;
-    
+
     const interval = setInterval(() => {
 
         if (!updateTimer()) {
@@ -269,7 +265,7 @@ function beginExamRuntime(endTimeStr) {
         startTimer();
     }
 
-    // startProctoring();
+    startProctoring();
 }
 
 // =============================
@@ -281,9 +277,9 @@ function beginExamRuntime(endTimeStr) {
 // fullscreen" overlay and only call beginExamRuntime after its button is clicked.
 
 function resumeExamAfterReload() {
-    
+
     // Deadline already passed → don't prompt, submit immediately.
-    if (isNaN(examEndTime) || examEndTime - (Date.now() + clockOffset) <= 0) {
+    if (isNaN(examEndTime) || examEndTime - Date.now() <= 0) {
         autoSubmitting = true;
         const form = document.getElementById("exam-form");
         if (form) form.submit();
@@ -713,12 +709,12 @@ document.addEventListener(
 // =============================
 // DISABLE COPY / PASTE / RIGHT-CLICK / SELECTION
 // =============================
-// ["contextmenu", "copy", "cut", "paste", "dragstart", "selectstart"]
-//     .forEach(function (evt) {
-//         document.addEventListener(evt, function (e) {
-//             e.preventDefault();
-//         });
-//     });
+["contextmenu", "copy", "cut", "paste", "dragstart", "selectstart"]
+    .forEach(function (evt) {
+        document.addEventListener(evt, function (e) {
+            e.preventDefault();
+        });
+    });
 
 } 
 

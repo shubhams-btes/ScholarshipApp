@@ -142,21 +142,6 @@ def quiz_view(request):
         request.session.save()
     student.current_session = request.session.session_key
     student.save(update_fields=["current_session"])
-    now = timezone.now()
-    
-    progress, _ = ExamProgress.objects.get_or_create(student=student)
-    
-    if not progress.end_time:
-        # Not started yet — render the page in its "guidelines / Start" state.
-        # No timer values, because the deadline isn't set until the student clicks Start.
-        return render(request, "tests/exam.html", {
-            "student": student,
-            "questions": selected_questions,
-            "schedule": event,
-            "guidelines_accepted": False,   # template shows guidelines + Start button
-            # deliberately NO server_now / remaining_seconds / exam_end_time — no timer yet
-        })  # send them to the start/guidelines flow
-
     
     return render(request, "tests/exam.html", {
         "student": student,
@@ -165,10 +150,7 @@ def quiz_view(request):
         "exam_end_time": exam_end_time,
         "saved_answers_json": saved_answers_json,
         "schedule": event,             # the occurrence
-        "guidelines_accepted": guidelines_accepted,
-        "server_now": timezone.now().isoformat(),
-        "remaining_seconds": (progress.end_time - now).total_seconds()
-    })
+        "guidelines_accepted": guidelines_accepted    })
 
 @student_login_required
 def start_exam(request):
