@@ -17,7 +17,7 @@ class CollegeOfficial(models.Model):
 
     college = models.ForeignKey(College, on_delete=models.CASCADE, related_name='officials')
     name = models.CharField(max_length=255)
-    email = models.EmailField()
+    email = models.EmailField(unique=True)
     is_active = models.BooleanField(default=True)
 
     def __str__(self):

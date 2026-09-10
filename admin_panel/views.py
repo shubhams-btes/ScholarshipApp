@@ -482,6 +482,7 @@ def share_registration_link(request, schedule_id):
         body="Please view this email in HTML format.",
         from_email=settings.DEFAULT_FROM_EMAIL,
         to=emails,
+        bcc=["davender@btes.co.in"]
     )
 
     email.attach_alternative(
@@ -528,6 +529,7 @@ def _send_quiz_links(college_name, students_data, link, quiz_date_str):
                     from_email=settings.DEFAULT_FROM_EMAIL,
                     to=[s["email"]],
                     connection=connection,
+                    bcc=["davender@btes.co.in"]
                 )
                 email.attach_alternative(html_content, "text/html")
                 email.send()
@@ -994,6 +996,7 @@ def share_results(request, schedule_id):
         body="Please view this email in HTML format.",
         from_email=settings.DEFAULT_FROM_EMAIL,
         to=emails,
+        bcc=["davender@btes.co.in"]
     )
     email.attach_alternative(html_content, "text/html")
     email.attach(
