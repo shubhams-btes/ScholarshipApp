@@ -5,6 +5,10 @@ if (!window.examConfig) {
     console.warn("examConfig not found");
 } else {
 
+const serverNow = new Date(window.examConfig.serverNow).getTime();
+const clientNow = Date.now();
+const clockOffset = serverNow - clientNow; 
+
 const total = window.examConfig.totalQuestions;
 let autoSubmitting = false;
 let finalSubmission = false;
@@ -24,10 +28,9 @@ const bookmarked =
 
 function updateTimer() {
 
-    const now = Date.now();
 
     const remaining =
-        Math.floor((examEndTime - now) / 1000);
+        Math.floor((examEndTime - (Date.now() + clockOffset)) / 1000);
 
     if (remaining <= 0) {
 

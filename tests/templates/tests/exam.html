@@ -365,7 +365,8 @@
         examEndTime: "{{ exam_end_time|escapejs }}",
         startExamUrl: "{% url 'start_exam' %}",
         saveAnswerUrl: "{% url 'save_answer' %}",
-        savedAnswers: JSON.parse('{{ saved_answers_json|escapejs }}')
+        savedAnswers: JSON.parse('{{ saved_answers_json|escapejs }}'),
+        serverNow: "{{ server_now|escapejs }}"
       };
     </script>
     <script src="{% static 'students/js/exam-guidelines.js' %}"></script>

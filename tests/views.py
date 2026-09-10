@@ -176,6 +176,7 @@ def start_exam(request):
     return JsonResponse({
         "success": True,
         "exam_end_time": progress.end_time.isoformat(),
+        "server_now": timezone.now().isoformat(),
     })
 
 
