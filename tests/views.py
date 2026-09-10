@@ -147,7 +147,7 @@ def quiz_view(request):
     progress, _ = ExamProgress.objects.get_or_create(student=student)
     
     if not progress.end_time:
-        return redirect("start_quiz")   # send them to the start/guidelines flow
+        return redirect("start_exam")   # send them to the start/guidelines flow
 
     
     return render(request, "tests/exam.html", {
