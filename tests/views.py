@@ -77,32 +77,44 @@ def quiz_view(request):
         return render(request, 'tests/message.html',
                       {'message': 'You have already attempted the BTES TalentQuest.'})
 
-    EXAM_DURATION_MINUTES = 20
+    EXAM_DURATION_MINUTES = 40   # changed from 20
 
     progress, _ = ExamProgress.objects.get_or_create(student=student)
 
     if not progress.question_ids:
-        available_questions = list(
-            Question.objects.filter(
-                is_active=True,
-                category__in=["TECHNICAL", "REASONING", "AI", "DATABASE"]
+        # Per-category quotas — order here defines the exam order
+        category_quotas = [
+            ("TECHNICAL", 10),
+            ("REASONING", 10),
+            ("DATABASE", 5),
+            ("AI", 5),
+        ]
+
+        selected_ids = []
+        insufficient = []
+
+        for category, count in category_quotas:
+            pool = list(
+                Question.objects.filter(is_active=True, category=category)
+                .values_list("id", flat=True)
             )
-        )
+            if len(pool) < count:
+                insufficient.append(f"{category} (need {count}, have {len(pool)})")
+                continue
+            selected_ids.extend(random.sample(pool, count))
 
-        if len(available_questions) < 20:
-            return render(
-                request,
-                'tests/message.html',
-                {
-                    'message': 'Not enough active questions available. Contact admin.'
-                }
-            )
+        # If any category can't meet its quota, fail clearly rather than a short exam
+        if insufficient:
+            return render(request, 'tests/message.html', {
+                'message': (
+                    "Not enough active questions in: "
+                    + ", ".join(insufficient)
+                    + ". Contact admin."
+                )
+            })
 
-        selected = random.sample(available_questions, 20)
-
-        random.shuffle(selected)
-
-        progress.question_ids = [q.id for q in selected]
+        # NOTE: do NOT shuffle — that would destroy the category order.
+        progress.question_ids = selected_ids
         progress.save(update_fields=["question_ids", "updated_at"])
 
     question_ids = progress.question_ids
@@ -144,7 +156,7 @@ def quiz_view(request):
 @student_login_required
 def start_exam(request):
 
-    EXAM_DURATION_MINUTES = 20
+    EXAM_DURATION_MINUTES = 40
 
     student = request.student
 
