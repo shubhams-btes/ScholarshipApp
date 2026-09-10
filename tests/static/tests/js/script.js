@@ -282,7 +282,7 @@ function beginExamRuntime(endTimeStr) {
 function resumeExamAfterReload() {
 
     // Deadline already passed → don't prompt, submit immediately.
-    if (isNaN(examEndTime) || examEndTime - Date.now() <= 0) {
+    if (isNaN(examEndTime) || examEndTime - (Date.now() + clockOffset) <= 0) {
         autoSubmitting = true;
         const form = document.getElementById("exam-form");
         if (form) form.submit();
