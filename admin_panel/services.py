@@ -4,13 +4,18 @@ from io import BytesIO
 from tests.models import Result
 
 
-def build_results_workbook(schedule, results):
-    """Build the results Excel for a schedule. `results` is an already-filtered queryset."""
+def build_results_workbook(schedule, results, include_score=False):
+    """Build the results Excel for a schedule. `results` is an already-filtered queryset.
+    include_score=True adds the Score column (internal/official use);
+    default False omits it (for sharing with colleges)."""
     wb = openpyxl.Workbook()
     ws = wb.active
-    ws.title = f"Results_{schedule.college.name}"[:31]  # Excel sheet-name max 31 chars
+    ws.title = f"Results_{schedule.college.name}"[:31]
 
     headers = ["ID", "Student Name", "Email", "College", "Contact Number"]
+    if include_score:
+        headers.append("Score")   # add the column only when requested
+
     for col_index, header in enumerate(headers, start=1):
         cell = ws.cell(row=1, column=col_index, value=header.upper())
         cell.font = Font(bold=True)
@@ -23,6 +28,9 @@ def build_results_workbook(schedule, results):
             result.exam_schedule.college.name.upper() if result.exam_schedule.college.name else "",
             result.student.mobile_number.upper() if result.student.mobile_number else "",
         ]
+        if include_score:
+            row.append(result.score)   # append matching the header
+
         for col_index, value in enumerate(row, start=1):
             ws.cell(row=idx + 1, column=col_index, value=value)
 

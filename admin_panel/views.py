@@ -528,8 +528,8 @@ def _send_quiz_links(college_name, students_data, link, quiz_date_str):
                     body="Please view this email in HTML format.",
                     from_email=settings.DEFAULT_FROM_EMAIL,
                     to=[s["email"]],
-                    connection=connection,
-                    bcc=["davender@btes.co.in","shubhams@bebotechnologies.com"]
+                    connection=connection
+                    # bcc=["davender@btes.co.in","shubhams@bebotechnologies.com"]
                 )
                 email.attach_alternative(html_content, "text/html")
                 email.send()
@@ -921,7 +921,7 @@ def export_results(request, schedule_id):
         messages.warning(request, "No results match the current filter — nothing to export.")
         return redirect("view_results", schedule_id=schedule.id)
 
-    wb = build_results_workbook(schedule, results)
+    wb = build_results_workbook(schedule, results,include_score=True)
 
     response = HttpResponse(
         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
