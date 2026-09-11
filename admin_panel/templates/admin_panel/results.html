@@ -141,18 +141,19 @@
                     </li>
                     {% else %}
                     <li class="page-item disabled"><span class="page-link">Previous</span></li>
-                    {% endif %} {% for num in page_obj.paginator.page_range %} {% if page_obj.number == num %}
-                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-                    {% else %}
-                    <li class="page-item">
-                        <a
-                            class="page-link"
-                            href="?page={{ num }}{% if cutoff %}&cutoff={{ cutoff }}{% endif %}{% if top_n %}&top_n={{ top_n }}{% endif %}"
-                        >
-                            {{ num }}
-                        </a>
-                    </li>
-                    {% endif %} {% endfor %} {% if page_obj.has_next %}
+                    {% endif %} 
+                    {% for num in elided_page_range %}
+                        {% if num == "…" %}
+                            <li class="page-item disabled"><span class="page-link">…</span></li>
+                        {% elif num == page_obj.number %}
+                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                        {% else %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}{% if cutoff %}&cutoff={{ cutoff }}{% endif %}{% if top_n %}&top_n={{ top_n }}{% endif %}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %} 
+                    {% if page_obj.has_next %}
                     <li class="page-item">
                         <a
                             class="page-link"

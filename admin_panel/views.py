@@ -105,12 +105,19 @@ def dashboard(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
+    elided_page_range = paginator.get_elided_page_range(
+        page_obj.number,
+        on_each_side=2,
+        on_ends=1,
+    )
+    
     return render(request, 'admin_panel/dashboard.html', {
         'page_obj': page_obj,
         'college_query': college_query,
         'from_date': from_date_str,
         'to_date': to_date_str,
-        'title': 'Dashboard'
+        'title': 'Dashboard',
+        'elided_page_range': elided_page_range
     })
 
 
@@ -159,10 +166,16 @@ def college_management(request):
     paginator = Paginator(filtered_colleges, 10)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
+    elided_page_range = paginator.get_elided_page_range(
+        page_obj.number,
+        on_each_side=2,
+        on_ends=1,
+    )
 
     return render(request, "admin_panel/college_management.html", {
         "colleges": page_obj,  # template loops over colleges
-        "q": q
+        "q": q,
+        "elided_page_range": elided_page_range,
     })
 
 
@@ -275,12 +288,19 @@ def exam_schedule_management(request):
 
     paginator = Paginator(rows, 10)
     page_obj = paginator.get_page(request.GET.get('page'))
+    elided_page_range = paginator.get_elided_page_range(
+        page_obj.number,                                 # use the view's page-object variable
+        on_each_side=2,
+        on_ends=1,
+    )
+
 
     return render(request, 'admin_panel/quiz_management.html', {
         "rows": page_obj,
         "page_obj": page_obj,
         "q": q,
         "now": timezone.localtime(now),
+        "elided_page_range": elided_page_range,
     })
 
 @superuser_required
@@ -662,6 +682,12 @@ def college_results(request, schedule_id):
     paginator = Paginator(filtered_results, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
+    
+    elided_page_range = paginator.get_elided_page_range(
+        page_obj.number,
+        on_each_side=2,
+        on_ends=1,
+    )
 
     return render(request, "admin_panel/results.html", {
         "college": college,
@@ -669,6 +695,7 @@ def college_results(request, schedule_id):
         "page_obj": page_obj,
         "cutoff": cutoff,
         "top_n": top_n,
+        "elided_page_range": elided_page_range,
     })
 
 
@@ -685,11 +712,18 @@ def college_registrations(request, schedule_id):
     paginator = Paginator(registered_students, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
+    
+    elided_page_range = paginator.get_elided_page_range(
+        page_obj.number,
+        on_each_side=2,
+        on_ends=1,
+    )
 
     return render(request, "admin_panel/registrations.html", {
         "college": college,
         "schedule": schedule,
-        "page_obj": page_obj
+        "page_obj": page_obj,
+        "elided_page_range": elided_page_range,
     })
 
 # -----------------------------
@@ -701,6 +735,7 @@ def manage_questions(request):
     paginator = Paginator(questions, 10)  # paginate by 10
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
+    
     return render(request, 'admin_panel/manage_questions.html', {'page_obj': page_obj})
 
 
