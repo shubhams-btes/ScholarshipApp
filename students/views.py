@@ -162,6 +162,7 @@ def verify_email(request):
                 student = Student.objects.create(
                     name=pending_data['name'],
                     email=pending_data['email'],
+                    roll_no=pending_data['roll_no'],
                     password=pending_data['password'],
                     exam_schedule=exam_schedule,
                     stream=pending_data['stream'],
