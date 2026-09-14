@@ -93,6 +93,19 @@
                 <button class="btn btn-warning mb-2" disabled title="No results to share">Share Result</button>
             {% endif %}
 
+            <form method="get" class="row g-2 mb-3">
+                <div class="col-md-6">
+                    <input type="text" name="search" value="{{ search }}" class="form-control"
+                        placeholder="Search by name, email, phone, or hall ticket">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">Search</button>
+                </div>
+                <div class="col-md-2">
+                    <a href="?" class="btn btn-secondary w-100">Reset</a>
+                </div>
+            </form>
+
             <table class="table table-striped table-hover">
                 <thead class="table-dark">
                     <tr>

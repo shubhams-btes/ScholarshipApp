@@ -660,54 +660,6 @@ def toggle_registration(request, pk):
 # -----------------------------
 # Results per College
 # -----------------------------
-@superuser_required
-def college_results(request, schedule_id):
-    schedule = get_object_or_404(ExamScheduleHistory, pk=schedule_id)
-    college = schedule.college
-
-    # Get results only for this exam schedule
-    results = Result.objects.filter(exam_schedule=schedule).order_by("-score")
-
-    # Apply optional filters
-    cutoff = request.GET.get("cutoff")
-    top_n = request.GET.get("top_n")
-
-    filtered_results = results
-    if cutoff:
-        filtered_results = filtered_results.filter(score__gte=int(cutoff))
-    if top_n:
-        filtered_results = filtered_results[:int(top_n)]
-
-    search = request.GET.get("search", "").strip()
-    if search:
-        filtered_results = filtered_results.filter(
-            Q(student__name__icontains=search) |
-            Q(student__email__icontains=search) |
-            Q(student__mobile_number__icontains=search) |
-            Q(student__hall_ticket__icontains=search)
-        )
-
-    # Pagination: 10 results per page
-    paginator = Paginator(filtered_results, 10)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-    
-    elided_page_range = paginator.get_elided_page_range(
-        page_obj.number,
-        on_each_side=2,
-        on_ends=1,
-    )
-
-    return render(request, "admin_panel/results.html", {
-        "college": college,
-        "schedule": schedule,
-        "page_obj": page_obj,
-        "cutoff": cutoff,
-        "top_n": top_n,
-        "elided_page_range": elided_page_range,
-        "search": search,
-    })
-
 
 def get_filtered_results(schedule, cutoff=None, top_n=None, search=None):
     results = Result.objects.filter(exam_schedule=schedule).select_related(
@@ -731,6 +683,35 @@ def get_filtered_results(schedule, cutoff=None, top_n=None, search=None):
         except (ValueError, TypeError): pass
 
     return results
+
+@superuser_required
+def college_results(request, schedule_id):
+    schedule = get_object_or_404(ExamScheduleHistory, pk=schedule_id)
+    college = schedule.college
+
+    cutoff = request.GET.get("cutoff")
+    top_n = request.GET.get("top_n")
+    search = request.GET.get("search", "").strip()
+
+    # ONE source of truth — the helper (which orders filters correctly, search before slice)
+    filtered_results = get_filtered_results(schedule, cutoff, top_n, search)
+
+    paginator = Paginator(filtered_results, 10)
+    page_obj = paginator.get_page(request.GET.get('page'))
+    elided_page_range = paginator.get_elided_page_range(page_obj.number, on_each_side=2, on_ends=1)
+
+    return render(request, "admin_panel/results.html", {
+        "college": college,
+        "schedule": schedule,
+        "page_obj": page_obj,
+        "cutoff": cutoff,
+        "top_n": top_n,
+        "search": search,
+        "elided_page_range": elided_page_range,
+    })
+
+
+
 
 @superuser_required
 def college_registrations(request, schedule_id):
