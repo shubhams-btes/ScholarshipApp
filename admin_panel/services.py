@@ -12,7 +12,7 @@ def build_results_workbook(schedule, results, include_score=False):
     ws = wb.active
     ws.title = f"Results_{schedule.college.name}"[:31]
 
-    headers = ["ID", "Student Name", "Email", "College", "Contact Number"]
+    headers = ["ID","Roll No","Student Name", "Email", "College", "Contact Number"]
     if include_score:
         headers.append("Score")   # add the column only when requested
         headers.append("Hall Ticket")  # add hall ticket column for internal use
@@ -25,6 +25,7 @@ def build_results_workbook(schedule, results, include_score=False):
     for idx, result in enumerate(results, start=1):
         row = [
             idx,
+            result.student.roll_no.upper() if result.student.roll_no else "",
             result.student.name.upper() if result.student.name else "",
             result.student.email.upper() if result.student.email else "",
             result.exam_schedule.college.name.upper() if result.exam_schedule.college.name else "",
