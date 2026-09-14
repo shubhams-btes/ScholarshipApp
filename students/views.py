@@ -1,3 +1,4 @@
+from datetime import timezone
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.core.mail import send_mail
@@ -7,7 +8,7 @@ from django.contrib.sessions.models import Session
 from .forms import StudentRegistrationForm
 from .models import Student
 from admin_panel.models import College, ExamSchedule, ExamScheduleHistory
-from tests.models import Result
+from tests.models import ExamProgress, Result
 import random, string
 from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives
@@ -272,7 +273,8 @@ def login_view(request):
             return render(request, 'tests/message.html', {
                 'message': "You have already attempted this BTES TalentQuest. Your response has been recorded."
             })
-
+            
+        
         # Log in
         request.session['student_id'] = student.id
         if not request.session.session_key:

@@ -149,7 +149,7 @@
                             <li class="page-item active"><span class="page-link">{{ num }}</span></li>
                         {% else %}
                             <li class="page-item">
-                                <a class="page-link" href="?page={{ num }}{% if cutoff %}&cutoff={{ cutoff }}{% endif %}{% if top_n %}&top_n={{ top_n }}{% endif %}">{{ num }}</a>
+                                <a class="page-link" href="?page={{ num }}{% if cutoff %}&cutoff={{ cutoff }}{% endif %}{% if top_n %}&top_n={{ top_n }}{% endif %}{% if search %}&search={{ search|urlencode }}{% endif %}">{{ num }}</a>
                             </li>
                         {% endif %}
                     {% endfor %} 

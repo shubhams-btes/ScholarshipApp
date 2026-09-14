@@ -678,6 +678,15 @@ def college_results(request, schedule_id):
     if top_n:
         filtered_results = filtered_results[:int(top_n)]
 
+    search = request.GET.get("search", "").strip()
+    if search:
+        filtered_results = filtered_results.filter(
+            Q(student__name__icontains=search) |
+            Q(student__email__icontains=search) |
+            Q(student__mobile_number__icontains=search) |
+            Q(student__hall_ticket__icontains=search)
+        )
+
     # Pagination: 10 results per page
     paginator = Paginator(filtered_results, 10)
     page_number = request.GET.get('page')
@@ -696,8 +705,32 @@ def college_results(request, schedule_id):
         "cutoff": cutoff,
         "top_n": top_n,
         "elided_page_range": elided_page_range,
+        "search": search,
     })
 
+
+def get_filtered_results(schedule, cutoff=None, top_n=None, search=None):
+    results = Result.objects.filter(exam_schedule=schedule).select_related(
+        "student", "exam_schedule__college"
+    ).order_by("-score")
+
+    if cutoff:
+        try: results = results.filter(score__gte=int(cutoff))
+        except (ValueError, TypeError): pass
+
+    if search:
+        results = results.filter(
+            Q(student__name__icontains=search) |
+            Q(student__email__icontains=search) |
+            Q(student__mobile_number__icontains=search) |
+            Q(student__hall_ticket__icontains=search)
+        )
+
+    if top_n:   # slice LAST, after all filtering
+        try: results = results[:int(top_n)]
+        except (ValueError, TypeError): pass
+
+    return results
 
 @superuser_required
 def college_registrations(request, schedule_id):
@@ -707,6 +740,15 @@ def college_registrations(request, schedule_id):
 
     # Fetch all students registered for this quiz schedule
     registered_students = Student.objects.filter(exam_schedule=schedule).order_by('name')
+    
+    search = request.GET.get("search", "").strip()
+    if search:
+        registered_students = registered_students.filter(
+            Q(name__icontains=search) |
+            Q(email__icontains=search) |
+            Q(mobile_number__icontains=search) |
+            Q(hall_ticket__icontains=search)
+        )
 
     # Pagination: 10 students per page
     paginator = Paginator(registered_students, 10)
@@ -724,6 +766,7 @@ def college_registrations(request, schedule_id):
         "schedule": schedule,
         "page_obj": page_obj,
         "elided_page_range": elided_page_range,
+        "search": search, 
     })
 
 # -----------------------------

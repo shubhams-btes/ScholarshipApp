@@ -150,7 +150,8 @@ def quiz_view(request):
         "exam_end_time": exam_end_time,
         "saved_answers_json": saved_answers_json,
         "schedule": event,             # the occurrence
-        "guidelines_accepted": guidelines_accepted    })
+        "guidelines_accepted": guidelines_accepted,
+    })
 
 @student_login_required
 def start_exam(request):
