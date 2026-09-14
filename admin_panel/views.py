@@ -676,7 +676,7 @@ def get_filtered_results(schedule, cutoff=None, top_n=None, search=None):
             Q(student__email__icontains=search) |
             Q(student__mobile_number__icontains=search) |
             Q(student__hall_ticket__icontains=search) |
-            Q(roll_no__icontains=search)
+            Q(student__roll_no__icontains=search)
         )
 
     if top_n:   # slice LAST, after all filtering
