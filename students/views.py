@@ -103,6 +103,7 @@ def student_register(request):
             request.session['pending_registration'] = {
                 'name': form.cleaned_data['name'],
                 'email': email,
+                'roll_no': form.cleaned_data['roll_no'],
                 'password': make_password(form.cleaned_data['password']),
                 'stream': form.cleaned_data['stream'],
                 'mobile_number': form.cleaned_data['mobile_number'],
@@ -117,28 +118,7 @@ def student_register(request):
             messages.info(request, f"An OTP has been sent to {email}. Please verify to complete registration.")
             return redirect('verify_email')
         
-            otp = ''.join(secrets.choice(string.digits) for _ in range(6))
-
-            request.session['pending_registration'] = {
-                'name': form.cleaned_data['name'],
-                'email': email,
-                'password': make_password(form.cleaned_data['password']),
-                'stream': form.cleaned_data['stream'],
-                'mobile_number': form.cleaned_data['mobile_number'],
-                'exam_schedule_id': event.id           # ← bind to the live occurrence
-            }
-            request.session['email_otp'] = otp
-            request.session['otp_expiry'] = time.time() + 600
-            request.session['otp_attempts'] = 0
-            request.session['otp_last_sent'] = time.time()
-
-            threading.Thread(
-                target=_send_otp_email,
-                args=(email, form.cleaned_data['name'], otp),
-                daemon=True,
-            ).start()
-
-            messages.info(request, f"An OTP has been sent to {email}. Please verify to complete registration.")
+            
             return redirect('verify_email')
     else:
         form = StudentRegistrationForm()
