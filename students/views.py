@@ -81,6 +81,7 @@ def student_register(request):
                     student = Student.objects.create(
                         name=form.cleaned_data['name'],
                         email=email,
+                        roll_no=form.cleaned_data['roll_no'],
                         password=make_password(form.cleaned_data['password']),
                         exam_schedule=event,
                         stream=form.cleaned_data['stream'],
