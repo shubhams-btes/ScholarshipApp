@@ -1,44 +1,51 @@
-from multiprocessing.dummy import connection
-from django.contrib.auth.decorators import user_passes_test
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib import messages
-from django.core.mail import send_mail
+# ── Standard library ──
+import json
+import logging
+import os
+import secrets
+import string
+import threading
+from collections import defaultdict
+from datetime import datetime, date, timedelta   # adjust to what you actually use
+from io import BytesIO
+
+# ── Django ──
 from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth import logout as auth_logout
+from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth.hashers import make_password
+from django.core.mail import EmailMultiAlternatives, get_connection, send_mail
 from django.core.paginator import Paginator
-from django.views.decorators.http import require_POST
+from django.db.models import Count, Prefetch, Q
 from django.forms import modelformset_factory
-from .forms import QuestionForm, CollegeForm, ExamScheduleForm, CollegeOfficialForm,CollegeOfficialEditForm
-from tests.models import Result, Question
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
+from django.urls import reverse
+from django.utils import timezone
+from django.utils.dateparse import parse_date
+from django.utils.timezone import get_default_timezone, make_aware
+from django.views.decorators.cache import never_cache
+from django.views.decorators.http import require_http_methods, require_POST
+
+# ── Third-party ──
+import openpyxl
+from openpyxl.styles import Font
+
+# ── Local apps ──
 from admin_panel.models import College, CollegeOfficial, ExamSchedule, ExamScheduleHistory
 from students.models import Student
-from tests.models import Result, Question, ExamProgress
+from tests.models import ExamProgress, Question, Result
 from utils.qr_utils import generate_qr_attachment
-import datetime
-from django.utils.timezone import make_aware, get_default_timezone
-from django.contrib.auth import logout as auth_logout
-import json
-from django.views.decorators.http import require_http_methods
-from django.contrib.auth.decorators import user_passes_test
-import openpyxl
-from django.http import HttpResponse
-from openpyxl.styles import Font
-from django.views.decorators.cache import never_cache
-from django.utils.dateparse import parse_date
-from django.utils import timezone
-from datetime import datetime
-import os
-from django.core.paginator import Paginator
-from django.db.models import Q, Prefetch
-from collections import defaultdict
-from django.template.loader import render_to_string
-from django.core.mail import EmailMultiAlternatives,get_connection
-from django.db.models import Count
-from django.utils import timezone
-from django.conf import settings
-import logging
-import threading
+from .forms import (
+    CollegeForm,
+    CollegeOfficialEditForm,
+    CollegeOfficialForm,
+    ExamScheduleForm,
+    QuestionForm,
+)
 from .services import build_results_workbook, get_filtered_results
-from io import BytesIO
 
 logger = logging.getLogger(__name__)
 # -----------------------------
@@ -971,6 +978,54 @@ def export_registrations(request, schedule_id):
     wb.save(response)
     return response
 
+def _send_password_reset_email(email, name, new_password):
+    try:
+        html = render_to_string("emails/password_reset_email.html", {
+            "name": name,
+            "email": email,
+            "new_password": new_password,
+            "site_name": settings.SITE_NAME,
+        })
+        msg = EmailMultiAlternatives(
+            subject=f"Your {settings.SITE_NAME} Password Has Been Reset",
+            body=f"Your new password is {new_password}",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[email],
+        )
+        msg.attach_alternative(html, "text/html")
+        msg.send()
+    except Exception:
+        logger.exception("Failed to send password reset email to %s", email)
+
+@superuser_required
+@require_POST
+def reset_student_password(request, student_id):
+    student = get_object_or_404(Student, pk=student_id)
+
+    # Generate a unique random password for THIS reset (plaintext, held only briefly)
+    alphabet = string.ascii_letters + string.digits
+    new_password = ''.join(secrets.choice(alphabet) for _ in range(8))
+
+    # Store only the HASH
+    student.password = make_password(new_password)
+    student.save(update_fields=["password"])
+
+    # Email the new plaintext password once, then it's discarded
+    threading.Thread(
+        target=_send_password_reset_email,
+        args=(student.email, student.name, new_password),
+        daemon=True,
+    ).start()
+
+    messages.success(
+        request,
+        f"Password reset for {student.name}. The new password has been emailed to them."
+    )
+
+    # Redirect back to the registration list, preserving schedule + any search/page
+    schedule_id = request.POST.get("schedule_id")
+    return redirect(f"{reverse('college_registrations', args=[schedule_id])}")
+    # ↑ adjust 'college_registrations' to your actual URL name for the registration list
 
 @superuser_required
 def export_results(request, schedule_id):
