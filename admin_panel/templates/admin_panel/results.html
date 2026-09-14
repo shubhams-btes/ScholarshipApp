@@ -112,6 +112,7 @@
                         <th>#</th>
                         <th>Hall Ticket</th>
                         <th>Student Name</th>
+                        <th>Roll Number</th>
                         <th>Email</th>
                         <th>Contact Number</th>
                         <th>Score</th>
@@ -124,6 +125,7 @@
                         <td>{{ forloop.counter0|add:page_obj.start_index }}</td>
                         <td>{{ result.student.hall_ticket }}</td>
                         <td>{{ result.student.name }}</td>
+                        <td>{{ result.student.roll_no }}</td>
                         <td>{{ result.student.email }}</td>
                         <td>{{ result.student.mobile_number }}</td>
                         <td>{{ result.score }}</td>

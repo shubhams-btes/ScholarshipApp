@@ -675,7 +675,8 @@ def get_filtered_results(schedule, cutoff=None, top_n=None, search=None):
             Q(student__name__icontains=search) |
             Q(student__email__icontains=search) |
             Q(student__mobile_number__icontains=search) |
-            Q(student__hall_ticket__icontains=search)
+            Q(student__hall_ticket__icontains=search) |
+            Q(roll_no__icontains=search)
         )
 
     if top_n:   # slice LAST, after all filtering
@@ -728,7 +729,8 @@ def college_registrations(request, schedule_id):
             Q(name__icontains=search) |
             Q(email__icontains=search) |
             Q(mobile_number__icontains=search) |
-            Q(hall_ticket__icontains=search)
+            Q(hall_ticket__icontains=search) |
+            Q(roll_no__icontains=search)
         )
 
     # Pagination: 10 students per page

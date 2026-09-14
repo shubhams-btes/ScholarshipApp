@@ -7,7 +7,7 @@ class Student(models.Model):
     name = models.CharField(max_length=255)
     email = models.EmailField()
     password = models.CharField(max_length=128)
-
+    roll_no = models.CharField(max_length=50, blank=True, null=True)
     class Meta:
         constraints = [
             models.UniqueConstraint(
@@ -43,7 +43,10 @@ class Student(models.Model):
     hall_ticket = models.CharField(max_length=20, unique=True, editable=False, blank=True)
 
     REQUIRED_FIELDS = ['name', 'email', 'password', 'stream', 'exam_schedule', 'mobile_number']
-
+    constraints = [
+      models.UniqueConstraint(fields=['email', 'exam_schedule'], name='unique_email_per_exam'),
+      models.UniqueConstraint(fields=['roll_no', 'exam_schedule'], name='unique_roll_per_exam'),
+    ]
     def __str__(self):
         return f"{self.name} ({self.email})"
 

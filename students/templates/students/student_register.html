@@ -144,7 +144,17 @@
                             type="hidden"
                             name="college"
                             value="{{ college.id }}">
+                        <div class="form-group">
+                            <label for="{{ form.roll_no.id_for_label }}">
+                                Roll Number
+                            </label>
 
+                            {{ form.roll_no }}
+
+                            {% for error in form.roll_no.errors %}
+                                <small class="text-danger">{{ error }}</small>
+                            {% endfor %}
+                        </div>
                         <div class="form-group">
                             <label for="{{ form.mobile_number.id_for_label }}">
                                 Mobile Number
