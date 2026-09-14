@@ -943,7 +943,7 @@ def export_registrations(request, schedule_id):
     ws.title = f"Registrations_{schedule.college.name}"
 
     # Header row
-    headers = ["ID", "Name", "Email", "College", "Contact Number"]
+    headers = ["ID","hall_ticket","roll_no","Name","Email", "College", "Contact Number"]
     for col_index, header in enumerate(headers, start=1):
         cell = ws.cell(row=1, column=col_index, value=header.upper())
         cell.font = Font(bold=True)
@@ -952,6 +952,8 @@ def export_registrations(request, schedule_id):
     for idx, student in enumerate(students, start=1):
         row = [
             idx,
+            student.hall_ticket.upper() if student.hall_ticket else "",
+            student.roll_no.upper() if student.roll_no else "",
             student.name.upper() if student.name else "",
             student.email.upper() if student.email else "",
             student.exam_schedule.college.name.upper() if student.exam_schedule.college.name else "",

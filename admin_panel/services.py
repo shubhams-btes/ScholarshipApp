@@ -15,6 +15,8 @@ def build_results_workbook(schedule, results, include_score=False):
     headers = ["ID", "Student Name", "Email", "College", "Contact Number"]
     if include_score:
         headers.append("Score")   # add the column only when requested
+        headers.append("Hall Ticket")  # add hall ticket column for internal use
+        headers.append("Roll No")  # add roll number column for internal use
 
     for col_index, header in enumerate(headers, start=1):
         cell = ws.cell(row=1, column=col_index, value=header.upper())
@@ -27,9 +29,12 @@ def build_results_workbook(schedule, results, include_score=False):
             result.student.email.upper() if result.student.email else "",
             result.exam_schedule.college.name.upper() if result.exam_schedule.college.name else "",
             result.student.mobile_number.upper() if result.student.mobile_number else "",
+            
         ]
         if include_score:
-            row.append(result.score)   # append matching the header
+            row.append(result.score)# append matching the header
+            row.append(result.student.hall_ticket.upper() if result.student.hall_ticket else "")
+            row.append(result.student.roll_no.upper() if result.student.roll_no else "")
 
         for col_index, value in enumerate(row, start=1):
             ws.cell(row=idx + 1, column=col_index, value=value)
