@@ -6,6 +6,16 @@ from django.db import models
 class College(models.Model):
     name = models.CharField(max_length=255, unique=True)  # only college name is needed
 
+    class Location(models.TextChoices):
+        CHANDIGARH = "CHD", "Chandigarh"
+        BHUBANESWAR = "BBSR", "Bhubaneswar"
+
+    location = models.CharField(
+        max_length=10,
+        choices=Location.choices,
+        default=Location.CHANDIGARH,   # ← see the "existing colleges" note below
+    )
+
     def __str__(self):
         return self.name
 

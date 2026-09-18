@@ -93,6 +93,7 @@
                         <th>College Name</th>
                         <th>Official Name</th>
                         <th>Official Email</th>
+                        <th>Location</th>
                         <th>Status</th>
                         <th>Actions</th>
                     </tr>
@@ -110,6 +111,7 @@
                         {% endif %}
                         <td>{{ official.name|default:"—" }}</td>
                         <td>{{ official.email|default:"—" }}</td>
+                        <td>{{ college.get_location_display }}</td>
                         <td>
                             {% if official.is_active == None %} — {% else %}
                             <form

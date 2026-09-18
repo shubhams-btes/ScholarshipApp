@@ -50,18 +50,34 @@ class Student(models.Model):
     def __str__(self):
         return f"{self.name} ({self.email})"
 
+    def _get_hall_ticket_prefix(self):
+        location = None
+        if self.exam_schedule and self.exam_schedule.college:
+            location = self.exam_schedule.college.location
+        if location == "BBSR":
+            return "BB0125"
+        return "CH0125"   # default Chandigarh
+
     def save(self, *args, **kwargs):
         if not self.hall_ticket:
-            prefix = "CH0125"
+            prefix = self._get_hall_ticket_prefix()
             start_number = 1000
-            last_student = Student.objects.filter(hall_ticket__startswith=prefix).order_by('-id').first()
+
+            last_student = (
+                Student.objects
+                .exclude(hall_ticket="")
+                .order_by('-id')
+                .first()
+            )
+
+            new_number = start_number
             if last_student and last_student.hall_ticket:
                 try:
-                    last_number = int(last_student.hall_ticket.replace(prefix, ''))
+                    last_number = int(last_student.hall_ticket[6:])
+                    new_number = last_number + 1
                 except ValueError:
-                    last_number = start_number
-                new_number = last_number + 1
-            else:
-                new_number = start_number
+                    new_number = start_number
+
             self.hall_ticket = f"{prefix}{new_number}"
+
         super().save(*args, **kwargs)

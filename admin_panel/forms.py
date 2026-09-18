@@ -51,10 +51,11 @@ class QuestionForm(forms.ModelForm):
 class CollegeForm(forms.ModelForm):
     class Meta:
         model = College
-        fields = ['name']
+        fields = ['name', 'location']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control','pattern': '[A-Za-z ]+',
         'title': 'Only alphabets allowed.'}),
+            'location': forms.Select(attrs={'class': 'form-select'}),
         }
 
     def clean_name(self):
