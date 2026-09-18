@@ -89,10 +89,20 @@ def student_register(request):
         form = StudentRegistrationForm(request.POST)
         if form.is_valid():
             email = form.cleaned_data['email']
+            roll_no = form.cleaned_data['roll_no']
+            mobile = form.cleaned_data['mobile_number']
 
             # Duplicate guard is per-OCCURRENCE — re-registration for a NEW event is allowed.
             if Student.objects.filter(email=email, exam_schedule=event).exists():
                 messages.error(request, "You are already registered for this quiz.")
+                return redirect(f"{request.path}?schedule_id={schedule_id}")
+            
+            if Student.objects.filter(
+                roll_no=roll_no,
+                mobile_number=mobile,
+                exam_schedule=event
+            ).exists():
+                messages.error(request, "A registration with this roll number and mobile number already exists for this quiz.")
                 return redirect(f"{request.path}?schedule_id={schedule_id}")
 
             if not settings.REQUIRE_EMAIL_OTP:
