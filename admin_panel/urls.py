@@ -39,11 +39,12 @@ urlpatterns = [
     path('registrations/<int:schedule_id>/', views.college_registrations, name='college_registrations'),
     path('reset-session/<int:student_id>/', views.reset_student_session, name='reset_student_session'),
     path("students/<int:student_id>/reset-password/", views.reset_student_password, name="reset_student_password"),
-
+    path("students/<int:student_id>/delete-result/", views.delete_student_result, name="delete_student_result"),
     # Export Results
 
     path('export/registrations/<int:schedule_id>/', views.export_registrations, name='export_registrations'),
     path('export/results/<int:schedule_id>/', views.export_results, name='export_results'),
     path("results/<int:schedule_id>/share/", views.share_results, name="share_results"),
+    
 
 ]

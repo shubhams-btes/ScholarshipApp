@@ -46,6 +46,7 @@ from .forms import (
     QuestionForm,
 )
 from .services import build_results_workbook, get_filtered_results
+from django.db.models import Exists, OuterRef
 
 logger = logging.getLogger(__name__)
 # -----------------------------
@@ -728,7 +729,13 @@ def college_registrations(request, schedule_id):
     college = schedule.college
 
     # Fetch all students registered for this quiz schedule
-    registered_students = Student.objects.filter(exam_schedule=schedule).order_by('name')
+    registered_students = Student.objects.filter(
+    exam_schedule=schedule
+    ).annotate(
+        has_result=Exists(
+            Result.objects.filter(student=OuterRef('pk'), exam_schedule=schedule)
+        )
+    ).order_by('name')
     
     search = request.GET.get("search", "").strip()
     if search:
@@ -1072,6 +1079,21 @@ def reset_student_session(request, student_id):
         return redirect("college_registrations", schedule_id=schedule_id)
     return redirect("dashboard")
 
+
+@superuser_required
+@require_POST
+def delete_student_result(request, student_id):
+    student = get_object_or_404(Student, pk=student_id)
+    schedule_id = request.POST.get("schedule_id")
+
+    # Delete the (prematurely auto-submitted) result
+    Result.objects.filter(student=student).delete()
+
+    messages.success(
+        request,
+        f"Result deleted for {student.name}. They can now log in and re-take the exam."
+    )
+    return redirect('college_registrations', schedule_id=schedule_id)
 
 @superuser_required
 @require_POST
