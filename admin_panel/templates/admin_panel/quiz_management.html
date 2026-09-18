@@ -169,8 +169,6 @@
                                         data-kind="registration link">
                                     Share Reg Link
                                 </button>
-                                {% endif %}
-                                {% if row.schedule.quiz_enabled %}
                                 <button type="button"
                                         class="btn btn-sm btn-primary share-btn"
                                         data-action="{% url 'share_quiz_link' row.schedule.id %}"
