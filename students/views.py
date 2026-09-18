@@ -19,6 +19,30 @@ import threading
 import logging
 logger = logging.getLogger(__name__)
 
+def generate_student_password():
+    # Readable random password — excludes ambiguous chars (0/O, 1/l/I) for emailing.
+    alphabet = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789"
+    return ''.join(secrets.choice(alphabet) for _ in range(8))
+
+def _send_credentials_email(email, name, raw_password):
+    try:
+        html = render_to_string("students/emails/credentials_email.html", {
+            "name": name,
+            "email": email,
+            "password": raw_password,
+            "site_name": settings.SITE_NAME,
+        })
+        msg = EmailMultiAlternatives(
+            subject=f"Your {settings.SITE_NAME} Login Details",
+            body=f"Your login email is {email} and password is {raw_password}",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[email],
+        )
+        msg.attach_alternative(html, "text/html")
+        msg.send()
+    except Exception:
+        logger.exception("Failed to send credentials email to %s", email)
+
 def _send_otp_email(email, name, otp):
     try:
         html_message = render_to_string(
@@ -71,18 +95,15 @@ def student_register(request):
                 messages.error(request, "You are already registered for this quiz.")
                 return redirect(f"{request.path}?schedule_id={schedule_id}")
 
-            if Student.objects.filter(email=email, exam_schedule=event).exists():
-                messages.error(request, "You are already registered for this quiz.")
-                return redirect(f"{request.path}?schedule_id={schedule_id}")
-
             if not settings.REQUIRE_EMAIL_OTP:
                 # TEST ENVIRONMENT ONLY: skip OTP, register directly.
+                raw_password = generate_student_password()
                 try:
                     student = Student.objects.create(
                         name=form.cleaned_data['name'],
                         email=email,
                         roll_no=form.cleaned_data['roll_no'],
-                        password=make_password(form.cleaned_data['password']),
+                        password=make_password(raw_password),
                         exam_schedule=event,
                         stream=form.cleaned_data['stream'],
                         mobile_number=form.cleaned_data['mobile_number'],
@@ -92,9 +113,16 @@ def student_register(request):
                     messages.error(request, "You are already registered for this quiz.")
                     return redirect(f"{request.path}?schedule_id={schedule_id}")
 
+                threading.Thread(
+                    target=_send_credentials_email,
+                    args=(student.email, student.name, raw_password),
+                    daemon=True,
+                ).start()
+
                 success_message = (
-                    f"You have been registered successfully. Your hall ticket is {student.hall_ticket}. "
-                    "The login link will be sent 10 minutes prior to the start."
+                f"You have been registered successfully. Your hall ticket is {student.hall_ticket}. "
+                "Your login details (username and password) have been sent to your registered email. "
+                "The login link for your BTES TalentQuest will be sent 10 minutes prior to the start."
                 )
                 return render(request, 'tests/message.html', {'message': success_message})
 
@@ -104,7 +132,6 @@ def student_register(request):
                 'name': form.cleaned_data['name'],
                 'email': email,
                 'roll_no': form.cleaned_data['roll_no'],
-                'password': make_password(form.cleaned_data['password']),
                 'stream': form.cleaned_data['stream'],
                 'mobile_number': form.cleaned_data['mobile_number'],
                 'exam_schedule_id': event.id
@@ -116,9 +143,6 @@ def student_register(request):
 
             threading.Thread(target=_send_otp_email, args=(email, form.cleaned_data['name'], otp), daemon=True).start()
             messages.info(request, f"An OTP has been sent to {email}. Please verify to complete registration.")
-            return redirect('verify_email')
-        
-            
             return redirect('verify_email')
     else:
         form = StudentRegistrationForm()
@@ -158,12 +182,13 @@ def verify_email(request):
 
         if otp == saved_otp:
             exam_schedule = ExamScheduleHistory.objects.get(id=pending_data['exam_schedule_id'])
+            raw_password = generate_student_password()
             try:
                 student = Student.objects.create(
                     name=pending_data['name'],
                     email=pending_data['email'],
                     roll_no=pending_data['roll_no'],
-                    password=pending_data['password'],
+                    password=make_password(raw_password),
                     exam_schedule=exam_schedule,
                     stream=pending_data['stream'],
                     mobile_number=pending_data['mobile_number'],
@@ -179,8 +204,15 @@ def verify_email(request):
             for key in ['email_otp', 'otp_expiry', 'otp_attempts', 'pending_registration']:
                 request.session.pop(key, None)
 
+            threading.Thread(
+                target=_send_credentials_email,
+                args=(student.email, student.name, raw_password),
+                daemon=True,
+            ).start()
+
             success_message = (
                 f"You have been registered successfully. Your hall ticket is {student.hall_ticket}. "
+                "Your login details (username and password) have been sent to your registered email. "
                 "The login link for your BTES TalentQuest will be sent 10 minutes prior to the start."
             )
             return render(request, 'tests/message.html', {'message': success_message})

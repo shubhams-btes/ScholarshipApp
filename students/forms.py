@@ -16,16 +16,13 @@ class StudentRegistrationForm(forms.ModelForm):
 
     class Meta:
         model = Student
-        fields = ['name', 'email', 'password', 'mobile_number', 'stream', 'roll_no', 'exam_schedule']
+        fields = ['name', 'email', 'mobile_number', 'stream', 'roll_no', 'exam_schedule']
         widgets = {
             'name': forms.TextInput(attrs={
                 'placeholder': 'Enter your name'
             }),
             'email': forms.EmailInput(attrs={
                 'placeholder': 'Enter your email'
-            }),
-            'password': forms.PasswordInput(attrs={
-                'placeholder': 'Enter password'
             }),
             'mobile_number': forms.TextInput(attrs={
                 'placeholder': 'Enter mobile number'
