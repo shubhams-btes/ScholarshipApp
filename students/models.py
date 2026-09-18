@@ -1,20 +1,12 @@
 from django.db import models
-
 from django.core.validators import MinLengthValidator, RegexValidator
-from django.db import models
+
 
 class Student(models.Model):
     name = models.CharField(max_length=255)
     email = models.EmailField()
     password = models.CharField(max_length=128)
     roll_no = models.CharField(max_length=50, blank=True, null=True)
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=['email', 'exam_schedule'],
-                name='unique_email_per_exam'
-            )
-        ]   
 
     STREAM_CHOICES = [
         ('BTECH', 'B.Tech'),
@@ -39,14 +31,22 @@ class Student(models.Model):
     stream = models.CharField(max_length=10, choices=STREAM_CHOICES, default='BTECH')
     current_session = models.CharField(max_length=255, null=True, blank=True)
     is_active = models.BooleanField(default=False)
-
     hall_ticket = models.CharField(max_length=20, unique=True, editable=False, blank=True)
 
     REQUIRED_FIELDS = ['name', 'email', 'password', 'stream', 'exam_schedule', 'mobile_number']
-    constraints = [
-      models.UniqueConstraint(fields=['email', 'exam_schedule'], name='unique_email_per_exam'),
-      models.UniqueConstraint(fields=['roll_no', 'exam_schedule'], name='unique_roll_per_exam'),
-    ]
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['email', 'exam_schedule'],
+                name='unique_email_per_exam'
+            ),
+            models.UniqueConstraint(
+                fields=['roll_no', 'mobile_number', 'exam_schedule'],
+                name='unique_rollmobile_per_exam'
+            ),
+        ]
+
     def __str__(self):
         return f"{self.name} ({self.email})"
 
