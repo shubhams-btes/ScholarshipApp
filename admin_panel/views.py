@@ -705,7 +705,15 @@ def college_results(request, schedule_id):
     # ONE source of truth — the helper (which orders filters correctly, search before slice)
     filtered_results = get_filtered_results(schedule, cutoff, top_n, search)
 
-    paginator = Paginator(filtered_results, 10)
+    ALLOWED_PER_PAGE = [10, 25, 50, 100]
+    try:
+        per_page = int(request.GET.get("per_page", 10))
+    except (ValueError, TypeError):
+        per_page = 10
+    if per_page not in ALLOWED_PER_PAGE:
+        per_page = 10
+
+    paginator = Paginator(filtered_results, per_page)
     page_obj = paginator.get_page(request.GET.get('page'))
     elided_page_range = paginator.get_elided_page_range(page_obj.number, on_each_side=2, on_ends=1)
 
@@ -717,6 +725,8 @@ def college_results(request, schedule_id):
         "top_n": top_n,
         "search": search,
         "elided_page_range": elided_page_range,
+        "per_page": per_page,
+        "per_page_options": ALLOWED_PER_PAGE,
     })
 
 
@@ -747,8 +757,16 @@ def college_registrations(request, schedule_id):
             Q(roll_no__icontains=search)
         )
 
-    # Pagination: 10 students per page
-    paginator = Paginator(registered_students, 10)
+    ALLOWED_PER_PAGE = [10, 25, 50, 100]
+    try:
+        per_page = int(request.GET.get("per_page", 10))
+    except (ValueError, TypeError):
+        per_page = 10
+    if per_page not in ALLOWED_PER_PAGE:
+        per_page = 10
+
+    # Pagination: per_page students per page
+    paginator = Paginator(registered_students, per_page)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
@@ -764,6 +782,8 @@ def college_registrations(request, schedule_id):
         "page_obj": page_obj,
         "elided_page_range": elided_page_range,
         "search": search, 
+        "per_page": per_page,
+        "per_page_options": ALLOWED_PER_PAGE,
     })
 
 # -----------------------------
