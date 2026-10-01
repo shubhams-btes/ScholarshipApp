@@ -105,7 +105,7 @@
                         <td rowspan="{{ college.matching_officials|length }}">
                             {{ forloop.parentloop.counter }}
                         </td>
-                        <td rowspan="{{ college.matching_officials|length }}">
+                        <td rowspan="{{ college.matching_officials|length }}" style="max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ college.name }}">
                             {{ college.name }}
                         </td>
                         {% endif %}
