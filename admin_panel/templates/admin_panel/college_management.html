@@ -120,6 +120,7 @@
                             {% endif %}
                         </td>
                         <td class="actions-btns">
+                            <div class="d-flex flex-nowrap gap-1">
                             {% if official.is_active %}
                             <a
                                 href="{% url 'edit_official' official.id %}"
@@ -145,6 +146,7 @@
                                     <button type="submit" class="btn btn-sm btn-success">Activate</button>
                                 {% endif %}
                             </form>
+                            </div>
                         </td>
                     </tr>
                     {% endfor %} {% empty %}
