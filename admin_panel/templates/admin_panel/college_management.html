@@ -113,22 +113,10 @@
                         <td>{{ official.email|default:"—" }}</td>
                         <td>{{ college.get_location_display }}</td>
                         <td>
-                            {% if official.is_active == None %} — {% else %}
-                            <form
-                                method="post"
-                                action="{% url 'toggle_official_status' official.id %}"
-                                class="d-inline"
-                            >
-                                {% csrf_token %} {% if official.is_active %}
-                                <button type="submit" class="btn btn-sm btn-danger">
-                                    Deactivate
-                                </button>
-                                {% else %}
-                                <button type="submit" class="btn btn-sm btn-success">
-                                    Activate
-                                </button>
-                                {% endif %}
-                            </form>
+                            {% if official.is_active %}
+                                <span class="badge bg-success">Active</span>
+                            {% else %}
+                                <span class="badge bg-danger">Inactive</span>
                             {% endif %}
                         </td>
                         <td class="actions-btns">
@@ -148,6 +136,15 @@
                             >
                                 Add Member
                             </a>
+                            <form method="post" action="{% url 'toggle_official_status' official.id %}" class="d-inline"
+                                onsubmit="return confirm('{% if official.is_active %}Deactivate{% else %}Activate{% endif %} {{ official.name|escapejs }}?');">
+                                {% csrf_token %}
+                                {% if official.is_active %}
+                                    <button type="submit" class="btn btn-sm btn-danger">Deactivate</button>
+                                {% else %}
+                                    <button type="submit" class="btn btn-sm btn-success">Activate</button>
+                                {% endif %}
+                            </form>
                         </td>
                     </tr>
                     {% endfor %} {% empty %}
