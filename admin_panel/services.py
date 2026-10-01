@@ -12,29 +12,38 @@ def build_results_workbook(schedule, results, include_score=False):
     ws = wb.active
     ws.title = f"Results_{schedule.college.name}"[:31]
 
-    headers = ["ID","Student Name", "Email", "College", "Contact Number"]
+    headers = ["ID", "Student Name", "Email", "College", "Contact Number"]
     if include_score:
-        headers.append("Score")   # add the column only when requested
-        headers.append("Hall Ticket")  # add hall ticket column for internal use
-        headers.append("Roll No")  # add roll number column for internal use
+        headers.append("Score")
+        headers.append("Hall Ticket")
+        headers.append("Roll No")
+        headers.extend(["10th %", "12th %", "Graduation Degree", "Graduation %", "Masters Degree", "Masters %"])
 
     for col_index, header in enumerate(headers, start=1):
         cell = ws.cell(row=1, column=col_index, value=header.upper())
         cell.font = Font(bold=True)
 
     for idx, result in enumerate(results, start=1):
+        s = result.student
         row = [
             idx,
-            result.student.name.upper() if result.student.name else "",
-            result.student.email.upper() if result.student.email else "",
+            s.name.upper() if s.name else "",
+            s.email.upper() if s.email else "",
             result.exam_schedule.college.name.upper() if result.exam_schedule.college.name else "",
-            result.student.mobile_number.upper() if result.student.mobile_number else "",
-            
+            s.mobile_number if s.mobile_number else "",
         ]
         if include_score:
-            row.append(result.score)# append matching the header
-            row.append(result.student.hall_ticket.upper() if result.student.hall_ticket else "")
-            row.append(result.student.roll_no.upper() if result.student.roll_no else "")
+            row.append(result.score)
+            row.append(s.hall_ticket.upper() if s.hall_ticket else "")
+            row.append(s.roll_no.upper() if s.roll_no else "")
+            row.extend([
+                s.tenth_percentage if s.tenth_percentage is not None else "",
+                s.twelfth_percentage if s.twelfth_percentage is not None else "",
+                s.get_graduation_degree_display() if s.graduation_degree else "",
+                s.graduation_percentage if s.graduation_percentage is not None else "",
+                s.get_masters_degree_display() if s.masters_degree else "",
+                s.masters_percentage if s.masters_percentage is not None else "",
+            ])
 
         for col_index, value in enumerate(row, start=1):
             ws.cell(row=idx + 1, column=col_index, value=value)

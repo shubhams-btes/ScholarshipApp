@@ -55,6 +55,11 @@
     @keyframes spin {
         to { transform: rotate(360deg); }
     }
+    .text-danger {
+        color: #dc3545;
+        font-size: 16px;
+        margin-left: 2px;
+    }
     </style>
 </head>
 <body>
@@ -106,7 +111,7 @@
 
                         <div class="form-group">
                             <label for="{{ form.name.id_for_label }}">
-                                Name
+                                Name<span class="text-danger">*</span>
                             </label>
 
                             {{ form.name }}
@@ -118,7 +123,7 @@
 
                         <div class="form-group">
                             <label for="{{ form.email.id_for_label }}">
-                                Email
+                                Email<span class="text-danger">*</span>
                             </label>
 
                             {{ form.email }}
@@ -135,7 +140,7 @@
                             value="{{ college.id }}">
                         <div class="form-group">
                             <label for="{{ form.roll_no.id_for_label }}">
-                                Roll Number
+                                Roll Number<span class="text-danger">*</span>   
                             </label>
 
                             {{ form.roll_no }}
@@ -146,7 +151,7 @@
                         </div>
                         <div class="form-group">
                             <label for="{{ form.mobile_number.id_for_label }}">
-                                Mobile Number
+                                Mobile Number<span class="text-danger">*</span>
                             </label>
 
                             {{ form.mobile_number }}
@@ -156,17 +161,50 @@
                             {% endfor %}
                         </div>
 
-                        <div class="form-group">
-                            <label for="{{ form.stream.id_for_label }}">
-                                Stream
-                            </label>
+                        <div class="divider"></div>
+                            <h3 class="section-title">Academic Details</h3>
 
-                            {{ form.stream }}
+                            <!-- 10th | 12th -->
+                            <div class="form-row" style="display:flex; gap:16px;">
+                                <div class="form-group" style="flex:1;">
+                                    <label>10th Percentage<span class="text-danger">*</span></label>
+                                    {{ form.tenth_percentage }}
+                                    {% for error in form.tenth_percentage.errors %}<small class="text-danger">{{ error }}</small>{% endfor %}
+                                </div>
+                                <div class="form-group" style="flex:1;">
+                                    <label>12th Percentage<span class="text-danger">*</span></label>
+                                    {{ form.twelfth_percentage }}
+                                    {% for error in form.twelfth_percentage.errors %}<small class="text-danger">{{ error }}</small>{% endfor %}
+                                </div>
+                            </div>
 
-                            {% for error in form.stream.errors %}
-                                <small class="text-danger">{{ error }}</small>
-                            {% endfor %}
-                        </div>
+                            <!-- Graduation degree | % -->
+                            <div class="form-row" style="display:flex; gap:16px;">
+                                <div class="form-group" style="flex:1;">
+                                    <label>Graduation Degree<span class="text-danger">*</span></label>
+                                    {{ form.graduation_degree }}
+                                    {% for error in form.graduation_degree.errors %}<small class="text-danger">{{ error }}</small>{% endfor %}
+                                </div>
+                                <div class="form-group" style="flex:1;">
+                                    <label>Graduation Percentage<span class="text-danger">*</span></label>
+                                    {{ form.graduation_percentage }}
+                                    {% for error in form.graduation_percentage.errors %}<small class="text-danger">{{ error }}</small>{% endfor %}
+                                </div>
+                            </div>
+
+                            <!-- Masters degree | % (optional) -->
+                            <div class="form-row" style="display:flex; gap:16px;">
+                                <div class="form-group" style="flex:1;">
+                                    <label>Masters Degree <small class="text-muted">(optional)</small></label>
+                                    {{ form.masters_degree }}
+                                    {% for error in form.masters_degree.errors %}<small class="text-danger">{{ error }}</small>{% endfor %}
+                                </div>
+                                <div class="form-group" style="flex:1;">
+                                    <label>Masters Percentage <small class="text-muted">(optional)</small></label>
+                                    {{ form.masters_percentage }}
+                                    {% for error in form.masters_percentage.errors %}<small class="text-danger">{{ error }}</small>{% endfor %}
+                                </div>
+                            </div>
 
                         <div class="divider"></div>
 

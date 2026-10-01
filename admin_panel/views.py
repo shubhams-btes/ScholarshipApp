@@ -977,7 +977,11 @@ def export_registrations(request, schedule_id):
     ws.title = f"Registrations_{schedule.college.name}"
 
     # Header row
-    headers = ["ID","hall_ticket","roll_no","Name","Email", "College", "Contact Number"]
+        # Header row
+    headers = [
+        "ID", "Hall Ticket", "Roll No", "Name", "Email", "College", "Contact Number",
+        "10th %", "12th %", "Graduation Degree", "Graduation %", "Masters Degree", "Masters %"
+    ]
     for col_index, header in enumerate(headers, start=1):
         cell = ws.cell(row=1, column=col_index, value=header.upper())
         cell.font = Font(bold=True)
@@ -991,7 +995,13 @@ def export_registrations(request, schedule_id):
             student.name.upper() if student.name else "",
             student.email.upper() if student.email else "",
             student.exam_schedule.college.name.upper() if student.exam_schedule.college.name else "",
-            student.mobile_number.upper() if student.mobile_number else ""
+            student.mobile_number if student.mobile_number else "",
+            student.tenth_percentage if student.tenth_percentage is not None else "",
+            student.twelfth_percentage if student.twelfth_percentage is not None else "",
+            student.get_graduation_degree_display() if student.graduation_degree else "",
+            student.graduation_percentage if student.graduation_percentage is not None else "",
+            student.get_masters_degree_display() if student.masters_degree else "",
+            student.masters_percentage if student.masters_percentage is not None else "",
         ]
         for col_index, value in enumerate(row, start=1):
             ws.cell(row=idx+1, column=col_index, value=value)

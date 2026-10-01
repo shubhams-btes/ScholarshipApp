@@ -53,38 +53,42 @@ class CollegeForm(forms.ModelForm):
         model = College
         fields = ['name', 'location']
         widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-control','pattern': '[A-Za-z ]+',
-        'title': 'Only alphabets allowed.'}),
+            'name': forms.TextInput(attrs={
+                'class': 'form-control',
+                # removed the restrictive pattern (or loosen it — see note)
+                'title': 'College name',
+            }),
             'location': forms.Select(attrs={'class': 'form-select'}),
         }
 
     def clean_name(self):
-        name = self.cleaned_data.get("name")
-
-        # Allow only alphabets and spaces
-        if not re.match(r'^[A-Za-z ]+$', name):
-            raise forms.ValidationError("College name must contain only alphabets.")
-
+        name = self.cleaned_data.get("name", "").strip()
+        # Allow letters, spaces, and common punctuation: . & - ' , ( )
+        if not re.match(r"^[A-Za-z0-9 .&,'\-()]+$", name):
+            raise forms.ValidationError(
+                "College name may contain letters, numbers, spaces and . & - ' , ( ) only."
+            )
         return name
 
 class CollegeOfficialForm(forms.ModelForm):
     class Meta:
         model = CollegeOfficial
-        exclude = ['college']  # Important: exclude college
-        fields = ['name', 'email', 'is_active']  # Exclude 'college'
+        fields = ['name', 'email', 'is_active']
         widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-control','pattern': '[A-Za-z ]+',
-        'title': 'Only alphabets allowed.'}),
+            'name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'title': 'Official name',
+            }),
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
         }
-        
+
     def clean_name(self):
-        name = self.cleaned_data.get("name")
-
-        # Allow only alphabets and spaces
-        if not re.match(r'^[A-Za-z ]+$', name):
-            raise forms.ValidationError("College name must contain only alphabets.")
-
+        name = self.cleaned_data.get("name", "").strip()
+        # Allow letters, spaces, and . ' - (for Dr., O'Brien, Smith-Jones)
+        if not re.match(r"^[A-Za-z .'\-]+$", name):
+            raise forms.ValidationError(
+                "Name may contain letters, spaces and . ' - only."
+            )
         return name
 
 class CollegeOfficialEditForm(forms.ModelForm):
@@ -92,18 +96,16 @@ class CollegeOfficialEditForm(forms.ModelForm):
         model = CollegeOfficial
         fields = ['name', 'email']
         widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-control','pattern': '[A-Za-z ]+',
-        'title': 'Only alphabets allowed.'}),
+            'name': forms.TextInput(attrs={'class': 'form-control','title': 'Only alphabets allowed.'}),
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
         }
         
     def clean_name(self):
-        name = self.cleaned_data.get("name")
-
-        # Allow only alphabets and spaces
-        if not re.match(r'^[A-Za-z ]+$', name):
-            raise forms.ValidationError("College name must contain only alphabets.")
-
+        name = self.cleaned_data.get("name", "").strip()
+        if not re.match(r"^[A-Za-z .'\-]+$", name):
+            raise forms.ValidationError(
+                "Name may contain letters, spaces and . ' - only."
+            )
         return name
 
 # class ExamScheduleForm(forms.ModelForm):

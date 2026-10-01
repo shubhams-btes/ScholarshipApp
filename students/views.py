@@ -106,7 +106,6 @@ def student_register(request):
                 return redirect(f"{request.path}?schedule_id={schedule_id}")
 
             if not settings.REQUIRE_EMAIL_OTP:
-                # TEST ENVIRONMENT ONLY: skip OTP, register directly.
                 raw_password = generate_student_password()
                 try:
                     student = Student.objects.create(
@@ -115,8 +114,13 @@ def student_register(request):
                         roll_no=form.cleaned_data['roll_no'],
                         password=make_password(raw_password),
                         exam_schedule=event,
-                        stream=form.cleaned_data['stream'],
                         mobile_number=form.cleaned_data['mobile_number'],
+                        tenth_percentage=form.cleaned_data['tenth_percentage'],
+                        twelfth_percentage=form.cleaned_data['twelfth_percentage'],
+                        graduation_degree=form.cleaned_data['graduation_degree'],
+                        graduation_percentage=form.cleaned_data['graduation_percentage'],
+                        masters_degree=form.cleaned_data.get('masters_degree'),
+                        masters_percentage=form.cleaned_data.get('masters_percentage'),
                         is_active=True,
                     )
                 except IntegrityError:
@@ -142,8 +146,13 @@ def student_register(request):
                 'name': form.cleaned_data['name'],
                 'email': email,
                 'roll_no': form.cleaned_data['roll_no'],
-                'stream': form.cleaned_data['stream'],
                 'mobile_number': form.cleaned_data['mobile_number'],
+                'tenth_percentage': str(form.cleaned_data['tenth_percentage']),
+                'twelfth_percentage': str(form.cleaned_data['twelfth_percentage']),
+                'graduation_degree': form.cleaned_data['graduation_degree'],
+                'graduation_percentage': str(form.cleaned_data['graduation_percentage']),
+                'masters_degree': form.cleaned_data.get('masters_degree'),
+                'masters_percentage': str(form.cleaned_data['masters_percentage']) if form.cleaned_data.get('masters_percentage') else None,
                 'exam_schedule_id': event.id
             }
             request.session['email_otp'] = otp
@@ -195,15 +204,20 @@ def verify_email(request):
             raw_password = generate_student_password()
             try:
                 student = Student.objects.create(
-                    name=pending_data['name'],
-                    email=pending_data['email'],
-                    roll_no=pending_data['roll_no'],
-                    password=make_password(raw_password),
-                    exam_schedule=exam_schedule,
-                    stream=pending_data['stream'],
-                    mobile_number=pending_data['mobile_number'],
-                    is_active=True
-                )
+                name=pending_data['name'],
+                email=pending_data['email'],
+                roll_no=pending_data['roll_no'],
+                password=make_password(raw_password),   # generated at verify (your existing change)
+                exam_schedule=exam_schedule,
+                mobile_number=pending_data['mobile_number'],
+                tenth_percentage=pending_data['tenth_percentage'],
+                twelfth_percentage=pending_data['twelfth_percentage'],
+                graduation_degree=pending_data['graduation_degree'],
+                graduation_percentage=pending_data['graduation_percentage'],
+                masters_degree=pending_data.get('masters_degree'),
+                masters_percentage=pending_data.get('masters_percentage'),
+                is_active=True
+            )
             except IntegrityError:
                 # Race / double-submit: already registered for this exam.
                 for key in ['email_otp', 'otp_expiry', 'otp_attempts', 'pending_registration']:

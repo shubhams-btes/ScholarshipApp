@@ -1,5 +1,5 @@
 from django.db import models
-from django.core.validators import MinLengthValidator, RegexValidator
+from django.core.validators import MinLengthValidator, RegexValidator,MinValueValidator, MaxValueValidator
 
 
 class Student(models.Model):
@@ -28,7 +28,41 @@ class Student(models.Model):
             RegexValidator(r'^\d{10}$', "Mobile number must be exactly 10 digits.")
         ]
     )
-    stream = models.CharField(max_length=10, choices=STREAM_CHOICES, default='BTECH')
+    
+    # ── Academic details (nullable at DB for migration safety; required at form level) ──
+    tenth_percentage = models.DecimalField(
+        max_digits=5, decimal_places=2, null=True, blank=True,
+        validators=[MinValueValidator(0), MaxValueValidator(100)]
+    )
+    twelfth_percentage = models.DecimalField(
+        max_digits=5, decimal_places=2, null=True, blank=True,
+        validators=[MinValueValidator(0), MaxValueValidator(100)]
+    )
+
+    GRAD_CHOICES = [
+        ('BTECH', 'B.Tech'),
+        ('BCA', 'BCA'),
+        ('BSCIT', 'B.Sc. IT'),
+    ]
+    graduation_degree = models.CharField(max_length=10, choices=GRAD_CHOICES, null=True, blank=True)
+    graduation_percentage = models.DecimalField(
+        max_digits=5, decimal_places=2, null=True, blank=True,
+        validators=[MinValueValidator(0), MaxValueValidator(100)]
+    )
+
+    MASTERS_CHOICES = [
+        ('MCA', 'MCA'),
+        ('MSCIT', 'M.Sc. IT'),
+        ('MTECH', 'M.Tech'),
+    ]
+    masters_degree = models.CharField(max_length=10, choices=MASTERS_CHOICES, null=True, blank=True)
+    masters_percentage = models.DecimalField(
+        max_digits=5, decimal_places=2, null=True, blank=True,
+        validators=[MinValueValidator(0), MaxValueValidator(100)]
+    )
+    
+    
+    # stream = models.CharField(max_length=10, choices=STREAM_CHOICES, default='BTECH')
     current_session = models.CharField(max_length=255, null=True, blank=True)
     is_active = models.BooleanField(default=False)
     hall_ticket = models.CharField(max_length=20, unique=True, editable=False, blank=True)
