@@ -109,7 +109,7 @@
                             {{ college.name }}
                         </td>
                         {% endif %}
-                        <td>{{ official.name|default:"—" }}</td>
+                        <td class="text-nowrap">{{ official.name|default:"—" }}</td>
                         <td>{{ official.email|default:"—" }}</td>
                         <td>{{ college.get_location_display }}</td>
                         <td>
