@@ -8,11 +8,6 @@ class Student(models.Model):
     password = models.CharField(max_length=128)
     roll_no = models.CharField(max_length=50, blank=True, null=True)
 
-    STREAM_CHOICES = [
-        ('BTECH', 'B.Tech'),
-        ('MCA', 'MCA'),
-    ]
-
     exam_schedule = models.ForeignKey(
         'admin_panel.ExamScheduleHistory',
         on_delete=models.PROTECT,
