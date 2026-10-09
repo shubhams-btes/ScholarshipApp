@@ -362,6 +362,7 @@
     <script>
       window.examConfig = {
         totalQuestions: {{ questions|length }},
+        remainingSeconds: "{{ remaining_seconds }}",
         examEndTime: "{{ exam_end_time|escapejs }}",
         startExamUrl: "{% url 'start_exam' %}",
         saveAnswerUrl: "{% url 'save_answer' %}",

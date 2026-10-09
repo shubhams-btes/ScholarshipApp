@@ -52,7 +52,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // 4. Start timer + proctoring using the end time from the server
         if (typeof window.beginExamRuntime === "function") {
-            window.beginExamRuntime(data.exam_end_time);
+            window.beginExamRuntime(data.remaining_seconds);
         }
     });
 });

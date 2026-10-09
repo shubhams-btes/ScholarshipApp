@@ -8,48 +8,54 @@ if (!window.examConfig) {
 const total = window.examConfig.totalQuestions;
 let autoSubmitting = false;
 let finalSubmission = false;
-let examEndTime =
-    new Date(window.examConfig.examEndTime).getTime();
-
+let examEndTime = new Date(window.examConfig.examEndTime).getTime();
+let remainingSeconds = parseInt(window.examConfig.remainingSeconds, 10);
 let current = 1;
+const attempted = Array(total + 1).fill(false);
+const bookmarked = Array(total + 1).fill(false);
 
-const attempted =
-    Array(total + 1).fill(false);
+// function updateTimer() {
 
-const bookmarked =
-    Array(total + 1).fill(false);
+//     const now = Date.now();
 
+//     const remaining =
+//         Math.floor((examEndTime - now) / 1000);
 
+//     if (remaining <= 0) {
 
+//         document.getElementById("timer").textContent =
+//             "00:00";
+//         autoSubmitting = true;
+//         document.getElementById("exam-form").submit();
+
+//         return false;
+//     }
+
+//     const minutes =
+//         Math.floor(remaining / 60);
+
+//     const seconds =
+//         remaining % 60;
+
+//     document.getElementById("timer").textContent =
+//         String(minutes).padStart(2, "0") +
+//         ":" +
+//         String(seconds).padStart(2, "0");
+
+//     return true;
+// }
 
 function updateTimer() {
-
-    const now = Date.now();
-
-    const remaining =
-        Math.floor((examEndTime - now) / 1000);
-
-    if (remaining <= 0) {
-
-        document.getElementById("timer").textContent =
-            "00:00";
+    if (remainingSeconds <= 0) {
+        document.getElementById("timer").textContent = "00:00";
         autoSubmitting = true;
         document.getElementById("exam-form").submit();
-
         return false;
     }
-
-    const minutes =
-        Math.floor(remaining / 60);
-
-    const seconds =
-        remaining % 60;
-
+    const minutes = Math.floor(remainingSeconds / 60);
+    const seconds = remainingSeconds % 60;
     document.getElementById("timer").textContent =
-        String(minutes).padStart(2, "0") +
-        ":" +
-        String(seconds).padStart(2, "0");
-
+        String(minutes).padStart(2, "0") + ":" + String(seconds).padStart(2, "0");
     return true;
 }
 
@@ -59,7 +65,7 @@ function startTimer() {
     if (!updateTimer()) return;
 
     const interval = setInterval(() => {
-
+        remainingSeconds -= 1;
         if (!updateTimer()) {
             clearInterval(interval);
         }
@@ -213,7 +219,7 @@ function wireResumeButton() {
         // Reload case → runtime not started yet, so start it now.
         // Live Esc case → proctoring/timer already running, nothing more to do.
         if (!proctoringActive) {
-            beginExamRuntime(window.examConfig.examEndTime);
+            beginExamRuntime(window.examConfig.remainingSeconds);
         }
     });
 }
@@ -254,17 +260,13 @@ function saveAnswer(qid, value) {
 
 // Called by exam_guidelines.js after start_exam succeeds,
 // and on refresh if the exam is already in progress.
-function beginExamRuntime(endTimeStr) {
-
-    if (endTimeStr) {
-        examEndTime = new Date(endTimeStr).getTime();
-        window.examConfig.examEndTime = endTimeStr;
+function beginExamRuntime(remainingFromServer) {
+    if (remainingFromServer !== undefined && remainingFromServer !== null && remainingFromServer !== "") {
+        remainingSeconds = parseInt(remainingFromServer, 10);   // fresh-start value from fetch
     }
-
-    if (!isNaN(examEndTime) && examEndTime > 0) {
+    if (!isNaN(remainingSeconds) && remainingSeconds > 0) {
         startTimer();
     }
-
     startProctoring();
 }
 
@@ -278,8 +280,10 @@ function beginExamRuntime(endTimeStr) {
 
 function resumeExamAfterReload() {
 
-    // Deadline already passed → don't prompt, submit immediately.
-    if (isNaN(examEndTime) || examEndTime - Date.now() <= 0) {
+    const remaining = parseInt(window.examConfig.remainingSeconds, 10);
+
+    // Deadline already passed (or no time left) → don't prompt, submit immediately.
+    if (isNaN(remaining) || remaining <= 0) {
         autoSubmitting = true;
         const form = document.getElementById("exam-form");
         if (form) form.submit();
@@ -289,7 +293,7 @@ function resumeExamAfterReload() {
     const overlay = document.getElementById("resumeFullscreenModal");
     if (!overlay) {
         // Overlay markup missing → resume without fullscreen rather than trapping them.
-        beginExamRuntime(window.examConfig.examEndTime);
+        beginExamRuntime(window.examConfig.remainingSeconds);
         return;
     }
 
@@ -589,7 +593,7 @@ window.addEventListener(
                 if (modal) modal.style.display = "none";
             });
         }
-        if (window.examConfig.examEndTime) {
+        if (window.examConfig.remainingSeconds) {
             // Exam already in progress (page was reloaded) → require a fresh
             // click to re-enter fullscreen before resuming.
             resumeExamAfterReload();

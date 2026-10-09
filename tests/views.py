@@ -132,8 +132,10 @@ def quiz_view(request):
 
     if guidelines_accepted and progress.end_time:
         exam_end_time = progress.end_time.isoformat()
+        remaining_seconds = max(0, (progress.end_time - now).total_seconds())
     else:
         exam_end_time = ""
+        remaining_seconds = ""
 
     saved_answers_json = json.dumps(progress.answers or {})
 
@@ -147,6 +149,7 @@ def quiz_view(request):
         "student": student,
         "questions": selected_questions,
         "duration": EXAM_DURATION_MINUTES,
+        "remaining_seconds": remaining_seconds,
         "exam_end_time": exam_end_time,
         "saved_answers_json": saved_answers_json,
         "schedule": event,             # the occurrence
@@ -174,7 +177,8 @@ def start_exam(request):
     request.session['guidelines_accepted'] = True
     return JsonResponse({
         "success": True,
-        "exam_end_time": progress.end_time.isoformat()
+        "exam_end_time": progress.end_time.isoformat(),
+        "remaining_seconds": (progress.end_time - timezone.now()).total_seconds(),
     })
 
 
