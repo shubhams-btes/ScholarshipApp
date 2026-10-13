@@ -109,7 +109,7 @@ def dashboard(request):
     schedules = schedules.select_related('college').order_by('-quiz_date')
     
      # Pagination
-    paginator = Paginator(schedules, 5)  # 10 rows per page
+    paginator = Paginator(schedules, 10)  # 10 rows per page
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
