@@ -90,6 +90,7 @@
                     <tr>
                         <th>#</th>
                         <th>College</th>
+                        <th>Schedule ID</th>
                         <th>Quiz Date</th>
                         <th>Registration Status</th>
                         <th>Quiz Status</th>
@@ -101,12 +102,12 @@
                         <tr>
                             <td>{{ forloop.counter }}</td>
                             <td>{{ row.college.name }}</td>
-
+                            <td>{{row.schedule.id}}</td>
                             {% if row.schedule and row.schedule.quiz_date %}
                             <!-- QUIZ DATE cell: text + pencil, toggles to inline editor -->
                             <td>
                                 <div class="qd-view d-flex align-items-center gap-2">
-                                    <span>{{ row.schedule.quiz_date|date:"d-m-Y H:i" }}</span>
+                                    <span class="text-nowrap">{{ row.schedule.quiz_date|date:"d-m-Y H:i" }}</span>
                                     {% if row.schedule.is_active %}
                                     <button type="button"
                                             class="btn btn-sm btn-link p-0 qd-edit-btn"
@@ -135,7 +136,7 @@
                                 <form method="post" action="{% url 'toggle_registration' row.schedule.id %}" style="margin:0">
                                     {% csrf_token %}
                                     <button type="submit"
-                                            class="btn btn-sm {% if row.schedule.registration_enabled %}btn-danger{% else %}btn-success{% endif %}">
+                                            class="btn btn-sm text-nowrap {% if row.schedule.registration_enabled %}btn-danger{% else %}btn-success{% endif %}">
                                         {% if row.schedule.registration_enabled %}Close Registrations{% else %}Open Registrations{% endif %}
                                     </button>
                                 </form>
@@ -145,7 +146,7 @@
                             <td>
                                 {% if row.schedule.quiz_enabled %}
                                 <button type="button"
-                                        class="btn btn-sm btn-danger disable-quiz-btn"
+                                        class="btn btn-sm btn-danger disable-quiz-btn text-nowrap"
                                         data-action="{% url 'toggle_quiz_status' row.schedule.id %}"
                                         data-college="{{ row.schedule.college.name }}">
                                     Disable Quiz
@@ -160,7 +161,7 @@
                             </td>
 
                             <!-- ACTIONS: share links only (Update Date removed) -->
-                            <td>
+                            <td class="text-nowrap">
                                 {% if row.schedule.registration_enabled %}
                                 <button type="button"
                                         class="btn btn-sm btn-info share-btn"

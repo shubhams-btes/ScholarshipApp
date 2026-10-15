@@ -132,9 +132,9 @@
                     {% for schedule in page_obj %}
                     <tr>
                         <td>{{ schedule.college.name }}</td>
-                        <td>{{ schedule.quiz_date|date:"Y-m-d H:i" }}</td>
-                        <td>{{ schedule.created_at|date:"Y-m-d H:i" }}</td>
-                        <td>
+                        <td class="text-nowrap">{{ schedule.quiz_date|date:"Y-m-d H:i" }}</td>
+                        <td class="text-nowrap">{{ schedule.created_at|date:"Y-m-d H:i" }}</td>
+                        <td class="text-nowrap">
                             {% if schedule.is_active %}
                                 <span class="badge bg-success">Live</span>
                                 {% if schedule.registration_enabled %}
@@ -150,7 +150,7 @@
                         <td class="text-center">
                             <a
                                 href="{% url 'college_registrations' schedule.id %}"
-                                class="btn btn-sm btn-outline-primary"
+                                class="btn btn-sm btn-outline-primary text-nowrap"
                             >
                                 View Registrations
                             </a>
@@ -158,7 +158,7 @@
                         <td class="text-center">
                             <a
                                 href="{% url 'college_results' schedule.id %}"
-                                class="btn btn-sm btn-outline-primary"
+                                class="btn btn-sm btn-outline-primary text-nowrap"
                             >
                                 View Results
                             </a>
