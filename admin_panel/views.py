@@ -793,40 +793,93 @@ def shortlisted_students(request, schedule_id):
         Result.objects
         .filter(exam_schedule=schedule, is_shortlisted=True)
         .select_related("student")
-        .prefetch_related("interview")   # the OneToOne
+        .prefetch_related("interview")
         .order_by("-score")
     )
 
+    # Search
+    search = request.GET.get("search", "").strip()
+    if search:
+        results = results.filter(
+            Q(student__name__icontains=search) |
+            Q(student__email__icontains=search) |
+            Q(student__mobile_number__icontains=search) |
+            Q(student__hall_ticket__icontains=search)
+        )
+
+    # Per-page
+    ALLOWED_PER_PAGE = [5, 10, 50, 100]
+    try:
+        per_page = int(request.GET.get("per_page", 10))
+    except (ValueError, TypeError):
+        per_page = 10
+    if per_page not in ALLOWED_PER_PAGE:
+        per_page = 10
+
+    # Paginate the QUERYSET first
+    paginator = Paginator(results, per_page)
+    page_obj = paginator.get_page(request.GET.get("page"))
+    elided_page_range = paginator.get_elided_page_range(page_obj.number, on_each_side=2, on_ends=1)
+
+    # Compute scores only for THIS page's results
     rows = []
-    for result in results:
-        student = result.student
-        academic = student.academic_percentage
+    for result in page_obj:
+        s = result.student
+        academic = s.academic_percentage
         tq = talentquest_percentage(result)
-
-        interview = getattr(result, "interview", None)   # OneToOne, may not exist
+        interview = getattr(result, "interview", None)
         interview_pct = interview.interview_percentage if interview else None
-
         final = final_percentage(academic, tq, interview_pct)
         slab, scholarship = scholarship_slab(final)
-
         rows.append({
-            "result": result,
-            "student": student,
-            "academic": academic,
-            "talentquest": tq,
-            "interview": interview,                 # the object (for status/stream/remarks)
-            "interview_pct": interview_pct,
-            "final": final,
-            "slab": slab,
-            "scholarship": scholarship,
+            "result": result, "student": s,
+            "academic": academic, "talentquest": tq,
+            "interview": interview, "interview_pct": interview_pct,
+            "final": final, "slab": slab, "scholarship": scholarship,
         })
 
     return render(request, "admin_panel/shortlisted_students.html", {
         "schedule": schedule,
         "college": schedule.college,
         "rows": rows,
+        "page_obj": page_obj,
+        "elided_page_range": elided_page_range,
+        "search": search,
+        "per_page": per_page,
+        "per_page_options": ALLOWED_PER_PAGE,
     })
 
+
+@superuser_required
+@require_POST
+def edit_interview(request, result_id):
+    result = get_object_or_404(Result, pk=result_id)
+    interview = get_object_or_404(Interview, result=result)   # must exist to edit
+
+    status = request.POST.get("status")
+    stream = request.POST.get("stream") or None
+
+    try:
+        technical = Decimal(request.POST.get("technical_score"))
+        softskill = Decimal(request.POST.get("softskill_score"))
+    except (TypeError, InvalidOperation):
+        messages.error(request, "Enter valid scores.")
+        return redirect("shortlisted_students", schedule_id=result.exam_schedule.id)
+
+    if not (0 <= technical <= 5) or not (0 <= softskill <= 5):
+        messages.error(request, "Scores must be between 0 and 5.")
+        return redirect("shortlisted_students", schedule_id=result.exam_schedule.id)
+
+    interview.technical_score = technical
+    interview.softskill_score = softskill
+    interview.status = status
+    interview.stream = stream if status == "SELECTED" else None
+    interview.panelist_name = request.POST.get("panelist_name", "").strip()
+    interview.remarks = request.POST.get("remarks", "").strip()
+    interview.save()
+
+    messages.success(request, f"Interview updated for {result.student.name}.")
+    return redirect("shortlisted_students", schedule_id=result.exam_schedule.id)
 
 @superuser_required
 @require_POST
