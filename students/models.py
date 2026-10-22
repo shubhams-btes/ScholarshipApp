@@ -55,7 +55,8 @@ class Student(models.Model):
         max_digits=5, decimal_places=2, null=True, blank=True,
         validators=[MinValueValidator(0), MaxValueValidator(100)]
     )
-    
+    academic_percentage = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    qualify = models.IntegerField(default=1)   # 1 = eligible, 0 = any qualification < 60%
     
     # stream = models.CharField(max_length=10, choices=STREAM_CHOICES, default='BTECH')
     current_session = models.CharField(max_length=255, null=True, blank=True)

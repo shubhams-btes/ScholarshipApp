@@ -36,6 +36,11 @@ urlpatterns = [
 
     # College Results
     path("results/<int:schedule_id>/", views.college_results, name="college_results"),
+    path("results/<int:schedule_id>/freeze-shortlist/", views.freeze_shortlist, name="freeze_shortlist"),
+    path("results/<int:result_id>/toggle-shortlist/", views.toggle_shortlist, name="toggle_shortlist"),
+    path("shortlisted/<int:schedule_id>/", views.shortlisted_students, name="shortlisted_students"),
+    path("shortlisted/<int:schedule_id>/export/", views.export_shortlist, name="export_shortlist"),
+    path("results/<int:result_id>/add-interview/", views.add_interview, name="add_interview"),
     path('registrations/<int:schedule_id>/', views.college_registrations, name='college_registrations'),
     path('reset-session/<int:student_id>/', views.reset_student_session, name='reset_student_session'),
     path("students/<int:student_id>/reset-password/", views.reset_student_password, name="reset_student_password"),

@@ -167,13 +167,20 @@
                             <!-- 10th | 12th -->
                             <div class="form-row" style="display:flex; gap:16px;">
                                 <div class="form-group" style="flex:1;">
-                                    <label>10th Percentage<span class="text-danger">*</span></label>
+                                    <label>10th<span class="text-danger">*</span></label>
+                                    <div class="input-group">
                                     {{ form.tenth_percentage }}
+                                    {{ form.tenth_type }}
+                                    </div>
                                     {% for error in form.tenth_percentage.errors %}<small class="text-danger">{{ error }}</small>{% endfor %}
                                 </div>
+                                
                                 <div class="form-group" style="flex:1;">
-                                    <label>12th Percentage<span class="text-danger">*</span></label>
+                                    <label>12th<span class="text-danger">*</span></label>
+                                    <div class="input-group">
                                     {{ form.twelfth_percentage }}
+                                    {{ form.twelfth_type }}
+                                    </div>
                                     {% for error in form.twelfth_percentage.errors %}<small class="text-danger">{{ error }}</small>{% endfor %}
                                 </div>
                             </div>
@@ -186,8 +193,11 @@
                                     {% for error in form.graduation_degree.errors %}<small class="text-danger">{{ error }}</small>{% endfor %}
                                 </div>
                                 <div class="form-group" style="flex:1;">
-                                    <label>Graduation Percentage<span class="text-danger">*</span></label>
+                                    <label>Graduation<span class="text-danger">*</span></label>
+                                    <div class="input-group">
                                     {{ form.graduation_percentage }}
+                                    {{ form.graduation_type }}
+                                    </div>
                                     {% for error in form.graduation_percentage.errors %}<small class="text-danger">{{ error }}</small>{% endfor %}
                                 </div>
                             </div>
@@ -200,8 +210,11 @@
                                     {% for error in form.masters_degree.errors %}<small class="text-danger">{{ error }}</small>{% endfor %}
                                 </div>
                                 <div class="form-group" style="flex:1;">
-                                    <label>Masters Percentage <small class="text-muted">(optional)</small></label>
+                                    <label>Masters<small class="text-muted">(optional)</small></label>
+                                    <div class="input-group">
                                     {{ form.masters_percentage }}
+                                    {{ form.masters_type }}
+                                    </div>
                                     {% for error in form.masters_percentage.errors %}<small class="text-danger">{{ error }}</small>{% endfor %}
                                 </div>
                             </div>
@@ -255,6 +268,17 @@
         if (overlay) overlay.style.display = "flex";
         // Form submits normally; overlay stays until the page navigates.
     });
+
+    
 </script>
+
+{% if form.errors %}
+<script>
+    const firstError = document.querySelector('small.text-danger');
+    if (firstError) {
+        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+</script>
+{% endif %}
 </body>
 </html>

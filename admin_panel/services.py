@@ -68,3 +68,88 @@ def get_filtered_results(schedule, cutoff=None, top_n=None):
             pass
 
     return results
+
+from decimal import Decimal
+
+
+def talentquest_percentage(result):
+    """Exam score as % out of 100."""
+    if not result.total_questions:
+        return Decimal("0")
+    return round(Decimal(result.score) / Decimal(result.total_questions) * 100, 2)
+
+
+def final_percentage(academic_pct, tq_pct, interview_pct):
+    """Equal-thirds average of academics, TalentQuest, interview.
+    Returns None if interview not done (final can't be computed yet)."""
+    if interview_pct is None or academic_pct is None:
+        return None
+    return round((Decimal(academic_pct) + Decimal(tq_pct) + Decimal(interview_pct)) / 3, 2)
+
+
+def scholarship_slab(final_pct):
+    """A/B/C slab + scholarship %. 90+ → A/30, 80-90 → B/20, 70-80 → C/10, else none."""
+    if final_pct is None:
+        return (None, None)
+    if final_pct >= 90:
+        return ("A", 30)
+    if final_pct >= 80:
+        return ("B", 20)
+    if final_pct >= 70:
+        return ("C", 10)
+    return ("—", 0)
+
+
+def build_shortlist_workbook(schedule, results):
+    """Build the final shortlisted-students Excel with the full scoring pipeline.
+    `results` is a queryset of shortlisted Results."""
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = f"Shortlist_{schedule.college.name}"[:31]
+
+    headers = [
+        "ID", "Hall Ticket", "Roll No", "Name", "Email", "Contact Number", "College",
+        "Academic %", "TalentQuest %", "Interview %", "Final %",
+        "Slab", "Scholarship %",
+        "Interview Status", "Stream", "Panelist", "Interview Remarks", "Shortlist Remarks",
+    ]
+    for col_index, header in enumerate(headers, start=1):
+        cell = ws.cell(row=1, column=col_index, value=header.upper())
+        cell.font = Font(bold=True)
+
+    for idx, result in enumerate(results, start=1):
+        s = result.student
+        academic = s.academic_percentage
+        tq = talentquest_percentage(result)
+
+        interview = getattr(result, "interview", None)
+        interview_pct = interview.interview_percentage if interview else None
+
+        final = final_percentage(academic, tq, interview_pct)
+        slab, scholarship = scholarship_slab(final)
+
+        row = [
+            idx,
+            s.hall_ticket.upper() if s.hall_ticket else "",
+            s.roll_no.upper() if s.roll_no else "",
+            s.name.upper() if s.name else "",
+            s.email.upper() if s.email else "",
+            s.mobile_number if s.mobile_number else "",
+            result.exam_schedule.college.name.upper() if result.exam_schedule.college.name else "",
+            academic if academic is not None else "",
+            tq,
+            interview_pct if interview_pct is not None else "",
+            final if final is not None else "",
+            slab if slab else "",
+            scholarship if scholarship else "",
+            interview.get_status_display() if interview else "Pending",
+            interview.get_stream_display() if interview and interview.stream else "",
+            interview.panelist_name if interview else "",
+            interview.remarks if interview else "",
+            result.shortlist_remarks or "",
+        ]
+
+        for col_index, value in enumerate(row, start=1):
+            ws.cell(row=idx + 1, column=col_index, value=value)
+
+    return wb

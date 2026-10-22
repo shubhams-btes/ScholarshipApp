@@ -1,4 +1,5 @@
 # ── Standard library ──
+from decimal import Decimal, InvalidOperation
 import json
 import logging
 import os
@@ -36,7 +37,7 @@ from openpyxl.styles import Font
 # ── Local apps ──
 from admin_panel.models import College, CollegeOfficial, ExamSchedule, ExamScheduleHistory
 from students.models import Student
-from tests.models import ExamProgress, Question, Result
+from tests.models import ExamProgress, Interview, Question, Result
 from utils.qr_utils import generate_qr_attachment
 from .forms import (
     CollegeForm,
@@ -45,7 +46,7 @@ from .forms import (
     ExamScheduleForm,
     QuestionForm,
 )
-from .services import build_results_workbook, get_filtered_results
+from .services import build_results_workbook, get_filtered_results, talentquest_percentage,final_percentage,scholarship_slab,build_shortlist_workbook
 from django.db.models import Exists, OuterRef
 
 logger = logging.getLogger(__name__)
@@ -729,8 +730,141 @@ def college_results(request, schedule_id):
         "per_page_options": ALLOWED_PER_PAGE,
     })
 
+@superuser_required
+@require_POST
+def freeze_shortlist(request, schedule_id):
+    schedule = get_object_or_404(ExamScheduleHistory, pk=schedule_id)
+
+    cutoff = request.POST.get("cutoff")
+    top_n = request.POST.get("top_n")
+    search = request.POST.get("search", "").strip()
+
+    filtered_results = get_filtered_results(schedule, cutoff, top_n, search)
+
+    shortlisted = 0
+    skipped_flagged = 0
+
+    for result in filtered_results:
+        # Red-flag block: can't shortlist a student with any qualification < 60
+        if result.student.qualify == 0:
+            skipped_flagged += 1
+            continue
+        if not result.is_shortlisted:
+            result.is_shortlisted = True
+            result.save(update_fields=["is_shortlisted"])
+            shortlisted += 1
+
+    msg = f"{shortlisted} student(s) shortlisted."
+    if skipped_flagged:
+        msg += f" {skipped_flagged} skipped (academic score below 60% in a qualification)."
+    messages.success(request, msg)
+
+    return redirect("college_results", schedule_id=schedule.id)
 
 
+@superuser_required
+@require_POST
+def toggle_shortlist(request, result_id):
+    result = get_object_or_404(Result, pk=result_id)
+
+    if result.is_shortlisted:
+        # Un-shortlist
+        result.is_shortlisted = False
+        result.shortlist_remarks = ""
+        result.save(update_fields=["is_shortlisted", "shortlist_remarks", "shortlisted_by", "shortlisted_on"])
+        messages.success(request, f"{result.student.name} removed from shortlist.")
+    else:
+        # Red-flag block
+        if result.student.qualify == 0:
+            messages.error(request, f"{result.student.name} cannot be shortlisted — academic score below 60% in a qualification.")
+            return redirect("college_results", schedule_id=result.exam_schedule.id)
+        result.is_shortlisted = True
+        result.shortlist_remarks = request.POST.get("remarks", "").strip()
+        result.save(update_fields=["is_shortlisted", "shortlist_remarks", "shortlisted_by", "shortlisted_on"])
+        messages.success(request, f"{result.student.name} shortlisted.")
+
+    return redirect("college_results", schedule_id=result.exam_schedule.id)
+
+@superuser_required
+def shortlisted_students(request, schedule_id):
+    schedule = get_object_or_404(ExamScheduleHistory, pk=schedule_id)
+
+    results = (
+        Result.objects
+        .filter(exam_schedule=schedule, is_shortlisted=True)
+        .select_related("student")
+        .prefetch_related("interview")   # the OneToOne
+        .order_by("-score")
+    )
+
+    rows = []
+    for result in results:
+        student = result.student
+        academic = student.academic_percentage
+        tq = talentquest_percentage(result)
+
+        interview = getattr(result, "interview", None)   # OneToOne, may not exist
+        interview_pct = interview.interview_percentage if interview else None
+
+        final = final_percentage(academic, tq, interview_pct)
+        slab, scholarship = scholarship_slab(final)
+
+        rows.append({
+            "result": result,
+            "student": student,
+            "academic": academic,
+            "talentquest": tq,
+            "interview": interview,                 # the object (for status/stream/remarks)
+            "interview_pct": interview_pct,
+            "final": final,
+            "slab": slab,
+            "scholarship": scholarship,
+        })
+
+    return render(request, "admin_panel/shortlisted_students.html", {
+        "schedule": schedule,
+        "college": schedule.college,
+        "rows": rows,
+    })
+
+
+@superuser_required
+@require_POST
+def add_interview(request, result_id):
+    result = get_object_or_404(Result, pk=result_id)
+
+    # One interview per student (OneToOne) — block if already exists
+    if hasattr(result, "interview"):
+        messages.error(request, "An interview already exists for this student.")
+        return redirect("shortlisted_students", schedule_id=result.exam_schedule.id)
+
+    status = request.POST.get("status")
+    stream = request.POST.get("stream") or None   # only if selected
+
+    try:
+        technical = Decimal(request.POST.get("technical_score"))
+        softskill = Decimal(request.POST.get("softskill_score"))
+    except (TypeError, InvalidOperation):
+        messages.error(request, "Enter valid technical and soft-skill scores.")
+        return redirect("shortlisted_students", schedule_id=result.exam_schedule.id)
+
+    # Validate 0-5
+    if not (0 <= technical <= 5) or not (0 <= softskill <= 5):
+        messages.error(request, "Scores must be between 0 and 5.")
+        return redirect("shortlisted_students", schedule_id=result.exam_schedule.id)
+
+    Interview.objects.create(
+        result=result,
+        technical_score=technical,
+        softskill_score=softskill,
+        stream=stream if status == "SELECTED" else None,   # stream only when selected
+        status=status,
+        remarks=request.POST.get("remarks", "").strip(),
+        panelist_name=request.POST.get("panelist_name", "").strip(),
+    )
+
+    messages.success(request, f"Interview recorded for {result.student.name}.")
+    return redirect("shortlisted_students", schedule_id=result.exam_schedule.id)
 
 @superuser_required
 def college_registrations(request, schedule_id):
@@ -1012,6 +1146,32 @@ def export_registrations(request, schedule_id):
     )
     filename = f"Registrations_{schedule.college.name}_{schedule.quiz_date.date()}.xlsx"
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    wb.save(response)
+    return response
+
+@superuser_required
+def export_shortlist(request, schedule_id):
+    schedule = get_object_or_404(ExamScheduleHistory, pk=schedule_id)
+
+    results = (
+        Result.objects
+        .filter(exam_schedule=schedule, is_shortlisted=True)
+        .select_related("student")
+        .prefetch_related("interview")
+        .order_by("-score")
+    )
+
+    if not results:
+        messages.warning(request, "No shortlisted students to export.")
+        return redirect("shortlisted_students", schedule_id=schedule.id)
+
+    wb = build_shortlist_workbook(schedule, results)
+
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    filename = f"Shortlist_{schedule.college.name}_{schedule.quiz_date.date()}.xlsx"
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
     wb.save(response)
     return response
 

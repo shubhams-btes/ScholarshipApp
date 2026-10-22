@@ -17,6 +17,7 @@ import secrets, time
 from django.db import IntegrityError
 import threading
 import logging
+
 logger = logging.getLogger(__name__)
 
 def generate_student_password():
@@ -121,6 +122,8 @@ def student_register(request):
                         graduation_percentage=form.cleaned_data['graduation_percentage'],
                         masters_degree=form.cleaned_data.get('masters_degree'),
                         masters_percentage=form.cleaned_data.get('masters_percentage'),
+                        academic_percentage=form.cleaned_data['_academic_percentage'],
+                        qualify=form.cleaned_data['_qualify'],
                         is_active=True,
                     )
                 except IntegrityError:
@@ -153,6 +156,8 @@ def student_register(request):
                 'graduation_percentage': str(form.cleaned_data['graduation_percentage']),
                 'masters_degree': form.cleaned_data.get('masters_degree'),
                 'masters_percentage': str(form.cleaned_data['masters_percentage']) if form.cleaned_data.get('masters_percentage') else None,
+                'academic_percentage': str(form.cleaned_data['_academic_percentage']),
+                'qualify': form.cleaned_data['_qualify'],
                 'exam_schedule_id': event.id
             }
             request.session['email_otp'] = otp
@@ -216,6 +221,8 @@ def verify_email(request):
                 graduation_percentage=pending_data['graduation_percentage'],
                 masters_degree=pending_data.get('masters_degree'),
                 masters_percentage=pending_data.get('masters_percentage'),
+                academic_percentage=pending_data['academic_percentage'],
+                qualify=pending_data['qualify'],
                 is_active=True
             )
             except IntegrityError:

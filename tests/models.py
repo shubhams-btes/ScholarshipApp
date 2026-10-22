@@ -2,6 +2,8 @@ from django.db import models
 from students.models import Student
 from admin_panel.models import ExamScheduleHistory
 from django.conf import settings
+from django.core.validators import MinValueValidator, MaxValueValidator
+    
 class Question(models.Model):
     TECHNICAL = 'TECH'
     REASONING = 'REAS'
@@ -53,6 +55,8 @@ class Result(models.Model):
     score = models.IntegerField(default=0)
     total_questions = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
+    is_shortlisted = models.BooleanField(default=False)
+    shortlist_remarks = models.TextField(blank=True)
 
     def __str__(self):
         return f"{self.student} - {self.score}/{self.total_questions}"
@@ -71,3 +75,52 @@ class ExamProgress(models.Model):
 
     def __str__(self):
         return f"Progress: {self.student}"
+    
+    
+# in tests/models.py (or wherever Result lives)
+
+class Interview(models.Model):
+
+    class Status(models.TextChoices):
+        SELECTED = "SELECTED", "Selected"
+        REJECTED = "REJECTED", "Rejected"
+
+    class Stream(models.TextChoices):
+        DEV = "DEV", "Development"
+        QA = "QA", "QA"
+
+    result = models.OneToOneField(
+        Result,
+        on_delete=models.CASCADE,
+        related_name="interview"
+    )
+
+    technical_score = models.DecimalField(
+        max_digits=3, decimal_places=1,
+        validators=[MinValueValidator(0), MaxValueValidator(5)]
+    )
+    softskill_score = models.DecimalField(
+        max_digits=3, decimal_places=1,
+        validators=[MinValueValidator(0), MaxValueValidator(5)]
+    )
+
+    stream = models.CharField(
+        max_length=10, choices=Stream.choices,
+        null=True, blank=True   # only set if SELECTED
+    )
+    status = models.CharField(max_length=10, choices=Status.choices)
+
+    remarks = models.TextField(blank=True)
+    panelist_name = models.CharField(max_length=255)
+
+    conducted_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Interview: {self.result.student.name} ({self.status})"
+
+    @property
+    def interview_percentage(self):
+        """(technical + softskill) out of 10 → % out of 100."""
+        from decimal import Decimal
+        total = Decimal(self.technical_score) + Decimal(self.softskill_score)
+        return round(total / 10 * 100, 2)
