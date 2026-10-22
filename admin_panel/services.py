@@ -2,7 +2,7 @@ import openpyxl
 from openpyxl.styles import Font
 from io import BytesIO
 from tests.models import Result
-
+from decimal import Decimal
 
 def build_results_workbook(schedule, results, include_score=False):
     """Build the results Excel for a schedule. `results` is an already-filtered queryset.
@@ -69,7 +69,7 @@ def get_filtered_results(schedule, cutoff=None, top_n=None):
 
     return results
 
-from decimal import Decimal
+
 
 
 def talentquest_percentage(result):
@@ -101,14 +101,14 @@ def scholarship_slab(final_pct):
 
 
 def build_shortlist_workbook(schedule, results):
-    """Build the final shortlisted-students Excel with the full scoring pipeline.
-    `results` is a queryset of shortlisted Results."""
+    """Build the final shortlisted-students Excel with the full scoring pipeline."""
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = f"Shortlist_{schedule.college.name}"[:31]
 
     headers = [
         "ID", "Hall Ticket", "Roll No", "Name", "Email", "Contact Number", "College",
+        "10th %", "12th %", "Graduation %", "Masters %",   # ← individual breakdown
         "Academic %", "TalentQuest %", "Interview %", "Final %",
         "Slab", "Scholarship %",
         "Interview Status", "Stream", "Panelist", "Interview Remarks", "Shortlist Remarks",
@@ -136,6 +136,12 @@ def build_shortlist_workbook(schedule, results):
             s.email.upper() if s.email else "",
             s.mobile_number if s.mobile_number else "",
             result.exam_schedule.college.name.upper() if result.exam_schedule.college.name else "",
+            # ── individual academic breakdown ──
+            s.tenth_percentage if s.tenth_percentage is not None else "",
+            s.twelfth_percentage if s.twelfth_percentage is not None else "",
+            s.graduation_percentage if s.graduation_percentage is not None else "",
+            s.masters_percentage if s.masters_percentage is not None else "",
+            # ── aggregate + pipeline ──
             academic if academic is not None else "",
             tq,
             interview_pct if interview_pct is not None else "",
