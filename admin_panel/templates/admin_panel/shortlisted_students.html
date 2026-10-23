@@ -85,6 +85,7 @@
             <table class="table table-striped">
     <thead class="table-dark">
         <tr>
+            <th>#</th>
             <th>Hall Ticket</th>
             <th>Name</th>
             <th>Academic %</th>
@@ -100,6 +101,7 @@
     <tbody>
         {% for row in rows %}
         <tr>
+            <td>{{ forloop.counter0|add:page_obj.start_index }}</td>
             <td>{{ row.student.hall_ticket }}</td>
             <td>{{ row.student.name }}</td>
             <td>{{ row.academic|default:"—" }}%</td>
