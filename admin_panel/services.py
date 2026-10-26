@@ -211,7 +211,7 @@ def build_shortlist_workbook(schedule, results):
             
     # ── Adjust column widths for better readability ──
     MIN_WIDTH = 10
-    MIN_HEIGHT = 10
+    MIN_HEIGHT = 30
     PADDING = 3
     for col_index, header in enumerate(headers, start=1):
         # Width based on the header length (headers are the longest text in most columns)
