@@ -9,6 +9,7 @@ import threading
 from collections import defaultdict
 from datetime import datetime, date, timedelta   # adjust to what you actually use
 from io import BytesIO
+from itertools import chain
 
 # ── Django ──
 from django.conf import settings
@@ -107,18 +108,18 @@ def dashboard(request):
             to_dt = timezone.make_aware(datetime.combine(to_date, datetime.max.time()))
             schedules = schedules.filter(quiz_date__lte=to_dt)
 
-    schedules = schedules.select_related('college').order_by('-quiz_date')
+    schedules = schedules.select_related('college')
+    
+     # Active exams first (soonest upcoming at top), disabled/archived after (most recent first)
+    active = schedules.filter(is_active=True).order_by('quiz_date')       # upcoming, nearest first
+    archived = schedules.filter(is_active=False).order_by('-quiz_date')   # disabled, most recent first
+    ordered = list(chain(active, archived))
     
      # Pagination
-    paginator = Paginator(schedules, 10)  # 10 rows per page
+    paginator = Paginator(ordered, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-
-    elided_page_range = paginator.get_elided_page_range(
-        page_obj.number,
-        on_each_side=2,
-        on_ends=1,
-    )
+    elided_page_range = paginator.get_elided_page_range(page_obj.number, on_each_side=2, on_ends=1)
     
     return render(request, 'admin_panel/dashboard.html', {
         'page_obj': page_obj,
