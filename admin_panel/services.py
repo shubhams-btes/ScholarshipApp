@@ -129,7 +129,7 @@ def build_shortlist_workbook(schedule, results):
 
     # ── Row 1: merged college banner (yellow) ──
     ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=num_cols)
-    banner = ws.cell(row=1, column=1, value={schedule.college.name})
+    banner = ws.cell(row=1, column=1, value=f"{schedule.college.name} ")
     banner.font = banner_font
     banner.alignment = Alignment(horizontal="center")
     banner.fill = yellow_fill
