@@ -1,5 +1,5 @@
 import openpyxl
-from openpyxl.styles import Font
+from openpyxl.styles import Font,Alignment, PatternFill
 from io import BytesIO
 from tests.models import Result
 from decimal import Decimal
@@ -88,74 +88,118 @@ def final_percentage(academic_pct, tq_pct, interview_pct):
 
 
 def scholarship_slab(final_pct):
-    """A/B/C slab + scholarship %. 90+ → A/30, 80-90 → B/20, 70-80 → C/10, else none."""
+    
     if final_pct is None:
         return (None, None)
     if final_pct >= 90:
-        return ("A", 30)
+        return ("A", 50)
     if final_pct >= 80:
-        return ("B", 20)
+        return ("B", 25)
     if final_pct >= 70:
-        return ("C", 10)
+        return ("C", 15)
     return ("—", 0)
 
 
 def build_shortlist_workbook(schedule, results):
-    """Build the final shortlisted-students Excel with the full scoring pipeline."""
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = f"Shortlist_{schedule.college.name}"[:31]
 
-    headers = [
-        "ID", "Hall Ticket", "Roll No", "Name", "Email", "Contact Number", "College",
-        "10th %", "12th %", "Graduation %", "Masters %",   # ← individual breakdown
-        "Academic %", "TalentQuest %", "Interview %", "Final %",
-        "Slab", "Scholarship %",
-        "Interview Status", "Stream", "Panelist", "Interview Remarks", "Shortlist Remarks",
-    ]
-    for col_index, header in enumerate(headers, start=1):
-        cell = ws.cell(row=1, column=col_index, value=header.upper())
-        cell.font = Font(bold=True)
+    # ── Color definitions ──
+    yellow_fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
+    green_fill = PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid")   # light green
+    red_font = Font(color="CC0000")                                                          # red text
+    header_font = Font(bold=True)
+    banner_font = Font(bold=True, size=14)
 
-    for idx, result in enumerate(results, start=1):
+    headers = [
+        "ID", "Hall Ticket", "Roll No", "Name", "Email", "Contact Number",
+        "Talent Quest Test (Round-1) Result",
+        "Tech. Interview Result",
+        "Scholarship Offered Slab",
+        "Scholarship %",
+        "Stack Offered",
+        "Final %",
+    ]
+    num_cols = len(headers)
+
+    # ── Row 1: merged college banner (yellow) ──
+    ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=num_cols)
+    banner = ws.cell(row=1, column=1, value=f"{schedule.college.name} — Shortlisted Candidates")
+    banner.font = banner_font
+    banner.alignment = Alignment(horizontal="center")
+    banner.fill = yellow_fill
+    # Fill the merged cells too (merge only styles the top-left; fill the rest for full banner color)
+    for col in range(1, num_cols + 1):
+        ws.cell(row=1, column=col).fill = yellow_fill
+
+    # ── Row 2: column headers (yellow) ──
+    for col_index, header in enumerate(headers, start=1):
+        cell = ws.cell(row=2, column=col_index, value=header.upper())
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal="center", wrap_text=True)
+        cell.fill = yellow_fill
+
+    # ── Build + sort rows (unchanged) ──
+    built = []
+    for result in results:
         s = result.student
         academic = s.academic_percentage
-        tq = talentquest_percentage(result)
-
+        tq_pct = talentquest_percentage(result)
         interview = getattr(result, "interview", None)
         interview_pct = interview.interview_percentage if interview else None
-
-        final = final_percentage(academic, tq, interview_pct)
+        final = final_percentage(academic, tq_pct, interview_pct)
         slab, scholarship = scholarship_slab(final)
 
-        row = [
+        if interview is None:
+            interview_result = "Pending"
+        elif interview.status == "SELECTED":
+            interview_result = "Selected"
+        else:
+            interview_result = "Not Forwarded"
+
+        built.append({
+            "student": s, "score": result.score,
+            "interview_result": interview_result,
+            "slab": slab if slab and slab != "—" else "NA",
+            "scholarship": scholarship if scholarship else "",
+            "stack": interview.get_stream_display() if interview and interview.stream else "",
+            "final": final,
+            "status": interview.status if interview else None,
+        })
+
+    SLAB_ORDER = {"A": 0, "B": 1, "C": 2, "NA": 3}
+    built.sort(key=lambda r: (0 if r["status"] == "SELECTED" else 1, SLAB_ORDER.get(r["slab"], 3)))
+
+    # ── Write data rows with conditional coloring ──
+    for idx, r in enumerate(built, start=1):
+        s = r["student"]
+        row_values = [
             idx,
             s.hall_ticket.upper() if s.hall_ticket else "",
             s.roll_no.upper() if s.roll_no else "",
             s.name.upper() if s.name else "",
             s.email.upper() if s.email else "",
             s.mobile_number if s.mobile_number else "",
-            result.exam_schedule.college.name.upper() if result.exam_schedule.college.name else "",
-            # ── individual academic breakdown ──
-            s.tenth_percentage if s.tenth_percentage is not None else "",
-            s.twelfth_percentage if s.twelfth_percentage is not None else "",
-            s.graduation_percentage if s.graduation_percentage is not None else "",
-            s.masters_percentage if s.masters_percentage is not None else "",
-            # ── aggregate + pipeline ──
-            academic if academic is not None else "",
-            tq,
-            interview_pct if interview_pct is not None else "",
-            final if final is not None else "",
-            slab if slab else "",
-            scholarship if scholarship else "",
-            interview.get_status_display() if interview else "Pending",
-            interview.get_stream_display() if interview and interview.stream else "",
-            interview.panelist_name if interview else "",
-            interview.remarks if interview else "",
-            result.shortlist_remarks or "",
+            r["score"],
+            r["interview_result"],
+            r["slab"],
+            r["scholarship"],
+            r["stack"],
+            r["final"] if r["final"] is not None else "",
         ]
 
-        for col_index, value in enumerate(row, start=1):
-            ws.cell(row=idx + 1, column=col_index, value=value)
+        excel_row = idx + 2   # banner + header offset
+
+        # Determine row styling by interview status
+        is_selected = r["status"] == "SELECTED"
+        is_rejected = r["status"] == "REJECTED"
+
+        for col_index, value in enumerate(row_values, start=1):
+            cell = ws.cell(row=excel_row, column=col_index, value=value)
+            if is_selected:
+                cell.fill = green_fill          # Selected → green background
+            if is_rejected:
+                cell.font = red_font            # Not Forwarded → red font
 
     return wb
