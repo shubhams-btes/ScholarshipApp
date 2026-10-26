@@ -1,5 +1,6 @@
 import openpyxl
-from openpyxl.styles import Font,Alignment, PatternFill
+from openpyxl.styles import Font,Alignment, PatternFill, Border, Side
+from openpyxl.utils import get_column_letter
 from io import BytesIO
 from tests.models import Result
 from decimal import Decimal
@@ -112,6 +113,9 @@ def build_shortlist_workbook(schedule, results):
     header_font = Font(bold=True)
     banner_font = Font(bold=True, size=14)
 
+        # ── Border: thin on all sides ──
+    thin = Side(style="thin", color="000000")
+    border = Border(left=thin, right=thin, top=thin, bottom=thin)
     headers = [
         "ID", "Hall Ticket", "Roll No", "Name", "Email", "Contact Number",
         "Talent Quest Test (Round-1) Result",
@@ -125,13 +129,14 @@ def build_shortlist_workbook(schedule, results):
 
     # ── Row 1: merged college banner (yellow) ──
     ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=num_cols)
-    banner = ws.cell(row=1, column=1, value=f"{schedule.college.name} — Shortlisted Candidates")
+    banner = ws.cell(row=1, column=1, value={schedule.college.name})
     banner.font = banner_font
     banner.alignment = Alignment(horizontal="center")
     banner.fill = yellow_fill
     # Fill the merged cells too (merge only styles the top-left; fill the rest for full banner color)
     for col in range(1, num_cols + 1):
         ws.cell(row=1, column=col).fill = yellow_fill
+        ws.cell(row=1, column=col).border = border
 
     # ── Row 2: column headers (yellow) ──
     for col_index, header in enumerate(headers, start=1):
@@ -139,6 +144,7 @@ def build_shortlist_workbook(schedule, results):
         cell.font = header_font
         cell.alignment = Alignment(horizontal="center", wrap_text=True)
         cell.fill = yellow_fill
+        cell.border = border
 
     # ── Build + sort rows (unchanged) ──
     built = []
@@ -201,5 +207,14 @@ def build_shortlist_workbook(schedule, results):
                 cell.fill = green_fill          # Selected → green background
             if is_rejected:
                 cell.font = red_font            # Not Forwarded → red font
+            cell.border = border
+            
+    # ── Adjust column widths for better readability ──
+    MIN_WIDTH = 10
+    PADDING = 3
+    for col_index, header in enumerate(headers, start=1):
+        # Width based on the header length (headers are the longest text in most columns)
+        width = max(len(header) + PADDING, MIN_WIDTH)
+        ws.column_dimensions[get_column_letter(col_index)].width = width
 
     return wb
