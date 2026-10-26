@@ -217,10 +217,7 @@ def build_shortlist_workbook(schedule, results):
         # Width based on the header length (headers are the longest text in most columns)
         width = max(len(header) + PADDING, MIN_WIDTH)
         ws.column_dimensions[get_column_letter(col_index)].width = width
-
-    for row in ws.iter_rows(min_row=3, max_row=ws.max_row):
-        for cell in row:
-            cell.alignment = Alignment(vertical="center")
-            cell.border = border
+        ws.row_dimensions[col_index].height = MIN_HEIGHT  # Set a minimum row height for better readability
+    
 
     return wb
