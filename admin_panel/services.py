@@ -211,13 +211,24 @@ def build_shortlist_workbook(schedule, results):
             
     # ── Adjust column widths for better readability ──
     MIN_WIDTH = 10
-    MIN_HEIGHT = 30
+    MAX_WIDTH = 22
     PADDING = 3
+    HEADER_ROW_HEIGHT = 45   # taller, so wrapped header text fits
+    DATA_ROW_HEIGHT = 20     # standard data row height
+
+    # ── Column WIDTHS (per column) ──
+    COLUMN_MIN = {"EMAIL": 28, "NAME": 22, "HALL TICKET": 14}
     for col_index, header in enumerate(headers, start=1):
-        # Width based on the header length (headers are the longest text in most columns)
-        width = max(len(header) + PADDING, MIN_WIDTH)
-        height = max(len(header) + PADDING, MIN_HEIGHT)
+        base = max(min(len(header) + PADDING, MAX_WIDTH), MIN_WIDTH)
+        width = max(base, COLUMN_MIN.get(header.upper(), 0))
         ws.column_dimensions[get_column_letter(col_index)].width = width
-        ws.row_dimensions[get_column_letter(col_index)].height = height  # Set a minimum row height for better readability
+
+    # ── Row HEIGHTS (per row, by row number) ──
+    ws.row_dimensions[1].height = 30                    # banner row
+    ws.row_dimensions[2].height = HEADER_ROW_HEIGHT     # header row (taller for wrapped text)
+    # Data rows start at row 3; set each to a standard height
+    total_data_rows = len(built)
+    for r in range(3, 3 + total_data_rows):
+        ws.row_dimensions[r].height = DATA_ROW_HEIGHT
 
     return wb
