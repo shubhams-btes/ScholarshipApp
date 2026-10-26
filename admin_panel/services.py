@@ -211,10 +211,16 @@ def build_shortlist_workbook(schedule, results):
             
     # ── Adjust column widths for better readability ──
     MIN_WIDTH = 10
+    MIN_HEIGHT = 10
     PADDING = 3
     for col_index, header in enumerate(headers, start=1):
         # Width based on the header length (headers are the longest text in most columns)
         width = max(len(header) + PADDING, MIN_WIDTH)
         ws.column_dimensions[get_column_letter(col_index)].width = width
+
+    for row in ws.iter_rows(min_row=3, max_row=ws.max_row):
+        for cell in row:
+            cell.alignment = Alignment(vertical="center")
+            cell.border = border
 
     return wb
