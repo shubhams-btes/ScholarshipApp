@@ -95,6 +95,7 @@
             <th>Slab</th>
             <th>Scholarship %</th>
             <th>Interview</th>
+            <th>Panelist</th>
             <th>Actions</th>
         </tr>
     </thead>
@@ -124,6 +125,7 @@
                     <span class="text-muted">Pending</span>
                 {% endif %}
             </td>
+            <td>{% if row.interview %}{{ row.interview.panelist_name }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
             <td>
                 {% if row.interview %}
                     <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editInterviewModal{{ row.result.id }}">
