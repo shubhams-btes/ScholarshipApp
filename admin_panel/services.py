@@ -124,6 +124,7 @@ def build_shortlist_workbook(schedule, results):
         "Scholarship %",
         "Stack Offered",
         "Final %",
+        "Remarks",
     ]
     num_cols = len(headers)
 
@@ -172,6 +173,7 @@ def build_shortlist_workbook(schedule, results):
             "stack": interview.get_stream_display() if interview and interview.stream else "",
             "final": final,
             "status": interview.status if interview else None,
+            "remarks": interview.remarks if interview else None,
         })
 
     SLAB_ORDER = {"A": 0, "B": 1, "C": 2, "NA": 3}
@@ -193,6 +195,7 @@ def build_shortlist_workbook(schedule, results):
             r["scholarship"],
             r["stack"],
             r["final"] if r["final"] is not None else "",
+            r["remarks"] if r["remarks"] is not None else "",
         ]
 
         excel_row = idx + 2   # banner + header offset

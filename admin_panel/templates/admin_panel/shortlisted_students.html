@@ -152,6 +152,15 @@
                                 <input type="number" name="softskill_score" class="form-control" step="0.1" min="0" max="5" value="{{ row.interview.softskill_score }}" required>
                             </div>
                             <div class="mb-2">
+                                <label class="form-label">Slab</label>
+                                <input type="number" name="slab" class="form-control" step="0.1" min="0" max="5" value="{{ row.interview.slab }}" required>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">Scholarship %</label>
+                                <input type="number" name="scholarship_percentage" class="form-control" step="0.1" min="0" max="100" value="{{ row.interview.scholarship_percentage }}" required>
+                            </div>
+                            
+                            <div class="mb-2">
                                 <label class="form-label">Status</label>
                                 <select name="status" class="form-select" required>
                                     <option value="SELECTED" {% if row.interview.status == 'SELECTED' %}selected{% endif %}>Selected</option>
