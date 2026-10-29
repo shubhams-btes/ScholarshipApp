@@ -27,22 +27,28 @@
         </style>
     </head>
     <body class="bg-light">
-        <nav class="navbar navbar-expand-lg shadow-sm">
-            <div class="container-fluid d-flex justify-content-between align-items-center">
-                <!-- Left: Brand -->
-                <a class="navbar-brand fw-bold" href="{% url 'dashboard' %}">{{ site_name }}</a>
+        <nav class="navbar navbar-expand-lg shadow-sm" style="background-color: #07224C;">
+            <div class="container-fluid d-flex align-items-center">
+
+                <!-- Left spacer (empty) — balances the logout button so the logo centers -->
+                <div class="flex-fill"></div>
 
                 <!-- Center: Logo -->
-                <div class="mx-auto">
-                    <img src="{% static 'students/BTES_Logo.png' %}" alt="Logo" id="logo" />
+                <div class="logo">
+                    <a href="#"><img src="{% static 'tests/images/logo1.png' %}" alt="BTES" /></a>
                 </div>
 
                 <!-- Right: Logout button -->
-                <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <a class="btn btn-outline-dark" href="{% url 'logout' %}">Logout</a>
-                    </li>
-                </ul>
+                <div class="flex-fill d-flex justify-content-end">
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <a class="btn"
+                            style="background-color: #F48120; color: #fff; border: none;"
+                            href="{% url 'logout' %}">Logout</a>
+                        </li>
+                    </ul>
+                </div>
+
             </div>
         </nav>
 
@@ -115,7 +121,16 @@
                     <button type="submit" class="btn btn-primary w-100">Search</button>
                 </div>
             </form>
-
+            <form method="get" class="d-flex align-items-center gap-2 mb-3">
+                {% if search %}<input type="hidden" name="search" value="{{ search }}">{% endif %}
+                <label class="form-label mb-0">Show</label>
+                <select name="per_page" class="form-select" style="width:auto;" onchange="this.form.submit()">
+                    {% for opt in per_page_options %}
+                        <option value="{{ opt }}" {% if per_page == opt %}selected{% endif %}>{{ opt }}</option>
+                    {% endfor %}
+                </select>
+                <span>per page</span>
+            </form>
             <!-- Table -->
             <table class="table table-striped table-bordered table-hover align-middle">
                 <thead class="table-dark">

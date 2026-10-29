@@ -115,8 +115,17 @@ def dashboard(request):
     archived = schedules.filter(is_active=False).order_by('-quiz_date')   # disabled, most recent first
     ordered = list(chain(active, archived))
     
+    ALLOWED_PER_PAGE = [5, 10, 50, 100]
+    try:
+        per_page = int(request.GET.get("per_page", 10))
+    except (ValueError, TypeError):
+        per_page = 10
+    if per_page not in ALLOWED_PER_PAGE:
+        per_page = 10
+
+    
      # Pagination
-    paginator = Paginator(ordered, 10)
+    paginator = Paginator(ordered, per_page)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     elided_page_range = paginator.get_elided_page_range(page_obj.number, on_each_side=2, on_ends=1)
@@ -127,7 +136,9 @@ def dashboard(request):
         'from_date': from_date_str,
         'to_date': to_date_str,
         'title': 'Dashboard',
-        'elided_page_range': elided_page_range
+        'elided_page_range': elided_page_range,
+        'per_page': per_page,
+        'per_page_options': ALLOWED_PER_PAGE,
     })
 
 
@@ -172,8 +183,17 @@ def college_management(request):
             college.matching_officials = matching_officials
             filtered_colleges.append(college)
 
+    ALLOWED_PER_PAGE = [5, 10, 50, 100]
+    try:
+        per_page = int(request.GET.get("per_page", 10))
+    except (ValueError, TypeError):
+        per_page = 10
+    if per_page not in ALLOWED_PER_PAGE:
+        per_page = 10
+
+
     # Pagination on colleges
-    paginator = Paginator(filtered_colleges, 10)
+    paginator = Paginator(filtered_colleges, per_page)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
     elided_page_range = paginator.get_elided_page_range(
@@ -186,6 +206,8 @@ def college_management(request):
         "colleges": page_obj,  # template loops over colleges
         "q": q,
         "elided_page_range": elided_page_range,
+        "per_page": per_page,
+        "per_page_options": ALLOWED_PER_PAGE,
     })
 
 
@@ -296,7 +318,16 @@ def exam_schedule_management(request):
         )
     )
 
-    paginator = Paginator(rows, 10)
+    # Per-page
+    ALLOWED_PER_PAGE = [5, 10, 50, 100]
+    try:
+        per_page = int(request.GET.get("per_page", 10))
+    except (ValueError, TypeError):
+        per_page = 10
+    if per_page not in ALLOWED_PER_PAGE:
+        per_page = 10
+
+    paginator = Paginator(rows, per_page)
     page_obj = paginator.get_page(request.GET.get('page'))
     elided_page_range = paginator.get_elided_page_range(
         page_obj.number,                                 # use the view's page-object variable
@@ -311,6 +342,8 @@ def exam_schedule_management(request):
         "q": q,
         "now": timezone.localtime(now),
         "elided_page_range": elided_page_range,
+        "per_page": per_page,
+        "per_page_options": ALLOWED_PER_PAGE,
     })
 
 @superuser_required
@@ -980,11 +1013,18 @@ def college_registrations(request, schedule_id):
 @superuser_required
 def manage_questions(request):
     questions = Question.objects.all().order_by('-id')
-    paginator = Paginator(questions, 10)  # paginate by 10
+    ALLOWED_PER_PAGE = [10, 25, 50, 100]
+    try:
+        per_page = int(request.GET.get("per_page", 10))
+    except (ValueError, TypeError):
+        per_page = 10
+    if per_page not in ALLOWED_PER_PAGE:
+        per_page = 10
+    paginator = Paginator(questions, per_page)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-    
-    return render(request, 'admin_panel/manage_questions.html', {'page_obj': page_obj})
+
+    return render(request, 'admin_panel/manage_questions.html', {'page_obj': page_obj, 'per_page': per_page, 'per_page_options': ALLOWED_PER_PAGE})
 
 
 @superuser_required
