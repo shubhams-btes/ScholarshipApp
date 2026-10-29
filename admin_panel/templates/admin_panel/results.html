@@ -176,12 +176,7 @@
 
                         <td>
                             {% if result.is_shortlisted %}
-                                <!-- Un-shortlist -->
-                                <form method="post" action="{% url 'toggle_shortlist' result.id %}" class="d-inline"
-                                    onsubmit="return confirm('Remove {{ result.student.name|escapejs }} from shortlist?');">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
-                                </form>
+                                
                             {% elif result.student.qualify == 0 %}
                                 <!-- Flagged → cannot shortlist -->
                                 <button class="btn btn-sm btn-secondary" disabled title="Not eligible (below 60%)">Shortlist</button>

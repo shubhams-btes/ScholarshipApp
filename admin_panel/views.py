@@ -802,20 +802,18 @@ def toggle_shortlist(request, result_id):
     result = get_object_or_404(Result, pk=result_id)
 
     if result.is_shortlisted:
-        # Un-shortlist
-        result.is_shortlisted = False
-        result.shortlist_remarks = ""
-        result.save(update_fields=["is_shortlisted", "shortlist_remarks", "shortlisted_by", "shortlisted_on"])
-        messages.success(request, f"{result.student.name} removed from shortlist.")
-    else:
-        # Red-flag block
-        if result.student.qualify == 0:
-            messages.error(request, f"{result.student.name} cannot be shortlisted — academic score below 60% in a qualification.")
-            return redirect("college_results", schedule_id=result.exam_schedule.id)
-        result.is_shortlisted = True
-        result.shortlist_remarks = request.POST.get("remarks", "").strip()
-        result.save(update_fields=["is_shortlisted", "shortlist_remarks", "shortlisted_by", "shortlisted_on"])
-        messages.success(request, f"{result.student.name} shortlisted.")
+        messages.info(request, f"{result.student.name} is already shortlisted.")
+        return redirect("college_results", schedule_id=result.exam_schedule.id)
+
+    # Red-flag block
+    if result.student.qualify == 0:
+        messages.error(request, f"{result.student.name} cannot be shortlisted — academic score below 60%.")
+        return redirect("college_results", schedule_id=result.exam_schedule.id)
+
+    result.is_shortlisted = True
+    result.shortlist_remarks = request.POST.get("remarks", "").strip()
+    result.save(update_fields=["is_shortlisted", "shortlist_remarks"])
+    messages.success(request, f"{result.student.name} shortlisted.")
 
     return redirect("college_results", schedule_id=result.exam_schedule.id)
 
